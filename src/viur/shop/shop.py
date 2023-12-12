@@ -1,6 +1,5 @@
 import logging
-import typing
-from typing import Any
+import typing as t
 
 from viur.core.decorators import exposed
 from viur.core.module import Module
@@ -21,7 +20,7 @@ class Shop(InstancedModule, Module):
     def __init__(
         self,
         name: str,
-        article_skel: typing.Type[Skeleton],
+        article_skel: t.Type[Skeleton],
         payment_providers: list[PaymentProviderAbstract],
         *args, **kwargs,
     ):
@@ -30,9 +29,9 @@ class Shop(InstancedModule, Module):
 
         # Store arguments
         self.name: str = name
-        self.article_skel: typing.Type[Skeleton] = article_skel
+        self.article_skel: t.Type[Skeleton] = article_skel
         self.payment_providers: list[PaymentProviderAbstract] = payment_providers
-        self.additional_settings: dict[str, Any] = dict(kwargs)
+        self.additional_settings: dict[str, t.Any] = dict(kwargs)
 
         self._set_kind_names()
 
@@ -55,6 +54,7 @@ class Shop(InstancedModule, Module):
         """
         from viur.shop import CartItemSkel
         CartItemSkel.article.kind = self.article_skel.kindName
+
 
 Shop.html = True
 Shop.vi = True
