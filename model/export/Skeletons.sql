@@ -55,7 +55,7 @@ ALTER TABLE ShippingConfigSkel ADD CONSTRAINT PK_ShippingConfigSkel PRIMARY KEY 
 CREATE TABLE ShippingPreConditionRelSkel (
  minimum_order_value FLOAT(10),
  country VARCHAR(2),
- zip VARCHAR(10)
+ zip_code VARCHAR(10)
 );
 
 
@@ -82,7 +82,7 @@ ALTER TABLE UserSkel ADD CONSTRAINT PK_UserSkel PRIMARY KEY (key);
 
 CREATE TABLE VatSkel (
  key VARCHAR(64) NOT NULL,
- value FLOAT(10)
+ rate FLOAT(10)
 );
 
 ALTER TABLE VatSkel ADD CONSTRAINT PK_VatSkel PRIMARY KEY (key);
@@ -125,7 +125,7 @@ CREATE TABLE DiscountConditionSkel (
  quantity_volume INT,
  quantity_used INT,
  individual_codes_amount INT,
- code VARCHAR(10),
+ scope_code VARCHAR(10),
  individual_codes_prefix VARCHAR(10),
  scope_minimum_order_value FLOAT(10),
  scope_date_start TIMESTAMP WITH TIME ZONE(10),
@@ -148,7 +148,7 @@ CREATE TABLE DiscountSkel (
  key VARCHAR(64) NOT NULL,
  name VARCHAR(255),
  description TEXT,
- type VARCHAR(255),
+ discount_type VARCHAR(255),
  absolute FLOAT(10),
  percentage FLOAT(10),
  condition VARCHAR(64) NOT NULL,
@@ -164,7 +164,7 @@ CREATE TABLE OrderSkel (
  customer VARCHAR(64) NOT NULL,
  cart VARCHAR(64) NOT NULL,
  total FLOAT(10),
- Bestellnummer VARCHAR(64) NOT NULL,
+ order_uid VARCHAR(64) NOT NULL,
  payment_provider VARCHAR(255),
  is_ordered BIT(1),
  is_paid BIT(1),
