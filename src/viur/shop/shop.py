@@ -8,6 +8,7 @@ from viur.core.skeleton import Skeleton
 from .modules import Cart
 from .modules.api import Api
 from .payment_providers import PaymentProviderAbstract
+from .skeletons.discount_condition import DiscountConditionSkel
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
@@ -54,6 +55,9 @@ class Shop(InstancedModule, Module):
         """
         from viur.shop import CartItemSkel
         CartItemSkel.article.kind = self.article_skel.kindName
+        DiscountConditionSkel.scope_article.kind = self.article_skel.kindName
+
+
 
 
 Shop.html = True

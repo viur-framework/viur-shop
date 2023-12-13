@@ -2,25 +2,57 @@ import logging
 
 from viur.core.bones import *
 from viur.core.prototypes.tree import TreeSkel
-from viur.shop.constants import ArticleAvailability
+from viur.shop.constants import *
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
 
-class CartNodeSkel(TreeSkel):  # STATE: partial (as in model)
+class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     kindName = "shop_cart_node"
 
     total = NumericBone(
         descr="Total",
+        precision=2,
     )
 
     vat_total = NumericBone(
         descr="Total",
+        precision=2,
     )
 
     vat_rate = RelationalBone(
         descr="Vat Rate",
         kind="shop_vat",
+    )
+
+    shipping_address = RelationalBone(
+        descr="shipping_address",
+        kind="shop_address",
+    )
+
+    customer_comment = TextBone(
+        descr="customer_comment",
+        validHtml=None,
+    )
+
+    name = StringBone(
+        descr="name",
+    )
+
+    cart_type = SelectBone(
+        descr="cart_type",
+        values=CartType,
+    )
+
+    shipping = RelationalBone(
+        descr="shipping",
+        kind="shop_shipping",
+    )
+    """Versand bei Warenkorb der einer Bestellung zugehört"""
+
+    discount = RelationalBone(
+        descr="discount",
+        kind="shop_discount",
     )
 
 
@@ -36,7 +68,7 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
         descr="Custom project data",
     )
 
-    # Bones to store a frozen copy of the article values:
+    # --- Bones to store a frozen copy of the article values: -----------------
 
     shop_name = StringBone(
         descr="shop_name",
