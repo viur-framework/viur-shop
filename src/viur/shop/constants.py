@@ -8,3 +8,9 @@ class ArticleAvailability(enum.Enum):
     DISCONTINUED = "discontinued"
     PREORDER = "preorder"
 
+
+
+class CartType(enum.Enum):
+    WISHLIST = "wishlist"
+    BASKET = "basket"
+
