@@ -14,7 +14,7 @@ twine="*"
 python_version = "3"
 
 [scripts]
-clean = "rm -rf dist build src/*.egg-info"
+clean = "rm -rf dist build src/viur_shop.egg-info"
 #build = "python -m build --wheel"
 build = "python -m build"
 release = "python -m twine upload dist/*"
