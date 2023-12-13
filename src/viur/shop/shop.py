@@ -5,8 +5,7 @@ from viur.core.decorators import exposed
 from viur.core.module import Module
 from viur.core.prototypes.instanced_module import InstancedModule
 from viur.core.skeleton import Skeleton
-from .modules import Cart
-from .modules.api import Api
+from .modules import *
 from .payment_providers import PaymentProviderAbstract
 from .skeletons.discount_condition import DiscountConditionSkel
 
@@ -43,8 +42,15 @@ class Shop(InstancedModule, Module):
         logger.debug(f"Shop.__call__({args=}, {kwargs=})")
         self: Shop = super().__call__(*args, **kwargs)  # noqa
         # Add sub modules
-        self.api = Api("api", f"{self.modulePath}/cart", shop=self)
-        self.cart = Cart("cart", f"{self.modulePath}/cart", shop=self)
+        self.address = Address(shop=self)
+        self.api = Api(shop=self)
+        self.cart = Cart(shop=self)
+        self.discount = Discount(shop=self)
+        self.discount_condition = DiscountCondition(shop=self)
+        self.order = Order(shop=self)
+        self.shipping = Shipping(shop=self)
+        self.shipping_config = ShippingConfig(shop=self)
+        self.vat = Vat(shop=self)
         self._update_methods()
         return self
 
@@ -56,8 +62,6 @@ class Shop(InstancedModule, Module):
         from viur.shop import CartItemSkel
         CartItemSkel.article.kind = self.article_skel.kindName
         DiscountConditionSkel.scope_article.kind = self.article_skel.kindName
-
-
 
 
 Shop.html = True

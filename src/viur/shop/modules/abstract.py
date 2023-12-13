@@ -22,7 +22,7 @@ class ShopModuleAbstract(Module):
         if shop is None:
             raise ValueError("Missing shop argument!")
         if moduleName is None:
-            moduleName = self.__class__.__name__
+            moduleName = self.__class__.__name__.lower()
         if modulePath is None:
             modulePath = f"{shop.modulePath}/{moduleName.lower()}"
         super().__init__(moduleName, modulePath, *args, **kwargs)
