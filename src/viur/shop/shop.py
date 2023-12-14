@@ -35,15 +35,17 @@ class Shop(InstancedModule, Module):
         self.payment_providers: list[PaymentProviderAbstract] = payment_providers
         self.additional_settings: dict[str, t.Any] = dict(kwargs)
 
-        self._set_kind_names()
-        self._extend_user_skeleton()
-
         # Debug only
         logger.debug(f"{vars(self) = }")
 
     def __call__(self, *args, **kwargs):
         logger.debug(f"Shop.__call__({args=}, {kwargs=})")
         self: Shop = super().__call__(*args, **kwargs)  # noqa
+
+        # Modify some objects dynamically
+        self._set_kind_names()
+        self._extend_user_skeleton()
+
         # Add sub modules
         self.address = Address(shop=self)
         self.api = Api(shop=self)
@@ -76,7 +78,7 @@ class Shop(InstancedModule, Module):
         skel_cls.wishlist = RelationalBone(
             descr="wishlist",
             kind="shop_cart_node",
-            module="shop/cart",
+            module=f"{self.moduleName}/cart",
             multiple=True,
         )
         # rebuild bonemap
