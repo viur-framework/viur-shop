@@ -9,6 +9,7 @@ logger = logging.getLogger("viur.shop").getChild(__name__)
 
 # TODO: add methods
 # TODO: add permission concept
+# TODO: add @force_post to not-view methods
 
 
 class Api(ShopModuleAbstract):
