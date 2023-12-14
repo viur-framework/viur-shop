@@ -24,6 +24,7 @@ class Api(ShopModuleAbstract):
     @exposed
     def article_add(
         self,
+        *,
         article_key: str | db.Key,
         quantity: int,
         parent_cart_key: str | db.Key,
@@ -33,6 +34,7 @@ class Api(ShopModuleAbstract):
     @exposed
     def article_update(
         self,
+        *,
         article_key: str | db.Key,
         quantity: int,
         parent_cart_key: str | db.Key,
@@ -42,6 +44,7 @@ class Api(ShopModuleAbstract):
     @exposed
     def article_remove(
         self,
+        *,
         article_key: str | db.Key,
         parent_cart_key: str | db.Key,
     ):
@@ -50,6 +53,7 @@ class Api(ShopModuleAbstract):
     @exposed
     def article_move(
         self,
+        *,
         article_key: str | db.Key,
         parent_cart_key: str | db.Key,
         new_parent_cart_key: str | db.Key,
@@ -59,7 +63,8 @@ class Api(ShopModuleAbstract):
     @exposed
     def cart_add(
         self,
-        parent_cart_key: str | db.Key,
+        *,
+        parent_cart_key: str | db.Key = None,
         cart_type: CartType,
         name: str = None,
         customer_comment: str = None,
@@ -71,6 +76,7 @@ class Api(ShopModuleAbstract):
     @exposed
     def cart_update(
         self,
+        *,
         cart_key: str | db.Key,
         name: str = None,
         customer_comment: str = None,
@@ -82,6 +88,7 @@ class Api(ShopModuleAbstract):
     @exposed
     def cart_remove(
         self,
+        *,
         cart_key: str | db.Key,
     ):
         ...
@@ -89,6 +96,7 @@ class Api(ShopModuleAbstract):
     @exposed
     def cart_clear(
         self,
+        *,
         cart_key: str | db.Key,
         remove_sub_carts: bool = False,
     ):
@@ -109,6 +117,7 @@ class Api(ShopModuleAbstract):
     @exposed
     def order_add(
         self,
+        *,
         order_key: str | db.Key,
         payment_provider: str = None,
         billing_address_key: str | db.Key = None,
@@ -123,6 +132,7 @@ class Api(ShopModuleAbstract):
     @exposed
     def order_update(
         self,
+        *,
         order_key: str | db.Key,
         payment_provider: str = None,
         billing_address_key: str | db.Key = None,
@@ -137,6 +147,7 @@ class Api(ShopModuleAbstract):
     @exposed
     def order_remove(
         self,
+        *,
         order_key: str | db.Key,
     ):
         ...
@@ -155,6 +166,7 @@ class Api(ShopModuleAbstract):
     @exposed
     def discount_add(
         self,
+        *,
         code: str,
         discount_key: str | db.Key,
     ):
@@ -168,6 +180,8 @@ class Api(ShopModuleAbstract):
     @exposed
     def discount_remove(
         self,
+        *,
+
         discount_key: str | db.Key,
     ):
         ...
