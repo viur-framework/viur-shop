@@ -1,10 +1,12 @@
 import logging
 import typing as t
 
+from viur.core.bones import RelationalBone
 from viur.core.decorators import exposed
 from viur.core.module import Module
+from viur.core.modules.user import UserSkel
 from viur.core.prototypes.instanced_module import InstancedModule
-from viur.core.skeleton import Skeleton
+from viur.core.skeleton import MetaSkel, Skeleton, skeletonByKind
 from .modules import *
 from .payment_providers import PaymentProviderAbstract
 from .skeletons.discount_condition import DiscountConditionSkel
@@ -34,6 +36,7 @@ class Shop(InstancedModule, Module):
         self.additional_settings: dict[str, t.Any] = dict(kwargs)
 
         self._set_kind_names()
+        self._extend_user_skeleton()
 
         # Debug only
         logger.debug(f"{vars(self) = }")
@@ -59,9 +62,25 @@ class Shop(InstancedModule, Module):
 
         At this point we are and must be before setSystemInitialized.
         """
-        from viur.shop import CartItemSkel
+        from viur.shop import CartItemSkel  # import must stay here to avoid circular imports
         CartItemSkel.article.kind = self.article_skel.kindName
         DiscountConditionSkel.scope_article.kind = self.article_skel.kindName
+
+    def _extend_user_skeleton(self):
+        """Extend the UserSkel of the project
+
+        At this point we are and must be before setSystemInitialized.
+        """
+        skel_cls: UserSkel = skeletonByKind("user")  # noqa
+        # Add bone(s) needed by the shop
+        skel_cls.wishlist = RelationalBone(
+            descr="wishlist",
+            kind="shop_cart_node",
+            module="shop/cart",
+            multiple=True,
+        )
+        # rebuild bonemap
+        skel_cls.__boneMap__ = MetaSkel.generate_bonemap(skel_cls)
 
 
 Shop.html = True
