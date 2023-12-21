@@ -1,8 +1,12 @@
 import logging
 
-from viur.core import db, exposed
+from google.protobuf.message import DecodeError
+
+from viur.core import db, errors, exposed, force_post
 from viur.shop.constants import CartType
+from viur.shop.exceptions import InvalidKeyException
 from viur.shop.modules.abstract import ShopModuleAbstract
+from viur.shop.response_types import JsonResponse
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
@@ -20,9 +24,17 @@ class Api(ShopModuleAbstract):
         article_key: str | db.Key,
         parent_cart_key: str | db.Key,
     ):
-        ...
+        """View an article in the cart"""
+        article_key = self._normalize_external_key(
+            article_key, "article_key")
+        parent_cart_key = self._normalize_external_key(
+            parent_cart_key, "parent_cart_key")
+        if not (res := self.shop.cart.get_article(article_key, parent_cart_key)):
+            raise errors.NotFound(f"{parent_cart_key} has no article with {article_key=}")
+        return JsonResponse(res)
 
     @exposed
+    @force_post
     def article_add(
         self,
         *,
@@ -30,9 +42,19 @@ class Api(ShopModuleAbstract):
         quantity: int,
         parent_cart_key: str | db.Key,
     ):
-        ...
+        """Add an article to the cart"""
+        article_key = self._normalize_external_key(
+            article_key, "article_key")
+        parent_cart_key = self._normalize_external_key(
+            parent_cart_key, "parent_cart_key")
+        # TODO: Could also return self.article_view() or just the cart_node_key...
+        if self.shop.cart.get_article(article_key, parent_cart_key):
+            raise errors.BadRequest("Article already exists")
+        return JsonResponse(self.shop.cart.add_or_update_article(
+            article_key, parent_cart_key, quantity))
 
     @exposed
+    @force_post
     def article_update(
         self,
         *,
@@ -40,15 +62,26 @@ class Api(ShopModuleAbstract):
         quantity: int,
         parent_cart_key: str | db.Key,
     ):
-        ...
+        """Update an existing article in the cart"""
+        article_key = self._normalize_external_key(
+            article_key, "article_key")
+        parent_cart_key = self._normalize_external_key(
+            parent_cart_key, "parent_cart_key")
+        if not self.shop.cart.get_article(article_key, parent_cart_key):
+            raise errors.BadRequest("Article does not exist")
+        # TODO: Could also return self.article_view() or just the cart_node_key...
+        return JsonResponse(self.shop.cart.add_or_update_article(
+            article_key, parent_cart_key, quantity))
 
     @exposed
+    @force_post
     def article_remove(
         self,
         *,
         article_key: str | db.Key,
         parent_cart_key: str | db.Key,
     ):
+        """Remove an article from the cart"""
         return self.article_update(article_key, 0, parent_cart_key)
 
     @exposed
@@ -106,16 +139,19 @@ class Api(ShopModuleAbstract):
     @exposed
     def cart_list(
         self,
-        cart_key: str | db.Key,
+        cart_key: str | db.Key | None = None,
     ):
         """
-        kein node_key: Listet root-nodes auf
+        kein cart_key: Listet root-nodes auf
 
-        node_key: listet direkte Kinder (leafs und nodes) auf
+        cart_key: listet direkte Kinder (leafs und nodes) auf
         """
-        ...
+        if cart_key is None:
+            return JsonResponse(self.shop.cart.getAvailableRootNodes())
+        raise errors.NotImplemented
 
     @exposed
+    @force_post
     def order_add(
         self,
         *,
@@ -196,6 +232,21 @@ class Api(ShopModuleAbstract):
         Listet verfügbar Versandoptionen für einen (Unter)Warenkorb auf
         """
         ...
+
+    # --- Internal helpers  ----------------------------------------------------
+
+    def _normalize_external_key(
+        self,
+        external_key: str,
+        parameter_name: str,
+    ) -> db.Key:
+        """
+        Convert urlsafe key to db.Key and raise an error on invalid in key.
+        """
+        try:
+            return db.Key.from_legacy_urlsafe(external_key)
+        except DecodeError:  # yes, the exception really comes from protobuf...
+            raise InvalidKeyException(external_key, parameter_name)
 
     # --- Testing only --------------------------------------------------------
 

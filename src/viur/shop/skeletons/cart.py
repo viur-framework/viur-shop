@@ -62,6 +62,14 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     article = RelationalBone(
         descr="article",
         kind="...",  # will be set in Shop._set_kind_names()
+        # FIXME: What's necessary here?
+        parentKeys=["key", "parententry", "article"],
+    )
+
+    # TODO: was not in the ER diagram; or did we want to create a new LeafSkel for each quantity?
+    quantity = NumericBone(
+        descr="quantity",
+        min=0,
     )
 
     project_data = JsonBone(
