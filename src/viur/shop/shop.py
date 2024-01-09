@@ -81,6 +81,11 @@ class Shop(InstancedModule, Module):
             module=f"{self.moduleName}/cart",
             multiple=True,
         )
+        skel_cls.basket = RelationalBone(
+            descr="basket",
+            kind="shop_cart_node",
+            module=f"{self.moduleName}/cart",
+        )
         # rebuild bonemap
         skel_cls.__boneMap__ = MetaSkel.generate_bonemap(skel_cls)
 

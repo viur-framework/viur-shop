@@ -1,7 +1,7 @@
 import logging
 import typing as t
 
-from viur.core import current, db, exposed, utils
+from viur.core import conf, current, db, exposed, utils
 from viur.core.prototypes import Tree
 from viur.shop.modules.abstract import ShopModuleAbstract
 from ..constants import CartType, QuantityModeType
@@ -21,7 +21,11 @@ class Cart(ShopModuleAbstract, Tree):
 
     @property
     def current_session_cart_key(self):
-        # TODO: Store in current_basket bone in the UserSkel of the user ?!
+        if user := current.user.get():
+            user_skel = conf.main_app.user.viewSkel()
+            user_skel.fromDB(user["key"])
+            if user_skel["basket"]:
+                self.session["session_cart_key"] = user_skel["basket"]["dest"]["key"]
         self._ensure_current_session_cart()
         return self.session.get("session_cart_key")
 
@@ -40,6 +44,12 @@ class Cart(ShopModuleAbstract, Tree):
             key = root_node.toDB()
             self.session["session_cart_key"] = key
             current.session.get().markChanged()
+            # Store basket at the user skel, it will be shared over multiple sessions / devices
+            if user := current.user.get():
+                user_skel = conf.main_app.user.editSkel()
+                user_skel.fromDB(user["key"])
+                user_skel.setBoneValue("basket", key)
+                user_skel.toDB()
         return self.session["session_cart_key"]
 
     def getAvailableRootNodes(self, *args, **kwargs) -> list[dict[t.Literal["name", "key"], str]]:
@@ -69,6 +79,8 @@ class Cart(ShopModuleAbstract, Tree):
             raise TypeError(f"article_key must be an instance of db.Key")
         if not isinstance(parent_cart_key, db.Key):
             raise TypeError(f"parent_cart_key must be an instance of db.Key")
+        if not any(parent_cart_key == node["key"] for node in self.getAvailableRootNodes()):
+            raise ValueError(f"Invalid root node (for this user).")
         skel = self.viewSkel("leaf")
         query: db.Query = skel.all()
         query.filter("parententry =", parent_cart_key)
@@ -88,6 +100,8 @@ class Cart(ShopModuleAbstract, Tree):
             raise TypeError(f"article_key must be an instance of db.Key")
         if not isinstance(parent_cart_key, db.Key):
             raise TypeError(f"parent_cart_key must be an instance of db.Key")
+        if not any(parent_cart_key == node["key"] for node in self.getAvailableRootNodes()):
+            raise ValueError(f"Invalid root node (for this user).")
         if not (skel := self.get_article(article_key, parent_cart_key)):
             skel = self.addSkel("leaf")
             res = skel.setBoneValue("article", article_key)
