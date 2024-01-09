@@ -1,7 +1,7 @@
 import logging
 import typing as t
 
-from viur.core import conf, current, db, exposed, utils
+from viur.core import conf, current, db, errors, exposed, utils
 from viur.core.prototypes import Tree
 from viur.shop.modules.abstract import ShopModuleAbstract
 from ..constants import CartType, QuantityModeType
@@ -69,6 +69,21 @@ class Cart(ShopModuleAbstract, Tree):
                 })
 
         return root_nodes
+
+    def get_children(
+        self,
+        parent_cart_key: db.Key,
+        **kwargs
+    ) -> t.Iterator[list[dict]]:
+        if not isinstance(parent_cart_key, db.Key):
+            raise TypeError(f"parent_cart_key must be an instance of db.Key")
+        for skel_type in ("node", "leaf"):
+            skel = self.viewSkel(skel_type)
+            query = self.listFilter(skel.all().mergeExternalFilter(kwargs))
+            if query is None:
+                raise errors.Unauthorized()
+            query.filter("parententry =", parent_cart_key)
+            yield from query.fetch()
 
     def get_article(
         self,

@@ -1,9 +1,9 @@
 import logging
-import typing
 
 from google.protobuf.message import DecodeError
 
-from viur.core import db, errors, exposed, force_post
+from viur.core import conf, db, errors, exposed, force_post
+from viur.core.render.json.default import DefaultRender as JsonRenderer
 from viur.shop.exceptions import InvalidKeyException
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.response_types import JsonResponse
@@ -17,6 +17,10 @@ logger = logging.getLogger("viur.shop").getChild(__name__)
 # TODO: add @force_post to not-view methods
 
 class Api(ShopModuleAbstract):
+
+    @property
+    def json_renderer(self) -> JsonRenderer:
+        return conf.main_app.vi.shop.render
 
     @exposed
     def article_view(
@@ -101,7 +105,8 @@ class Api(ShopModuleAbstract):
         self,
         *,
         parent_cart_key: str | db.Key = None,
-        cart_type: CartType,
+        cart_type: CartType,  # TODO: since we generate basket automatically,
+        #                             wishlist would be the only acceptable value ...
         name: str = None,
         customer_comment: str = None,
         shipping_address_key: str | db.Key = None,
@@ -144,13 +149,27 @@ class Api(ShopModuleAbstract):
         cart_key: str | db.Key | None = None,
     ):
         """
-        kein cart_key: Listet root-nodes auf
+        List root nodes or children of a cart
 
-        cart_key: listet direkte Kinder (leafs und nodes) auf
+        If a cart key is provided, the direct children (nodes and leafs) will
+        be returned.
+        Otherwise (without a key), the root nodes will be returned.
+
+        cart_key: list direct children (nodes and leafs) of this parent node
         """
+        # no key: list root node
         if cart_key is None:
             return JsonResponse(self.shop.cart.getAvailableRootNodes())
-        raise errors.NotImplemented
+        # key provided: list children (nodes and leafs)
+        cart_key = self._normalize_external_key(cart_key, "cart_key")
+        children = []
+        for child_skel in self.shop.cart.get_children(cart_key):
+            assert issubclass(child_skel.skeletonCls, (self.shop.cart.nodeSkelCls, self.shop.cart.leafSkelCls))
+            logger.debug(f"{child_skel=} // {child_skel.skeletonCls=}")
+            child = self.json_renderer.renderSkelValues(child_skel)
+            child["skel_type"] = "leaf" if issubclass(child_skel.skeletonCls, self.shop.cart.leafSkelCls) else "node"
+            children.append(child)
+        return JsonResponse(children)
 
     @exposed
     @force_post
