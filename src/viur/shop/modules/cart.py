@@ -4,7 +4,7 @@ import typing as t
 from viur.core import current, db, exposed, utils
 from viur.core.prototypes import Tree
 from viur.shop.modules.abstract import ShopModuleAbstract
-from .. import CartType
+from ..constants import CartType, QuantityModeType
 from ..exceptions import InvalidStateError
 from ..skeletons.cart import CartItemSkel, CartNodeSkel
 
@@ -82,6 +82,7 @@ class Cart(ShopModuleAbstract, Tree):
         article_key: db.Key,
         parent_cart_key: db.Key,
         quantity: int,
+        quantity_mode: QuantityModeType,
     ) -> CartItemSkel:
         if not isinstance(article_key, db.Key):
             raise TypeError(f"article_key must be an instance of db.Key")
@@ -95,6 +96,16 @@ class Cart(ShopModuleAbstract, Tree):
             parent_skel = self.viewSkel("node")
             parent_skel.fromDB(parent_cart_key)
             skel.setBoneValue("parentrepo", parent_skel["parentrepo"])
-        skel["quantity"] = quantity
+        if quantity_mode == "replace":
+            skel["quantity"] = quantity
+        elif quantity_mode == "decrease":
+            skel["quantity"] -= quantity
+        elif quantity_mode == "increase":
+            skel["quantity"] += quantity
+        else:
+            raise ValueError(
+                f"Invalid {quantity_mode=}! "
+                f"Must be {' or '.join(vars(QuantityModeType)['__args__'])}."
+            )
         key = skel.toDB()
         return skel

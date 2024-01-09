@@ -1,12 +1,13 @@
 import logging
+import typing
 
 from google.protobuf.message import DecodeError
 
 from viur.core import db, errors, exposed, force_post
-from viur.shop.constants import CartType
 from viur.shop.exceptions import InvalidKeyException
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.response_types import JsonResponse
+from ..constants import CartType, QuantityModeType
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
@@ -14,7 +15,6 @@ logger = logging.getLogger("viur.shop").getChild(__name__)
 # TODO: add methods
 # TODO: add permission concept
 # TODO: add @force_post to not-view methods
-
 
 class Api(ShopModuleAbstract):
 
@@ -40,6 +40,7 @@ class Api(ShopModuleAbstract):
         *,
         article_key: str | db.Key,
         quantity: int,
+        # quantity_mode: QuantityModeType = "replace",
         parent_cart_key: str | db.Key,
     ):
         """Add an article to the cart"""
@@ -51,7 +52,7 @@ class Api(ShopModuleAbstract):
         if self.shop.cart.get_article(article_key, parent_cart_key):
             raise errors.BadRequest("Article already exists")
         return JsonResponse(self.shop.cart.add_or_update_article(
-            article_key, parent_cart_key, quantity))
+            article_key, parent_cart_key, quantity, quantity_mode="replace"))
 
     @exposed
     @force_post
@@ -60,6 +61,7 @@ class Api(ShopModuleAbstract):
         *,
         article_key: str | db.Key,
         quantity: int,
+        quantity_mode: QuantityModeType = "replace",
         parent_cart_key: str | db.Key,
     ):
         """Update an existing article in the cart"""
@@ -71,7 +73,7 @@ class Api(ShopModuleAbstract):
             raise errors.BadRequest("Article does not exist")
         # TODO: Could also return self.article_view() or just the cart_node_key...
         return JsonResponse(self.shop.cart.add_or_update_article(
-            article_key, parent_cart_key, quantity))
+            article_key, parent_cart_key, quantity, quantity_mode))
 
     @exposed
     @force_post

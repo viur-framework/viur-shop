@@ -1,4 +1,5 @@
 import enum
+import typing as t
 
 
 class ArticleAvailability(enum.Enum):
@@ -85,3 +86,6 @@ class OrderState(enum.Enum):
 
     RTS = "rts"
     """Ready To Send (but must not be paid)"""
+
+
+QuantityModeType = t.Literal["replace", "increase", "decrease"]
