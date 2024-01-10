@@ -112,7 +112,8 @@ CREATE TABLE CartItemSkel (
  parententry VARCHAR(64) NOT NULL,
  article VARCHAR(64) NOT NULL,
  **article_data_skey VARCHAR(255),
- project_data JSON NOT NULL
+ project_data JSON NOT NULL,
+ quantity INT
 );
 
 ALTER TABLE CartItemSkel ADD CONSTRAINT PK_CartItemSkel PRIMARY KEY (key);
@@ -286,6 +287,7 @@ COMMENT ON COLUMN CartItemSkel.parententry IS '';
 COMMENT ON COLUMN CartItemSkel.article IS '';
 COMMENT ON COLUMN CartItemSkel.**article_data_skey IS '';
 COMMENT ON COLUMN CartItemSkel.project_data IS '';
+COMMENT ON COLUMN CartItemSkel.quantity IS '';
 COMMENT ON TABLE DiscountConditionSkel IS '';
 COMMENT ON COLUMN DiscountConditionSkel.key IS '';
 COMMENT ON COLUMN DiscountConditionSkel.code_type IS '';
