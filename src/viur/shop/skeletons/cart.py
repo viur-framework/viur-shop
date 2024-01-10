@@ -66,6 +66,14 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
         kind="...",  # will be set in Shop._set_kind_names()
         # FIXME: What's necessary here?
         parentKeys=["key", "parententry", "article"],
+        refKeys=[
+            "shop_name", "shop_description",
+            "shop_price_retail", "shop_price_recommended",
+            "shop_availability", "shop_listed",
+            "shop_image", "shop_art_no_or_gtin",
+            "shop_vat", "shop_shipping",
+            "shop_is_weee", "shop_is_low_price",
+        ],
     )
 
     # TODO: was not in the ER diagram; or did we want to create a new LeafSkel for each quantity?
@@ -130,7 +138,6 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     shop_is_low_price = BooleanBone(
         descr="shop_is_low_price",
     )
-
 
     @classmethod
     def toDB(cls, skelValues: SkeletonInstance, update_relations: bool = True, **kwargs) -> db.Key:
