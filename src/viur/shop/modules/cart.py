@@ -43,6 +43,7 @@ class Cart(ShopModuleAbstract, Tree):
             root_node = self.addSkel("node")
             user = current.user.get() and current.user.get()["name"] or "__guest__"
             root_node["name"] = f"Session Cart of {user} created at {utils.utcNow()}"
+            root_node["cart_type"] = CartType.BASKET
             key = root_node.toDB()
             self.session["session_cart_key"] = key
             current.session.get().markChanged()
@@ -54,12 +55,8 @@ class Cart(ShopModuleAbstract, Tree):
                 user_skel.toDB()
         return self.session["session_cart_key"]
 
-    def getAvailableRootNodes(self, *args, **kwargs) -> list[dict[t.Literal["name", "key"], str]]:
-        root_nodes = [{
-            "key": self.current_session_cart_key,
-            "name": self.current_session_cart["name"],
-            "cart_type": CartType.BASKET,
-        }]
+    def get_available_root_nodes(self, *args, **kwargs) -> list[dict[t.Literal["name", "key"], str]]:
+        root_nodes = [self.current_session_cart]
 
         if user := current.user.get():
             for wishlist in user["wishlist"]:
@@ -71,6 +68,9 @@ class Cart(ShopModuleAbstract, Tree):
                 })
 
         return root_nodes
+
+    # deprecated! viur-core support
+    getAvailableRootNodes = get_available_root_nodes
 
     def get_children(
         self,
