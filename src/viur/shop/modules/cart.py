@@ -7,6 +7,8 @@ from viur.shop.modules.abstract import ShopModuleAbstract
 from ..constants import CartType, QuantityModeType
 from ..exceptions import InvalidStateError
 from ..skeletons.cart import CartItemSkel, CartNodeSkel
+from viur.core.skeleton import SkeletonInstance
+from viur.core.bones import BaseBone
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
@@ -79,7 +81,8 @@ class Cart(ShopModuleAbstract, Tree):
             raise TypeError(f"parent_cart_key must be an instance of db.Key")
         for skel_type in ("node", "leaf"):
             skel = self.viewSkel(skel_type)
-            query = self.listFilter(skel.all().mergeExternalFilter(kwargs))
+            query = skel.all().mergeExternalFilter(kwargs)
+            # query = self.listFilter(query)
             if query is None:
                 raise errors.Unauthorized()
             query.filter("parententry =", parent_cart_key)
@@ -94,8 +97,9 @@ class Cart(ShopModuleAbstract, Tree):
             raise TypeError(f"article_key must be an instance of db.Key")
         if not isinstance(parent_cart_key, db.Key):
             raise TypeError(f"parent_cart_key must be an instance of db.Key")
-        if not any(parent_cart_key == node["key"] for node in self.getAvailableRootNodes()):
-            raise ValueError(f"Invalid root node (for this user).")
+        # FIXME: can be any parent ...
+        # if not any(parent_cart_key == node["key"] for node in self.getAvailableRootNodes()):
+        #     raise ValueError(f"Invalid root node (for this user).")
         skel = self.viewSkel("leaf")
         query: db.Query = skel.all()
         query.filter("parententry =", parent_cart_key)
@@ -110,13 +114,14 @@ class Cart(ShopModuleAbstract, Tree):
         parent_cart_key: db.Key,
         quantity: int,
         quantity_mode: QuantityModeType,
-    ) -> CartItemSkel:
+    ) -> CartItemSkel | None:
         if not isinstance(article_key, db.Key):
             raise TypeError(f"article_key must be an instance of db.Key")
         if not isinstance(parent_cart_key, db.Key):
             raise TypeError(f"parent_cart_key must be an instance of db.Key")
-        if not any(parent_cart_key == node["key"] for node in self.getAvailableRootNodes()):
-            raise ValueError(f"Invalid root node (for this user).")
+        # FIXME: can be any parent ...
+        # if not any(parent_cart_key == node["key"] for node in self.getAvailableRootNodes()):
+        #     raise ValueError(f"Invalid root node (for this user).")
         if not (skel := self.get_article(article_key, parent_cart_key)):
             skel = self.addSkel("leaf")
             res = skel.setBoneValue("article", article_key)
@@ -125,6 +130,26 @@ class Cart(ShopModuleAbstract, Tree):
             parent_skel = self.viewSkel("node")
             parent_skel.fromDB(parent_cart_key)
             skel.setBoneValue("parentrepo", parent_skel["parentrepo"])
+            article_skel :SkeletonInstance = self.shop.article_skel()
+            assert article_skel.fromDB(article_key)
+            # Copy values from the article
+            for bone in skel.keys():
+                if not bone.startswith("shop_"): continue
+                instance = getattr(article_skel.skeletonCls, bone)
+                logger.debug(f'{bone}: {article_skel[bone]} [{getattr(article_skel, bone)}] ({article_skel["key"]}) // {instance=}')
+                if isinstance(instance, BaseBone):
+                    value = article_skel[bone]
+                elif isinstance(instance, property):
+                    value = getattr(article_skel, bone)
+                else:
+                    raise NotImplementedError
+                # skel[bone] = article_skel[bone]
+                skel[bone] = value
+        if quantity == 0:
+            if quantity_mode in ("increase", "decrease"):
+                raise ValueError(f"Increase/Decrease quantity by zero is pointless")
+            skel.delete()
+            return None
         if quantity_mode == "replace":
             skel["quantity"] = quantity
         elif quantity_mode == "decrease":
@@ -137,4 +162,59 @@ class Cart(ShopModuleAbstract, Tree):
                 f"Must be {' or '.join(vars(QuantityModeType)['__args__'])}."
             )
         key = skel.toDB()
+        return skel
+
+    def move_article(
+        self,
+        article_key: db.Key,
+        parent_cart_key: db.Key,
+        new_parent_cart_key: db.Key,
+    ) -> CartItemSkel | None:
+        if not isinstance(article_key, db.Key):
+            raise TypeError(f"article_key must be an instance of db.Key")
+        if not isinstance(parent_cart_key, db.Key):
+            raise TypeError(f"parent_cart_key must be an instance of db.Key")
+        if not isinstance(new_parent_cart_key, db.Key):
+            raise TypeError(f"parent_cart_key must be an instance of db.Key")
+        if not (skel := self.get_article(article_key, parent_cart_key)):
+            raise ValueError(f"Article with {article_key=} does not exist in {parent_cart_key=}.")
+        parent_skel = self.viewSkel("node")
+        if not parent_skel.fromDB(new_parent_cart_key):
+            raise ValueError(f"Target node with {new_parent_cart_key=} does not exist")
+        if parent_skel["parentrepo"]["dest"]["key"] != skel["parentrepo"]["dest"]["key"]:
+            raise ValueError(f"Target node is inside a different repo")
+        skel["parententry"] = new_parent_cart_key  # TODO: validate permission?
+        skel.toDB()
+        return skel
+
+    def cart_add(
+        self,
+        # *,
+        parent_cart_key: str | db.Key = None,
+        cart_type: CartType =None,  # TODO: since we generate basket automatically,
+        #                             wishlist would be the only acceptable value ...
+        name: str = None,
+        customer_comment: str = None,
+        shipping_address_key: str | db.Key = None,
+        shipping_key: str | db.Key = None,
+    ):
+        # if not isinstance(article_key, db.Key):
+        #     raise TypeError(f"article_key must be an instance of db.Key")
+        if not isinstance(parent_cart_key, (db.Key, type(None))):
+            raise TypeError(f"parent_cart_key must be an instance of db.Key")
+        if not isinstance(cart_type, (CartType, type(None))):
+            raise TypeError(f"cart_type must be an instance of CartType")
+        parent_skel = self.viewSkel("node")
+        assert parent_skel.fromDB(parent_cart_key)
+        skel = self.addSkel("node")
+        skel["parententry"] = parent_cart_key
+        skel.setBoneValue("parentrepo", parent_skel["parentrepo"])
+        # res = skel.setBoneValue("article", article_key)
+        # logger.debug(f"article.setBoneValue : {res=}")
+        logger.debug(f"{current.request.get().kwargs = }")
+        logger.debug(f"{current.request.get().args = }")
+        skel["name"] = name
+        skel["customer_comment"] = customer_comment
+        #TOOD: all bones
+        skel.toDB()
         return skel

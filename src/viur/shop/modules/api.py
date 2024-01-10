@@ -7,6 +7,7 @@ from viur.core.render.json.default import DefaultRender as JsonRenderer
 from viur.shop.exceptions import InvalidKeyException
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.response_types import JsonResponse
+from .. import exceptions
 from ..constants import CartType, QuantityModeType
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
@@ -98,21 +99,39 @@ class Api(ShopModuleAbstract):
         parent_cart_key: str | db.Key,
         new_parent_cart_key: str | db.Key,
     ):
-        ...
+        """Move an article inside a cart"""
+        article_key = self._normalize_external_key(
+            article_key, "article_key")
+        parent_cart_key = self._normalize_external_key(
+            parent_cart_key, "parent_cart_key")
+        new_parent_cart_key = self._normalize_external_key(
+            new_parent_cart_key, "new_parent_cart_key")
+        return JsonResponse(self.shop.cart.article_move(
+            article_key, parent_cart_key, new_parent_cart_key))
 
     @exposed
+    @force_post
     def cart_add(
         self,
         *,
         parent_cart_key: str | db.Key = None,
-        cart_type: CartType,  # TODO: since we generate basket automatically,
+        cart_type: CartType=None,  # TODO: since we generate basket automatically,
         #                             wishlist would be the only acceptable value ...
         name: str = None,
         customer_comment: str = None,
         shipping_address_key: str | db.Key = None,
         shipping_key: str | db.Key = None,
     ):
-        ...
+        parent_cart_key = self._normalize_external_key(
+            parent_cart_key, "parent_cart_key")
+        if cart_type is not None:
+            try:
+                cart_type = CartType(cart_type)
+            except ValueError:
+                raise errors.BadRequest(f"Invalid cart type: {cart_type}")
+        return JsonResponse(self.shop.cart.cart_add(
+            parent_cart_key, cart_type, name, customer_comment,
+            shipping_address_key, shipping_key))
 
     @exposed
     def cart_update(

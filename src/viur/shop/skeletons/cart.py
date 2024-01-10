@@ -1,7 +1,9 @@
 import logging
 
+from viur.core import db
 from viur.core.bones import *
 from viur.core.prototypes.tree import TreeSkel
+from viur.core.skeleton import SkeletonInstance
 from viur.shop.constants import *
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
@@ -128,3 +130,8 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     shop_is_low_price = BooleanBone(
         descr="shop_is_low_price",
     )
+
+
+    @classmethod
+    def toDB(cls, skelValues: SkeletonInstance, update_relations: bool = True, **kwargs) -> db.Key:
+        return super().toDB(skelValues, update_relations, **kwargs)
