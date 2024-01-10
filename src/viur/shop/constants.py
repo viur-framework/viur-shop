@@ -68,7 +68,7 @@ class DiscountType(enum.Enum):
 
 
 class ConditionOperator(enum.Enum):
-    # TODO: Shall we name them "one" and "all" instead of "or" and "AND"?
+    # TODO(discussion): Shall we name them "one" and "all" instead of "or" and "AND"?
 
     OR = "or"
     """One condition must be satisfied"""

@@ -92,6 +92,7 @@ class Api(ShopModuleAbstract):
         return self.article_update(article_key, 0, parent_cart_key)
 
     @exposed
+    @force_post
     def article_move(
         self,
         *,
@@ -134,6 +135,7 @@ class Api(ShopModuleAbstract):
             shipping_address_key, shipping_key))
 
     @exposed
+    @force_post
     def cart_update(
         self,
         *,
@@ -146,6 +148,7 @@ class Api(ShopModuleAbstract):
         ...
 
     @exposed
+    @force_post
     def cart_remove(
         self,
         *,
@@ -154,6 +157,7 @@ class Api(ShopModuleAbstract):
         ...
 
     @exposed
+    @force_post
     def cart_clear(
         self,
         *,
@@ -207,6 +211,7 @@ class Api(ShopModuleAbstract):
         ...
 
     @exposed
+    @force_post
     def order_update(
         self,
         *,
@@ -222,6 +227,7 @@ class Api(ShopModuleAbstract):
         ...
 
     @exposed
+    @force_post
     def order_remove(
         self,
         *,
@@ -230,6 +236,7 @@ class Api(ShopModuleAbstract):
         ...
 
     @exposed
+    @force_post
     def order_view(
         self,
         order_key: str | db.Key,
@@ -241,6 +248,7 @@ class Api(ShopModuleAbstract):
         ...
 
     @exposed
+    @force_post
     def discount_add(
         self,
         *,
@@ -255,6 +263,7 @@ class Api(ShopModuleAbstract):
         ...
 
     @exposed
+    @force_post
     def discount_remove(
         self,
         *,

@@ -86,7 +86,7 @@ class Cart(ShopModuleAbstract, Tree):
             if query is None:
                 raise errors.Unauthorized()
             query.filter("parententry =", parent_cart_key)
-            yield from query.fetch()
+            yield from query.fetch(100)
 
     def get_article(
         self,

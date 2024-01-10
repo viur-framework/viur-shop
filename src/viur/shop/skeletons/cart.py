@@ -1,6 +1,6 @@
 import logging
 
-from viur.core import db
+from viur.core import conf, db
 from viur.core.bones import *
 from viur.core.prototypes.tree import TreeSkel
 from viur.core.skeleton import SkeletonInstance
@@ -9,23 +9,41 @@ from viur.shop.constants import *
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
 
+def get_total_for_node(skel: "CartNodeSkel", bone: NumericBone) -> float:
+    children = conf.main_app.shop.cart.get_children(skel["key"])
+    total = 0
+    for child in children:
+        if issubclass(child.skeletonCls, CartNodeSkel):
+            total += child["total"]
+        elif issubclass(child.skeletonCls, CartItemSkel):
+            total += child["shop_price_retail"] * child["quantity"]
+    # TODO: discount logic
+    return round(total, bone.precision)
+
+
 class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     kindName = "shop_cart_node"
 
     total = NumericBone(
         descr="Total",
         precision=2,
+        compute=Compute(get_total_for_node, ComputeInterval(ComputeMethod.Always)),
+        # compute=Compute(get_total_for_node, ComputeInterval(ComputeMethod.OnWrite)),
     )
 
     vat_total = NumericBone(
         descr="Total",
         precision=2,
+        # TODO: compute=Compute(get_total_vat_for_node, ComputeInterval(ComputeMethod.Always)),
     )
 
     vat_rate = RelationalBone(
         descr="Vat Rate",
         kind="shop_vat",
+        # TODO: compute=Compute(get_total_vat_rate_for_node, ComputeInterval(ComputeMethod.Always)),
     )
+
+    # TODO(discussion): Add bone total_quantity ?
 
     shipping_address = RelationalBone(
         descr="shipping_address",
@@ -76,7 +94,7 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
         ],
     )
 
-    # TODO: was not in the ER diagram; or did we want to create a new LeafSkel for each quantity?
+    # TODO(discussion): was not in the ER diagram; or did we want to create a new LeafSkel for each quantity?
     quantity = NumericBone(
         descr="quantity",
         min=0,
