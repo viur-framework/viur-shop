@@ -188,7 +188,6 @@ class Api(ShopModuleAbstract):
         children = []
         for child_skel in self.shop.cart.get_children(cart_key):
             assert issubclass(child_skel.skeletonCls, (self.shop.cart.nodeSkelCls, self.shop.cart.leafSkelCls))
-            logger.debug(f"{child_skel=} // {child_skel.skeletonCls=}")
             child = self.json_renderer.renderSkelValues(child_skel)
             child["skel_type"] = "leaf" if issubclass(child_skel.skeletonCls, self.shop.cart.leafSkelCls) else "node"
             children.append(child)

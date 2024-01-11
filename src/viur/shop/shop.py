@@ -26,7 +26,6 @@ class Shop(InstancedModule, Module):
         payment_providers: list[PaymentProviderAbstract],
         *args, **kwargs,
     ):
-        logger.debug(f"Shop.__init__()")
         super().__init__()
 
         # Store arguments
@@ -36,7 +35,7 @@ class Shop(InstancedModule, Module):
         self.additional_settings: dict[str, t.Any] = dict(kwargs)
 
         # Debug only
-        logger.debug(f"{vars(self) = }")
+        # logger.debug(f"{vars(self) = }")
 
     def __call__(self, *args, **kwargs):
         logger.debug(f"Shop.__call__({args=}, {kwargs=})")

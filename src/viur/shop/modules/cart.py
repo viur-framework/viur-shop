@@ -2,13 +2,13 @@ import logging
 import typing as t
 
 from viur.core import conf, current, db, errors, exposed, utils
+from viur.core.bones import BaseBone
 from viur.core.prototypes import Tree
+from viur.core.skeleton import SkeletonInstance
 from viur.shop.modules.abstract import ShopModuleAbstract
 from ..constants import CartType, QuantityModeType
 from ..exceptions import InvalidStateError
 from ..skeletons.cart import CartItemSkel, CartNodeSkel
-from viur.core.skeleton import SkeletonInstance
-from viur.core.bones import BaseBone
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
@@ -16,10 +16,6 @@ logger = logging.getLogger("viur.shop").getChild(__name__)
 class Cart(ShopModuleAbstract, Tree):
     nodeSkelCls = CartNodeSkel
     leafSkelCls = CartItemSkel
-
-    @exposed
-    def index(self):
-        return "your cart is empty -.-"
 
     @property
     def current_session_cart_key(self):
@@ -105,7 +101,6 @@ class Cart(ShopModuleAbstract, Tree):
         query.filter("parententry =", parent_cart_key)
         query.filter("article.dest.__key__ =", article_key)
         skel = query.getSkel()
-        logger.debug(f"{skel=}")
         return skel
 
     def add_or_update_article(
@@ -125,18 +120,16 @@ class Cart(ShopModuleAbstract, Tree):
         if not (skel := self.get_article(article_key, parent_cart_key)):
             skel = self.addSkel("leaf")
             res = skel.setBoneValue("article", article_key)
-            logger.debug(f"article.setBoneValue : {res=}")
             skel["parententry"] = parent_cart_key
             parent_skel = self.viewSkel("node")
             parent_skel.fromDB(parent_cart_key)
             skel.setBoneValue("parentrepo", parent_skel["parentrepo"])
-            article_skel :SkeletonInstance = self.shop.article_skel()
+            article_skel: SkeletonInstance = self.shop.article_skel()
             assert article_skel.fromDB(article_key)
             # Copy values from the article
             for bone in skel.keys():
                 if not bone.startswith("shop_"): continue
                 instance = getattr(article_skel.skeletonCls, bone)
-                logger.debug(f'{bone}: {article_skel[bone]} [{getattr(article_skel, bone)}] ({article_skel["key"]}) // {instance=}')
                 if isinstance(instance, BaseBone):
                     value = article_skel[bone]
                 elif isinstance(instance, property):
@@ -189,17 +182,14 @@ class Cart(ShopModuleAbstract, Tree):
 
     def cart_add(
         self,
-        # *,
         parent_cart_key: str | db.Key = None,
-        cart_type: CartType =None,  # TODO: since we generate basket automatically,
-        #                             wishlist would be the only acceptable value ...
+        cart_type: CartType = None,  # TODO: since we generate basket automatically,
+        #                                    wishlist would be the only acceptable value ...
         name: str = None,
         customer_comment: str = None,
         shipping_address_key: str | db.Key = None,
         shipping_key: str | db.Key = None,
     ):
-        # if not isinstance(article_key, db.Key):
-        #     raise TypeError(f"article_key must be an instance of db.Key")
         if not isinstance(parent_cart_key, (db.Key, type(None))):
             raise TypeError(f"parent_cart_key must be an instance of db.Key")
         if not isinstance(cart_type, (CartType, type(None))):
@@ -209,12 +199,13 @@ class Cart(ShopModuleAbstract, Tree):
         skel = self.addSkel("node")
         skel["parententry"] = parent_cart_key
         skel.setBoneValue("parentrepo", parent_skel["parentrepo"])
-        # res = skel.setBoneValue("article", article_key)
-        # logger.debug(f"article.setBoneValue : {res=}")
         logger.debug(f"{current.request.get().kwargs = }")
         logger.debug(f"{current.request.get().args = }")
-        skel["name"] = name
-        skel["customer_comment"] = customer_comment
-        #TOOD: all bones
+        # Set / Change only values which were explicitly provided
+        if "name" in current.request.get().kwargs:
+            skel["name"] = name
+        if "customer_comment" in current.request.get().kwargs:
+            skel["customer_comment"] = customer_comment
+        # TODO: assign to all bones
         skel.toDB()
         return skel
