@@ -7,7 +7,6 @@ from viur.core.render.json.default import DefaultRender as JsonRenderer
 from viur.shop.exceptions import InvalidKeyException
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.response_types import JsonResponse
-from .. import exceptions
 from ..constants import CartType, QuantityModeType
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
@@ -116,7 +115,7 @@ class Api(ShopModuleAbstract):
         self,
         *,
         parent_cart_key: str | db.Key = None,
-        cart_type: CartType=None,  # TODO: since we generate basket automatically,
+        cart_type: CartType = None,  # TODO: since we generate basket automatically,
         #                             wishlist would be the only acceptable value ...
         name: str = None,
         customer_comment: str = None,
@@ -164,7 +163,7 @@ class Api(ShopModuleAbstract):
         self,
         *,
         cart_key: str | db.Key,
-        remove_sub_carts: bool = False, #TODO(discussion): do we really want to have orphaned nodes/leafs?
+        remove_sub_carts: bool = False,  # TODO(discussion): do we really want to have orphaned nodes/leafs?
     ):
         """Remove direct or all children"""
         cart_key = self._normalize_external_key(cart_key, "cart_key")
@@ -211,7 +210,11 @@ class Api(ShopModuleAbstract):
         state_paid: bool = None,
         state_rts: bool = None,
     ):
+        cart_key = self._normalize_external_key(cart_key, "cart_key")
         ...
+        return JsonResponse(self.shop.order.order_add(
+            cart_key, payment_provider, billing_address_key,
+            email, customer_key, state_ordered, state_paid, state_rts))
 
     @exposed
     @force_post

@@ -64,7 +64,11 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
         descr="state",
         values=OrderState,
         multiple=True,
-        # compute=Compute(), #TODO:tbd; generate from is_* bones
+        compute=Compute(lambda skel: [
+            value
+            for key, value in OrderState._value2member_map_.items()
+            if skel[f"is_{key}"]
+        ]),
     )
 
     email = EmailBone(
