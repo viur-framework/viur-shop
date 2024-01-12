@@ -154,7 +154,9 @@ class Api(ShopModuleAbstract):
         *,
         cart_key: str | db.Key,
     ):
-        ...
+        """Remove itself and all children"""
+        cart_key = self._normalize_external_key(cart_key, "cart_key")
+        return JsonResponse(self.shop.cart.cart_remove(cart_key))
 
     @exposed
     @force_post
@@ -162,8 +164,10 @@ class Api(ShopModuleAbstract):
         self,
         *,
         cart_key: str | db.Key,
-        remove_sub_carts: bool = False,
+        remove_sub_carts: bool = False, #TODO(discussion): do we really want to have orphaned nodes/leafs?
     ):
+        """Remove direct or all children"""
+        cart_key = self._normalize_external_key(cart_key, "cart_key")
         ...
 
     @exposed
@@ -198,7 +202,7 @@ class Api(ShopModuleAbstract):
     def order_add(
         self,
         *,
-        order_key: str | db.Key,
+        cart_key: str | db.Key,
         payment_provider: str = None,
         billing_address_key: str | db.Key = None,
         email: str = None,

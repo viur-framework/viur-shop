@@ -1,7 +1,7 @@
 import logging
 import typing as t
 
-from viur.core import conf, current, db, errors, exposed, utils
+from viur.core import conf, current, db, errors, utils
 from viur.core.bones import BaseBone
 from viur.core.prototypes import Tree
 from viur.core.skeleton import SkeletonInstance
@@ -38,6 +38,7 @@ class Cart(ShopModuleAbstract, Tree):
         if not self.session.get("session_cart_key"):
             root_node = self.addSkel("node")
             user = current.user.get() and current.user.get()["name"] or "__guest__"
+            root_node["is_root_node"] = True
             root_node["name"] = f"Session Cart of {user} created at {utils.utcNow()}"
             root_node["cart_type"] = CartType.BASKET
             key = root_node.toDB()
@@ -118,12 +119,16 @@ class Cart(ShopModuleAbstract, Tree):
         # if not any(parent_cart_key == node["key"] for node in self.getAvailableRootNodes()):
         #     raise ValueError(f"Invalid root node (for this user).")
         if not (skel := self.get_article(article_key, parent_cart_key)):
+            logger.info("This is an add")
             skel = self.addSkel("leaf")
             res = skel.setBoneValue("article", article_key)
             skel["parententry"] = parent_cart_key
             parent_skel = self.viewSkel("node")
-            parent_skel.fromDB(parent_cart_key)
-            skel.setBoneValue("parentrepo", parent_skel["parentrepo"])
+            assert parent_skel.fromDB(parent_cart_key)
+            if parent_skel["is_root_node"]:
+                skel["parentrepo"] = parent_skel["key"]
+            else:
+                skel["parentrepo"] = parent_skel["parentrepo"]
             article_skel: SkeletonInstance = self.shop.article_skel()
             assert article_skel.fromDB(article_key)
             # Copy values from the article
@@ -136,13 +141,9 @@ class Cart(ShopModuleAbstract, Tree):
                     value = getattr(article_skel, bone)
                 else:
                     raise NotImplementedError
-                # skel[bone] = article_skel[bone]
                 skel[bone] = value
-        if quantity == 0:
-            if quantity_mode in ("increase", "decrease"):
-                raise ValueError(f"Increase/Decrease quantity by zero is pointless")
-            skel.delete()
-            return None
+        if quantity == 0 and quantity_mode in ("increase", "decrease"):
+            raise ValueError(f"Increase/Decrease quantity by zero is pointless")
         if quantity_mode == "replace":
             skel["quantity"] = quantity
         elif quantity_mode == "decrease":
@@ -154,6 +155,11 @@ class Cart(ShopModuleAbstract, Tree):
                 f"Invalid {quantity_mode=}! "
                 f"Must be {' or '.join(vars(QuantityModeType)['__args__'])}."
             )
+        if skel["quantity"] < 0:
+            raise ValueError(f'Quantity cannot be negative! (reached {skel["quantity"]})')
+        if skel["quantity"] == 0:
+            skel.delete()  # TODO(discussion): Is this too implicit, or okay?
+            return None
         key = skel.toDB()
         return skel
 
@@ -174,7 +180,7 @@ class Cart(ShopModuleAbstract, Tree):
         parent_skel = self.viewSkel("node")
         if not parent_skel.fromDB(new_parent_cart_key):
             raise ValueError(f"Target node with {new_parent_cart_key=} does not exist")
-        if parent_skel["parentrepo"]["dest"]["key"] != skel["parentrepo"]["dest"]["key"]:
+        if parent_skel["parentrepo"] != skel["parentrepo"]:
             raise ValueError(f"Target node is inside a different repo")
         skel["parententry"] = new_parent_cart_key  # TODO: validate permission?
         skel.toDB()
@@ -189,16 +195,22 @@ class Cart(ShopModuleAbstract, Tree):
         customer_comment: str = None,
         shipping_address_key: str | db.Key = None,
         shipping_key: str | db.Key = None,
-    ):
+    ) -> SkeletonInstance | None:
         if not isinstance(parent_cart_key, (db.Key, type(None))):
             raise TypeError(f"parent_cart_key must be an instance of db.Key")
         if not isinstance(cart_type, (CartType, type(None))):
             raise TypeError(f"cart_type must be an instance of CartType")
-        parent_skel = self.viewSkel("node")
-        assert parent_skel.fromDB(parent_cart_key)
         skel = self.addSkel("node")
         skel["parententry"] = parent_cart_key
-        skel.setBoneValue("parentrepo", parent_skel["parentrepo"])
+        if parent_cart_key is None:
+            skel["is_root_node"] = True
+        else:
+            parent_skel = self.viewSkel("node")
+            assert parent_skel.fromDB(parent_cart_key)
+            if parent_skel["is_root_node"]:
+                skel["parentrepo"] = parent_skel["key"]
+            else:
+                skel["parentrepo"] = parent_skel["parentrepo"]
         logger.debug(f"{current.request.get().kwargs = }")
         logger.debug(f"{current.request.get().args = }")
         # Set / Change only values which were explicitly provided
@@ -206,6 +218,25 @@ class Cart(ShopModuleAbstract, Tree):
             skel["name"] = name
         if "customer_comment" in current.request.get().kwargs:
             skel["customer_comment"] = customer_comment
-        # TODO: assign to all bones
+        if "shipping_address_key" in current.request.get().kwargs:
+            skel.setBoneValue("shipping_address_key", shipping_address_key)
+        if "shipping_key" in current.request.get().kwargs:
+            skel.setBoneValue("shipping_key", shipping_key)
         skel.toDB()
         return skel
+
+    def cart_remove(
+        self,
+        cart_key: db.Key,
+    ) -> None:
+        self.deleteRecursive(cart_key)
+        skel = self.editSkel("node")
+        skel.fromDB(cart_key)
+        if skel["parententry"] is None or skel["is_root_node"]:
+            logger.info(f"{skel['key']} was a root node!")
+            raise NotImplementedError("Cannot delete root node")
+            # TODO: remove relation or block deletion
+            if skel["parententry"] == self.current_session_cart_key:
+                del self.session["session_cart_key"]
+                current.session.get().markChanged()
+        skel.delete()

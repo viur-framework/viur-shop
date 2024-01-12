@@ -24,6 +24,11 @@ def get_total_for_node(skel: "CartNodeSkel", bone: NumericBone) -> float:
 class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     kindName = "shop_cart_node"
 
+    is_root_node = BooleanBone(
+        descr="Is root node?",
+        readOnly=True,
+    )
+
     total = NumericBone(
         descr="Total",
         precision=2,
