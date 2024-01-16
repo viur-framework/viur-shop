@@ -68,6 +68,10 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     vat_total = NumericBone(
         descr="Total",
         precision=2,
+        compute=Compute(
+            TotalFactory("vat_total", lambda child: (((vat := child["shop_vat"]) and vat["dest"]["rate"]) or 0) * child["shop_price_retail"], True),
+            ComputeInterval(ComputeMethod.Always),
+        ),
         # TODO: compute=Compute(get_total_vat_for_node, ComputeInterval(ComputeMethod.Always)),
     )
 
@@ -75,15 +79,17 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
         descr="Vat Rate",
         kind="shop_vat",
         # TODO: compute=Compute(get_total_vat_rate_for_node, ComputeInterval(ComputeMethod.Always)),
+        refKeys=["key", "name", "rate"],
     )
 
     total_quantity = NumericBone(
         descr="Total quantity",
-        precision=2,
+        precision=0,
         compute=Compute(
             TotalFactory("total_quantity", lambda child: 1, True),
             ComputeInterval(ComputeMethod.Always)
         ),
+        defaultValue=0,
     )
 
     shipping_address = RelationalBone(
@@ -183,6 +189,7 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     shop_vat = RelationalBone(
         descr="Steuersatz",
         kind="shop_vat",
+        refKeys=["key", "name", "rate"],
     )
 
     shop_shipping = RelationalBone(
