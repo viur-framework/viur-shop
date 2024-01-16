@@ -7,7 +7,7 @@ from viur.core.render.json.default import DefaultRender as JsonRenderer
 from viur.shop.exceptions import InvalidKeyException
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.response_types import JsonResponse
-from ..constants import CartType, QuantityModeType
+from ..constants import CartType, QuantityMode, QuantityModeType
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
@@ -43,8 +43,8 @@ class Api(ShopModuleAbstract):
         self,
         *,
         article_key: str | db.Key,
-        quantity: int,
-        # quantity_mode: QuantityModeType = "replace",
+        quantity: int = 1,
+        quantity_mode: QuantityModeType = "replace",
         parent_cart_key: str | db.Key,
     ):
         """Add an article to the cart"""
@@ -52,11 +52,13 @@ class Api(ShopModuleAbstract):
             article_key, "article_key")
         parent_cart_key = self._normalize_external_key(
             parent_cart_key, "parent_cart_key")
+        try:
+            quantity_mode = QuantityMode(quantity_mode)
+        except ValueError:
+            raise errors.BadRequest(f"Invalid quantity_mode: {quantity_mode}")
         # TODO: Could also return self.article_view() or just the cart_node_key...
-        # if self.shop.cart.get_article(article_key, parent_cart_key):
-        #     raise errors.BadRequest("Article already exists")
         return JsonResponse(self.shop.cart.add_or_update_article(
-            article_key, parent_cart_key, quantity, quantity_mode="replace"))
+            article_key, parent_cart_key, quantity, quantity_mode))
 
     @exposed
     @force_post
@@ -73,6 +75,10 @@ class Api(ShopModuleAbstract):
             article_key, "article_key")
         parent_cart_key = self._normalize_external_key(
             parent_cart_key, "parent_cart_key")
+        try:
+            quantity_mode = QuantityMode(quantity_mode)
+        except ValueError:
+            raise errors.BadRequest(f"Invalid quantity_mode: {quantity_mode}")
         if not self.shop.cart.get_article(article_key, parent_cart_key):
             raise errors.BadRequest("Article does not exist")
         # TODO: Could also return self.article_view() or just the cart_node_key...

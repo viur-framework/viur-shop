@@ -107,6 +107,7 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     quantity = NumericBone(
         descr="quantity",
         min=0,
+        defaultValue=0,
     )
 
     project_data = JsonBone(

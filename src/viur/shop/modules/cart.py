@@ -6,7 +6,7 @@ from viur.core.bones import BaseBone
 from viur.core.prototypes import Tree
 from viur.core.skeleton import SkeletonInstance
 from viur.shop.modules.abstract import ShopModuleAbstract
-from ..constants import CartType, QuantityModeType
+from ..constants import CartType, QuantityMode
 from ..exceptions import InvalidStateError
 from ..skeletons.cart import CartItemSkel, CartNodeSkel
 
@@ -109,12 +109,14 @@ class Cart(ShopModuleAbstract, Tree):
         article_key: db.Key,
         parent_cart_key: db.Key,
         quantity: int,
-        quantity_mode: QuantityModeType,
+        quantity_mode: QuantityMode,
     ) -> CartItemSkel | None:
         if not isinstance(article_key, db.Key):
             raise TypeError(f"article_key must be an instance of db.Key")
         if not isinstance(parent_cart_key, db.Key):
             raise TypeError(f"parent_cart_key must be an instance of db.Key")
+        if not isinstance(quantity_mode, QuantityMode):
+            raise TypeError(f"quantity_mode must be an instance of QuantityMode")
         # FIXME: can be any parent ...
         # if not any(parent_cart_key == node["key"] for node in self.getAvailableRootNodes()):
         #     raise ValueError(f"Invalid root node (for this user).")
@@ -142,18 +144,17 @@ class Cart(ShopModuleAbstract, Tree):
                 else:
                     raise NotImplementedError
                 skel[bone] = value
-        if quantity == 0 and quantity_mode in ("increase", "decrease"):
+        if quantity == 0 and quantity_mode in (QuantityMode.INCREASE, QuantityMode.DECREASE):
             raise ValueError(f"Increase/Decrease quantity by zero is pointless")
-        if quantity_mode == "replace":
+        if quantity_mode == QuantityMode.REPLACE:
             skel["quantity"] = quantity
-        elif quantity_mode == "decrease":
+        elif quantity_mode == QuantityMode.DECREASE:
             skel["quantity"] -= quantity
-        elif quantity_mode == "increase":
+        elif quantity_mode == QuantityMode.INCREASE:
             skel["quantity"] += quantity
         else:
             raise ValueError(
                 f"Invalid {quantity_mode=}! "
-                f"Must be {' or '.join(vars(QuantityModeType)['__args__'])}."
             )
         if skel["quantity"] < 0:
             raise ValueError(f'Quantity cannot be negative! (reached {skel["quantity"]})')

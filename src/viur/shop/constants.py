@@ -86,4 +86,15 @@ class OrderState(enum.Enum):
     """Ready To Send (but must not be paid)"""
 
 
+class QuantityMode(enum.Enum):
+    REPLACE = "replace"
+    """Use the provided quantity as new value"""
+
+    INCREASE = "increase"
+    """Adds the provided quantity to the current value"""
+
+    DECREASE = "decrease"
+    """Subtract the provided quantity from the current value"""
+
+
 QuantityModeType = t.Literal["replace", "increase", "decrease"]
