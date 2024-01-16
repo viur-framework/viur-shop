@@ -69,6 +69,40 @@ class Cart(ShopModuleAbstract, Tree):
     # deprecated! viur-core support
     getAvailableRootNodes = get_available_root_nodes
 
+    def is_valid_node(
+        self,
+        node_key: db.Key,
+        root_node: bool = False,
+    ) -> bool:
+        """
+        is this a valid node key for the user?
+
+        :param node_key: Key of node to check
+        :param root_node: Must this be a root node, or is any node okay?
+        """
+        # TODO: return (okay_status, reason, skel) tuple/Dataclass?
+        skel = self.viewSkel("node")
+        if not skel.fromDB(node_key):
+            logger.debug(f"fail reason: 404")
+            return False
+        logger.debug(f'{skel=}')
+        if root_node and not skel["is_root_node"]:
+            # The node is not a root node, but a root nodes is expected
+            logger.debug(f"fail reason: not a root node")
+            return False
+        available_root_nodes = self.get_available_root_nodes()
+        available_root_nodes_keys = [rn["key"] for rn in available_root_nodes]
+        if skel["is_root_node"] and skel["key"] not in available_root_nodes_keys:
+            # The node is a root node, but not from the user
+            logger.debug(f"fail reason: not a valid root node key")
+            return False
+        if not skel["is_root_node"] and skel["parentrepo"] not in available_root_nodes_keys:
+            # The node is a node, but the root node is not from the user
+            logger.debug(f"fail reason: not a child of valid root node")
+            logger.debug(f'{skel["parentrepo"]=} // {available_root_nodes_keys=}')
+            return False
+        return True
+
     def get_children(
         self,
         parent_cart_key: db.Key,
@@ -94,9 +128,8 @@ class Cart(ShopModuleAbstract, Tree):
             raise TypeError(f"article_key must be an instance of db.Key")
         if not isinstance(parent_cart_key, db.Key):
             raise TypeError(f"parent_cart_key must be an instance of db.Key")
-        # FIXME: can be any parent ...
-        # if not any(parent_cart_key == node["key"] for node in self.getAvailableRootNodes()):
-        #     raise ValueError(f"Invalid root node (for this user).")
+        if not self.is_valid_node(parent_cart_key):
+            raise ValueError(f"Invalid (root) node (for this user).")
         skel = self.viewSkel("leaf")
         query: db.Query = skel.all()
         query.filter("parententry =", parent_cart_key)
@@ -117,9 +150,8 @@ class Cart(ShopModuleAbstract, Tree):
             raise TypeError(f"parent_cart_key must be an instance of db.Key")
         if not isinstance(quantity_mode, QuantityMode):
             raise TypeError(f"quantity_mode must be an instance of QuantityMode")
-        # FIXME: can be any parent ...
-        # if not any(parent_cart_key == node["key"] for node in self.getAvailableRootNodes()):
-        #     raise ValueError(f"Invalid root node (for this user).")
+        if not self.is_valid_node(parent_cart_key):
+            raise ValueError(f"Invalid (root) node (for this user).")
         if not (skel := self.get_article(article_key, parent_cart_key)):
             logger.info("This is an add")
             skel = self.addSkel("leaf")
@@ -179,6 +211,8 @@ class Cart(ShopModuleAbstract, Tree):
         if not (skel := self.get_article(article_key, parent_cart_key)):
             raise ValueError(f"Article with {article_key=} does not exist in {parent_cart_key=}.")
         parent_skel = self.viewSkel("node")
+        if not self.is_valid_node(new_parent_cart_key):
+            raise ValueError(f"Invalid (root) node (for this user).")
         if not parent_skel.fromDB(new_parent_cart_key):
             raise ValueError(f"Target node with {new_parent_cart_key=} does not exist")
         if parent_skel["parentrepo"] != skel["parentrepo"]:
@@ -206,6 +240,8 @@ class Cart(ShopModuleAbstract, Tree):
         if parent_cart_key is None:
             skel["is_root_node"] = True
         else:
+            if not self.is_valid_node(parent_cart_key):
+                raise ValueError(f"Invalid (root) node (for this user).")
             parent_skel = self.viewSkel("node")
             assert parent_skel.fromDB(parent_cart_key)
             if parent_skel["is_root_node"]:

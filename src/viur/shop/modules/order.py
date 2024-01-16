@@ -29,7 +29,7 @@ class Order(ShopModuleAbstract, List):
             raise TypeError(f"customer_key must be an instance of db.Key")
         skel = self.addSkel()
         cart_skel = self.shop.cart.viewSkel("node")
-        if not cart_skel.fromDB(cart_key) or not cart_skel["is_root_node"]:
+        if not self.shop.cart.is_valid_node(cart_key, root_node=True):
             raise ValueError(f"Invalid {cart_key=}!")
         skel.setBoneValue("cart", cart_key)
         skel["total"] = cart_skel["total"]
