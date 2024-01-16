@@ -53,8 +53,8 @@ class Api(ShopModuleAbstract):
         parent_cart_key = self._normalize_external_key(
             parent_cart_key, "parent_cart_key")
         # TODO: Could also return self.article_view() or just the cart_node_key...
-        if self.shop.cart.get_article(article_key, parent_cart_key):
-            raise errors.BadRequest("Article already exists")
+        # if self.shop.cart.get_article(article_key, parent_cart_key):
+        #     raise errors.BadRequest("Article already exists")
         return JsonResponse(self.shop.cart.add_or_update_article(
             article_key, parent_cart_key, quantity, quantity_mode="replace"))
 
@@ -163,9 +163,12 @@ class Api(ShopModuleAbstract):
         self,
         *,
         cart_key: str | db.Key,
-        remove_sub_carts: bool = False,  # TODO(discussion): do we really want to have orphaned nodes/leafs?
+        remove_sub_carts: bool = False,
     ):
-        """Remove direct or all children"""
+        """Remove direct or all children
+
+        :param remove_sub_carts: Remove child leafs, keep nodes
+        """
         cart_key = self._normalize_external_key(cart_key, "cart_key")
         ...
 

@@ -158,7 +158,7 @@ class Cart(ShopModuleAbstract, Tree):
         if skel["quantity"] < 0:
             raise ValueError(f'Quantity cannot be negative! (reached {skel["quantity"]})')
         if skel["quantity"] == 0:
-            skel.delete()  # TODO(discussion): Is this too implicit, or okay?
+            skel.delete()
             return None
         key = skel.toDB()
         return skel

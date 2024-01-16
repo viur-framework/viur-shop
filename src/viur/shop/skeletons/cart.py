@@ -48,7 +48,12 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
         # TODO: compute=Compute(get_total_vat_rate_for_node, ComputeInterval(ComputeMethod.Always)),
     )
 
-    # TODO(discussion): Add bone total_quantity ?
+    total_quantity = NumericBone(
+        descr="Total quantity",
+        precision=2,
+        # TODO: compute=Compute(get_total_for_node, ComputeInterval(ComputeMethod.Always)),
+        # compute=Compute(get_total_for_node, ComputeInterval(ComputeMethod.OnWrite)),
+    )
 
     shipping_address = RelationalBone(
         descr="shipping_address",
@@ -99,7 +104,6 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
         ],
     )
 
-    # TODO(discussion): was not in the ER diagram; or did we want to create a new LeafSkel for each quantity?
     quantity = NumericBone(
         descr="quantity",
         min=0,
