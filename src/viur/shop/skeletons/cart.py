@@ -9,16 +9,43 @@ from viur.shop.constants import *
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
 
-def get_total_for_node(skel: "CartNodeSkel", bone: NumericBone) -> float:
-    children = conf.main_app.shop.cart.get_children(skel["key"])
-    total = 0
-    for child in children:
-        if issubclass(child.skeletonCls, CartNodeSkel):
-            total += child["total"]
-        elif issubclass(child.skeletonCls, CartItemSkel):
-            total += child["shop_price_retail"] * child["quantity"]
-    # TODO: discount logic
-    return round(total, bone.precision)
+class TotalFactory:
+    def __init__(
+        self,
+        bone_node: str | t.Callable[["SkeletonInstance"], float | int],
+        bone_leaf: str | t.Callable[["SkeletonInstance"], float | int],
+        multiply_quantity: bool = True,
+        precision: int | None = None,
+    ):
+        super().__init__()
+        self.bone_node = bone_node
+        self.bone_leaf = bone_leaf
+        self.multiply_quantity = multiply_quantity
+        self.precision = precision
+
+    def __call__(self, skel: "CartNodeSkel", bone: NumericBone):
+        # TODO: cache this in the request?
+        children = conf.main_app.shop.cart.get_children(skel["key"])
+        total = 0
+        for child in children:
+            # logger.debug(f"{child = }")
+            if issubclass(child.skeletonCls, CartNodeSkel):
+                if callable(self.bone_node):
+                    total += self.bone_node(child)
+                else:
+                    total += child[self.bone_node]
+            elif issubclass(child.skeletonCls, CartItemSkel):
+                if callable(self.bone_leaf):
+                    value = self.bone_leaf(child)
+                else:
+                    value = child[self.bone_leaf] * child["quantity"]
+                if self.multiply_quantity:
+                    value *= child["quantity"]
+                total += value
+        return round(
+            total,
+            self.precision if self.precision is not None else bone.precision
+        )
 
 
 class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
@@ -32,8 +59,10 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     total = NumericBone(
         descr="Total",
         precision=2,
-        compute=Compute(get_total_for_node, ComputeInterval(ComputeMethod.Always)),
-        # compute=Compute(get_total_for_node, ComputeInterval(ComputeMethod.OnWrite)),
+        compute=Compute(
+            TotalFactory("total", "shop_price_retail", True),
+            ComputeInterval(ComputeMethod.Always),
+        ),
     )
 
     vat_total = NumericBone(
@@ -51,8 +80,10 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     total_quantity = NumericBone(
         descr="Total quantity",
         precision=2,
-        # TODO: compute=Compute(get_total_for_node, ComputeInterval(ComputeMethod.Always)),
-        # compute=Compute(get_total_for_node, ComputeInterval(ComputeMethod.OnWrite)),
+        compute=Compute(
+            TotalFactory("total_quantity", lambda child: 1, True),
+            ComputeInterval(ComputeMethod.Always)
+        ),
     )
 
     shipping_address = RelationalBone(
