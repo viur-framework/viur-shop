@@ -18,6 +18,7 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
     billing_address = RelationalBone(
         descr="billing_address",
         kind="shop_address",
+        module="shop.address",
     )
 
     customer = RelationalBone(
@@ -28,6 +29,7 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
     cart = RelationalBone(
         descr="cart",
         kind="shop_cart_node",
+        module="shop.cart_node",
     )
 
     total = NumericBone(

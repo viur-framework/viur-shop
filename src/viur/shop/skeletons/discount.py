@@ -42,6 +42,8 @@ class DiscountSkel(Skeleton):  # STATE: Complete (as in model)
     condition = RelationalBone(
         descr="condition",
         kind="shop_discount_condition",
+        module="shop.discount_condition",
+        multiple=True,
     )
 
     condition_operator = SelectBone(

@@ -50,10 +50,10 @@ class Shop(InstancedModule, Module):
         self.api = Api(shop=self)
         self.cart = Cart(shop=self)
         self.discount = Discount(shop=self)
-        self.discount_condition = DiscountCondition(shop=self)
+        self.discount_condition = DiscountCondition(moduleName="discount_condition", shop=self)
         self.order = Order(shop=self)
         self.shipping = Shipping(shop=self)
-        self.shipping_config = ShippingConfig(shop=self)
+        self.shipping_config = ShippingConfig(moduleName="shipping_config", shop=self)
         self.vat = Vat(shop=self)
         self._update_methods()
         return self
@@ -66,6 +66,7 @@ class Shop(InstancedModule, Module):
         from viur.shop import CartItemSkel  # import must stay here to avoid circular imports
         CartItemSkel.article.kind = self.article_skel.kindName
         DiscountConditionSkel.scope_article.kind = self.article_skel.kindName
+        DiscountConditionSkel.scope_article.module = self.article_skel.kindName
 
     def _extend_user_skeleton(self):
         """Extend the UserSkel of the project

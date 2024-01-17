@@ -116,4 +116,5 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
     parent_code = RelationalBone(
         descr="parent_code",
         kind="shop_discount_condition",
+        module="shop.discount_condition",
     )
