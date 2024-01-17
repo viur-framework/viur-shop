@@ -107,7 +107,7 @@ class Cart(ShopModuleAbstract, Tree):
         self,
         parent_cart_key: db.Key,
         **kwargs
-    ) -> t.Iterator[list[dict]]:
+    ) -> t.Iterator[SkeletonInstance]:
         if not isinstance(parent_cart_key, db.Key):
             raise TypeError(f"parent_cart_key must be an instance of db.Key")
         for skel_type in ("node", "leaf"):
@@ -118,6 +118,19 @@ class Cart(ShopModuleAbstract, Tree):
                 raise errors.Unauthorized()
             query.filter("parententry =", parent_cart_key)
             yield from query.fetch(100)
+
+    def get_children_from_cache(
+        self,
+        parent_cart_key: db.Key
+    ) -> list[SkeletonInstance]:
+        cache = current.request_data.get().setdefault("shop_cache_cart_children", {})
+        try:
+            return cache[parent_cart_key]
+        except KeyError:
+            pass
+        children = list(self.get_children(parent_cart_key))
+        cache[parent_cart_key] = children
+        return children
 
     def get_article(
         self,

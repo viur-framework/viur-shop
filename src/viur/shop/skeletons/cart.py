@@ -16,16 +16,23 @@ class TotalFactory:
         bone_leaf: str | t.Callable[["SkeletonInstance"], float | int],
         multiply_quantity: bool = True,
         precision: int | None = None,
+        use_cache: bool = True,
     ):
         super().__init__()
         self.bone_node = bone_node
         self.bone_leaf = bone_leaf
         self.multiply_quantity = multiply_quantity
         self.precision = precision
+        self.use_cache = use_cache
+
+    def _get_children(self, parent_cart_key: db.Key) -> list[SkeletonInstance]:
+        if self.use_cache:
+            return conf.main_app.shop.cart.get_children_from_cache(parent_cart_key)
+        else:
+            return conf.main_app.shop.cart.get_children(parent_cart_key)
 
     def __call__(self, skel: "CartNodeSkel", bone: NumericBone):
-        # TODO: cache this in the request?
-        children = conf.main_app.shop.cart.get_children(skel["key"])
+        children = self._get_children(skel["key"])
         total = 0
         for child in children:
             # logger.debug(f"{child = }")
@@ -46,20 +53,20 @@ class TotalFactory:
             total,
             self.precision if self.precision is not None else bone.precision
         )
+
+
 def get_vat_rate_for_node(skel: "CartNodeSkel", bone: RelationalBone):
-    children = conf.main_app.shop.cart.get_children(skel["key"])
+    children = conf.main_app.shop.cart.get_children_from_cache(skel["key"])
     rel_keys = set()
-    logger.debug(f"{skel = }")
+    # logger.debug(f"{skel = }")
     for child in children:
-        logger.debug(f"{child = }")
+        # logger.debug(f"{child = }")
         if issubclass(child.skeletonCls, CartNodeSkel):
-            # continue
             for rel in child["vat_rate"] or []:
                 rel_keys.add(rel["dest"]["key"])
         elif issubclass(child.skeletonCls, CartItemSkel):
             if child["shop_vat"] is not None:
                 rel_keys.add(child["shop_vat"]["dest"]["key"])
-    logger.debug(f"{rel_keys = }")
     return [
         bone.createRelSkelFromKey(key)
         for key in rel_keys
