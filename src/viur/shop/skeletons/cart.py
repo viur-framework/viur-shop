@@ -46,6 +46,24 @@ class TotalFactory:
             total,
             self.precision if self.precision is not None else bone.precision
         )
+def get_vat_rate_for_node(skel: "CartNodeSkel", bone: RelationalBone):
+    children = conf.main_app.shop.cart.get_children(skel["key"])
+    rel_keys = set()
+    logger.debug(f"{skel = }")
+    for child in children:
+        logger.debug(f"{child = }")
+        if issubclass(child.skeletonCls, CartNodeSkel):
+            # continue
+            for rel in child["vat_rate"] or []:
+                rel_keys.add(rel["dest"]["key"])
+        elif issubclass(child.skeletonCls, CartItemSkel):
+            if child["shop_vat"] is not None:
+                rel_keys.add(child["shop_vat"]["dest"]["key"])
+    logger.debug(f"{rel_keys = }")
+    return [
+        bone.createRelSkelFromKey(key)
+        for key in rel_keys
+    ]
 
 
 class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
@@ -69,17 +87,18 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
         descr="Total",
         precision=2,
         compute=Compute(
-            TotalFactory("vat_total", lambda child: (((vat := child["shop_vat"]) and vat["dest"]["rate"]) or 0) * child["shop_price_retail"], True),
+            TotalFactory("vat_total", lambda child: child.shop_vat_value, True),
             ComputeInterval(ComputeMethod.Always),
         ),
-        # TODO: compute=Compute(get_total_vat_for_node, ComputeInterval(ComputeMethod.Always)),
     )
 
     vat_rate = RelationalBone(
         descr="Vat Rate",
         kind="shop_vat",
-        # TODO: compute=Compute(get_total_vat_rate_for_node, ComputeInterval(ComputeMethod.Always)),
+        module="shop/vat",
+        compute=Compute(get_vat_rate_for_node, ComputeInterval(ComputeMethod.Always)),
         refKeys=["key", "name", "rate"],
+        multiple=True,
     )
 
     total_quantity = NumericBone(
@@ -95,6 +114,7 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     shipping_address = RelationalBone(
         descr="shipping_address",
         kind="shop_address",
+        module="shop/shop_address",
     )
 
     customer_comment = TextBone(
@@ -114,12 +134,14 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     shipping = RelationalBone(
         descr="shipping",
         kind="shop_shipping",
+        module="shop/shipping",
     )
     """Versand bei Warenkorb der einer Bestellung zugehört"""
 
     discount = RelationalBone(
         descr="discount",
         kind="shop_discount",
+        module="shop/discount",
     )
 
 
@@ -189,12 +211,14 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     shop_vat = RelationalBone(
         descr="Steuersatz",
         kind="shop_vat",
+        module="shop/vat",
         refKeys=["key", "name", "rate"],
     )
 
     shop_shipping = RelationalBone(
         descr="Versandkosten",
         kind="shop_shipping",
+        module="shop/shipping",
     )
 
     shop_is_weee = BooleanBone(
@@ -204,6 +228,13 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     shop_is_low_price = BooleanBone(
         descr="shop_is_low_price",
     )
+
+    @property
+    def shop_vat_value(self):
+        """Calculate the vat value based on price and vat rate"""
+        if not (vat := self["shop_vat"]):
+            return 0
+        return (vat["dest"]["rate"] or 0) / 100 * self["shop_price_retail"]
 
     @classmethod
     def toDB(cls, skelValues: SkeletonInstance, update_relations: bool = True, **kwargs) -> db.Key:

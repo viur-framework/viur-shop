@@ -6,6 +6,7 @@ from viur.core import conf, current
 from viur.core.render.json.default import CustomJsonEncoder
 from viur.core.skeleton import SkeletonInstance
 
+logger = logging.getLogger("viur.shop").getChild(__name__)
 
 
 class ExtendedCustomJsonEncoder(CustomJsonEncoder):
@@ -35,7 +36,7 @@ class JsonResponse:
         self.json_indent = json_indent
 
     def __str__(self) -> str:
-        logging.debug(f"Called __str__ on JsonResponse")
+        # logger.debug(f"Called __str__ on JsonResponse")
         current.request.get().response.status_code = self.status_code
         current.request.get().response.headers["Content-Type"] = self.content_type
         return json.dumps(
