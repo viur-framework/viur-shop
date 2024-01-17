@@ -1,6 +1,7 @@
 import logging
 import typing as t
 
+import viur.shop.exceptions as e
 from viur.core import conf, current, db, errors, exposed, utils
 from viur.core.bones import BaseBone
 from viur.core.prototypes import Tree
@@ -156,7 +157,7 @@ class Cart(ShopModuleAbstract, Tree):
         if not isinstance(parent_cart_key, db.Key):
             raise TypeError(f"parent_cart_key must be an instance of db.Key")
         if not self.is_valid_node(parent_cart_key):
-            raise ValueError(f"Invalid (root) node (for this user).")
+            raise e.InvalidArgumentException("parent_cart_key", parent_cart_key)
         skel = self.viewSkel("leaf")
         query: db.Query = skel.all()
         query.filter("parententry =", parent_cart_key)
@@ -178,7 +179,7 @@ class Cart(ShopModuleAbstract, Tree):
         if not isinstance(quantity_mode, QuantityMode):
             raise TypeError(f"quantity_mode must be an instance of QuantityMode")
         if not self.is_valid_node(parent_cart_key):
-            raise ValueError(f"Invalid (root) node (for this user).")
+            raise e.InvalidArgumentException("parent_cart_key", parent_cart_key)
         if not (skel := self.get_article(article_key, parent_cart_key)):
             logger.info("This is an add")
             skel = self.addSkel("leaf")
@@ -204,7 +205,10 @@ class Cart(ShopModuleAbstract, Tree):
                     raise NotImplementedError
                 skel[bone] = value
         if quantity == 0 and quantity_mode in (QuantityMode.INCREASE, QuantityMode.DECREASE):
-            raise ValueError(f"Increase/Decrease quantity by zero is pointless")
+            raise e.InvalidArgumentException(
+                "quantity",
+                descr_appendix="Increase/Decrease quantity by zero is pointless",
+            )
         if quantity_mode == QuantityMode.REPLACE:
             skel["quantity"] = quantity
         elif quantity_mode == QuantityMode.DECREASE:
@@ -212,11 +216,12 @@ class Cart(ShopModuleAbstract, Tree):
         elif quantity_mode == QuantityMode.INCREASE:
             skel["quantity"] += quantity
         else:
-            raise ValueError(
-                f"Invalid {quantity_mode=}! "
-            )
+            raise e.InvalidArgumentException("quantity_mode", quantity_mode)
         if skel["quantity"] < 0:
-            raise ValueError(f'Quantity cannot be negative! (reached {skel["quantity"]})')
+            raise e.InvalidArgumentException(
+                "quantity",
+                descr_appendix=f'Quantity cannot be negative! (reached {skel["quantity"]})'
+            )
         if skel["quantity"] == 0:
             skel.delete()
             return None
@@ -236,15 +241,24 @@ class Cart(ShopModuleAbstract, Tree):
         if not isinstance(new_parent_cart_key, db.Key):
             raise TypeError(f"parent_cart_key must be an instance of db.Key")
         if not (skel := self.get_article(article_key, parent_cart_key)):
-            raise ValueError(f"Article with {article_key=} does not exist in {parent_cart_key=}.")
+            raise e.InvalidArgumentException(
+                "article_key",
+                descr_appendix=f"Article does not exist in cart node {parent_cart_key}."
+            )
         parent_skel = self.viewSkel("node")
         if not self.is_valid_node(new_parent_cart_key):
-            raise ValueError(f"Invalid (root) node (for this user).")
+            raise e.InvalidArgumentException("parent_cart_key", parent_cart_key)
         if not parent_skel.fromDB(new_parent_cart_key):
-            raise ValueError(f"Target node with {new_parent_cart_key=} does not exist")
+            raise e.InvalidArgumentException(
+                "new_parent_cart_key", new_parent_cart_key,
+                f"Target cart node does not exist"
+            )
         if parent_skel["parentrepo"] != skel["parentrepo"]:
-            raise ValueError(f"Target node is inside a different repo")
-        skel["parententry"] = new_parent_cart_key  # TODO: validate permission?
+            raise e.InvalidArgumentException(
+                "new_parent_cart_key", new_parent_cart_key,
+                f"Target cart node is inside a different repo"
+            )
+        skel["parententry"] = new_parent_cart_key
         skel.toDB()
         return skel
 
@@ -268,7 +282,7 @@ class Cart(ShopModuleAbstract, Tree):
             skel["is_root_node"] = True
         else:
             if not self.is_valid_node(parent_cart_key):
-                raise ValueError(f"Invalid (root) node (for this user).")
+                raise e.InvalidArgumentException("parent_cart_key", parent_cart_key)
             parent_skel = self.viewSkel("node")
             assert parent_skel.fromDB(parent_cart_key)
             if parent_skel["is_root_node"]:

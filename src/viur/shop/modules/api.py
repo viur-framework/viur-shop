@@ -2,6 +2,7 @@ import logging
 
 from google.protobuf.message import DecodeError
 
+import viur.shop.exceptions as e
 from viur.core import conf, db, errors, exposed, force_post
 from viur.core.render.json.default import DefaultRender as JsonRenderer
 from viur.shop.exceptions import InvalidKeyException
@@ -55,7 +56,7 @@ class Api(ShopModuleAbstract):
         try:
             quantity_mode = QuantityMode(quantity_mode)
         except ValueError:
-            raise errors.BadRequest(f"Invalid quantity_mode: {quantity_mode}")
+            raise e.InvalidArgumentException("quantity_mode", quantity_mode)
         # TODO: Could also return self.article_view() or just the cart_node_key...
         return JsonResponse(self.shop.cart.add_or_update_article(
             article_key, parent_cart_key, quantity, quantity_mode))
@@ -78,9 +79,9 @@ class Api(ShopModuleAbstract):
         try:
             quantity_mode = QuantityMode(quantity_mode)
         except ValueError:
-            raise errors.BadRequest(f"Invalid quantity_mode: {quantity_mode}")
+            raise e.InvalidArgumentException("quantity_mode", quantity_mode)
         if not self.shop.cart.get_article(article_key, parent_cart_key):
-            raise errors.BadRequest("Article does not exist")
+            raise errors.NotFound(f"{parent_cart_key} has no article with {article_key=}")
         # TODO: Could also return self.article_view() or just the cart_node_key...
         return JsonResponse(self.shop.cart.add_or_update_article(
             article_key, parent_cart_key, quantity, quantity_mode))
@@ -122,7 +123,7 @@ class Api(ShopModuleAbstract):
         *,
         parent_cart_key: str | db.Key = None,
         cart_type: CartType = None,  # TODO: since we generate basket automatically,
-        #                             wishlist would be the only acceptable value ...
+        #                                    wishlist would be the only acceptable value ...
         name: str = None,
         customer_comment: str = None,
         shipping_address_key: str | db.Key = None,
@@ -134,7 +135,7 @@ class Api(ShopModuleAbstract):
             try:
                 cart_type = CartType(cart_type)
             except ValueError:
-                raise errors.BadRequest(f"Invalid cart type: {cart_type}")
+                raise e.InvalidArgumentException("cart_type", cart_type)
         return JsonResponse(self.shop.cart.cart_add(
             parent_cart_key, cart_type, name, customer_comment,
             shipping_address_key, shipping_key))
