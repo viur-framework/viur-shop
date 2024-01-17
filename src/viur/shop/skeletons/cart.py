@@ -45,7 +45,7 @@ class TotalFactory:
                 if callable(self.bone_leaf):
                     value = self.bone_leaf(child)
                 else:
-                    value = child[self.bone_leaf] * child["quantity"]
+                    value = child[self.bone_leaf]
                 if self.multiply_quantity:
                     value *= child["quantity"]
                 total += value
