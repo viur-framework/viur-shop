@@ -1,7 +1,7 @@
 import logging
 import typing as t
 
-from viur.core import conf, current, db, errors, utils
+from viur.core import conf, current, db, errors, exposed, utils
 from viur.core.bones import BaseBone
 from viur.core.prototypes import Tree
 from viur.core.skeleton import SkeletonInstance
@@ -69,6 +69,19 @@ class Cart(ShopModuleAbstract, Tree):
     # deprecated! viur-core support
     getAvailableRootNodes = get_available_root_nodes
 
+    @exposed
+    def listRootNodes(self, *args, **kwargs) -> t.Any:
+        """
+        Renders a list of all available repositories for the current user using the
+        modules default renderer.
+
+        :returns: The rendered representation of the available root-nodes.
+        """
+        return self.render.listRootNodes([
+            self.render.renderSkelValues(skel)
+            for skel in self.getAvailableRootNodes(*args, **kwargs)
+        ])
+
     def is_valid_node(
         self,
         node_key: db.Key,
@@ -113,7 +126,8 @@ class Cart(ShopModuleAbstract, Tree):
         for skel_type in ("node", "leaf"):
             skel = self.viewSkel(skel_type)
             query = skel.all().mergeExternalFilter(kwargs)
-            # query = self.listFilter(query)
+            query = query.order(("sortindex", db.SortOrder.Ascending))
+            # TODO: query = self.listFilter(query)
             if query is None:
                 raise errors.Unauthorized()
             query.filter("parententry =", parent_cart_key)
