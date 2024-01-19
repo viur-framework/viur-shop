@@ -1,3 +1,4 @@
+import contextvars
 import logging
 import typing as t
 
@@ -13,10 +14,15 @@ from .skeletons.discount_condition import DiscountConditionSkel
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
+SHOP_INSTANCE = contextvars.ContextVar("ShopInstance")
+SHOP_INSTANCE_VI = contextvars.ContextVar("ShopInstanceVi")
+
 
 class Shop(InstancedModule, Module):
     @exposed
     def hello(self):
+        # logger.debug(f"{SHOP_INSTANCE.get().render=}")
+        # logger.debug(f"{SHOP_INSTANCE_VI.get().render=}")
         return f"Welcome to the {self.name} Shop!"
 
     def __init__(
@@ -56,6 +62,12 @@ class Shop(InstancedModule, Module):
         self.shipping_config = ShippingConfig(moduleName="shipping_config", shop=self)
         self.vat = Vat(shop=self)
         self._update_methods()
+
+        # set the instance references
+        if self.modulePath == f"/{self.moduleName}":
+            SHOP_INSTANCE.set(self)
+        elif self.modulePath == f"/vi/{self.moduleName}":
+            SHOP_INSTANCE_VI.set(self)
         return self
 
     def _set_kind_names(self):
