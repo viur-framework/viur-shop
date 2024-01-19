@@ -107,3 +107,4 @@ class Shop(InstancedModule, Module):
 
 Shop.html = True
 Shop.vi = True
+Shop.json = True

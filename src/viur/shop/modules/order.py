@@ -36,7 +36,7 @@ class Order(ShopModuleAbstract, List):
         if "payment_provider" in current.request.get().kwargs:
             skel["payment_provider"] = payment_provider  # TODO: validate
         if "billing_address_key" in current.request.get().kwargs:
-            skel.setBoneValue("billing_address_key", billing_address_key)
+            skel.setBoneValue("billing_address", billing_address_key)
         if user := current.user.get():
             # us current user as default value
             skel["email"] = user["name"]

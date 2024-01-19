@@ -1,5 +1,6 @@
 import logging
 
+from viur.core.i18n import translate
 from viur.core.bones import *
 from viur.core.skeleton import Skeleton
 
@@ -40,7 +41,7 @@ class ShippingSkel(Skeleton):  # STATE: Complete (as in model)
     )
 
     supplier = SelectBone(
-        descr="supplier",
+        descr=translate("viur-shop.supplier"),
         values=get_suppliers,
     )
 
