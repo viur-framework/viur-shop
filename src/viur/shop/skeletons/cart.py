@@ -218,14 +218,14 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     shop_vat = RelationalBone(
         descr="Steuersatz",
         kind="shop_vat",
-        module="shop/vat",
+        module="shop.vat",
         refKeys=["key", "name", "rate"],
     )
 
     shop_shipping = RelationalBone(
         descr="Versandkosten",
-        kind="shop_shipping",
-        module="shop/shipping",
+        kind="shop_shipping_config",
+        module="shop.shipping_config",
     )
 
     shop_is_weee = BooleanBone(
