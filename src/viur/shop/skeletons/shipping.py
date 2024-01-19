@@ -33,6 +33,7 @@ class ShippingSkel(Skeleton):  # STATE: Complete (as in model)
         descr="shipping_cost",
         precision=2,
         min=0,
+        getEmptyValueFunc=lambda: None,
     )
 
     supplier = SelectBone(

@@ -8,6 +8,8 @@ logger = logging.getLogger("viur.shop").getChild(__name__)
 
 
 class ShippingConfigSkel(Skeleton):  # STATE: Complete (as in model)
+    kindName = "shop_shipping_config"
+
     name = StringBone(
         descr="name",
     )

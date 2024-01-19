@@ -21,5 +21,6 @@ class VatSkel(Skeleton):  # STATE: Complete (as in model)
         required=True,
         precision=2,
         min=0,
+        getEmptyValueFunc=lambda: None,
         # TODO: UnitBone / PercentageBone
     )
