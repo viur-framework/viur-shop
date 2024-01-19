@@ -11,9 +11,10 @@ logger = logging.getLogger("viur.shop").getChild(__name__)
 
 class ExtendedCustomJsonEncoder(CustomJsonEncoder):
     def default(self, o: t.Any) -> t.Any:
+        from viur.shop.shop import SHOP_INSTANCE_VI
         if isinstance(o, SkeletonInstance):
             # We're using the ViRender of the (hopefully) always existing user module
-            return conf.main_app.vi.user.render.renderSkelValues(o)
+            return SHOP_INSTANCE_VI.get().render.renderSkelValues(o)
         return super().default(o)
 
 

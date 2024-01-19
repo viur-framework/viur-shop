@@ -7,8 +7,11 @@ logger = logging.getLogger("viur.shop").getChild(__name__)
 
 
 def get_suppliers() -> dict[str, str]:
-    return {}
-    return shop.configured_supliers  # TODO
+    from viur.shop.shop import SHOP_INSTANCE
+    return {
+        supplier.key: supplier.name
+        for supplier in SHOP_INSTANCE.get().suppliers
+    }
 
 
 class ShippingSkel(Skeleton):  # STATE: Complete (as in model)

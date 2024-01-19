@@ -1,6 +1,6 @@
-import contextvars
 import logging
 import typing as t
+from contextvars import ContextVar
 
 from viur.core.bones import RelationalBone
 from viur.core.decorators import exposed
@@ -8,14 +8,15 @@ from viur.core.module import Module
 from viur.core.modules.user import UserSkel
 from viur.core.prototypes.instanced_module import InstancedModule
 from viur.core.skeleton import MetaSkel, Skeleton, skeletonByKind
+from .constants import Supplier
 from .modules import *
 from .payment_providers import PaymentProviderAbstract
 from .skeletons.discount_condition import DiscountConditionSkel
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
-SHOP_INSTANCE = contextvars.ContextVar("ShopInstance")
-SHOP_INSTANCE_VI = contextvars.ContextVar("ShopInstanceVi")
+SHOP_INSTANCE: ContextVar["Shop"] = ContextVar("ShopInstance")
+SHOP_INSTANCE_VI: ContextVar["Shop"] = ContextVar("ShopInstanceVi")
 
 
 class Shop(InstancedModule, Module):
@@ -30,6 +31,7 @@ class Shop(InstancedModule, Module):
         name: str,
         article_skel: t.Type[Skeleton],
         payment_providers: list[PaymentProviderAbstract],
+        suppliers: list[Supplier],
         *args, **kwargs,
     ):
         super().__init__()
@@ -38,6 +40,7 @@ class Shop(InstancedModule, Module):
         self.name: str = name
         self.article_skel: t.Type[Skeleton] = article_skel
         self.payment_providers: list[PaymentProviderAbstract] = payment_providers
+        self.suppliers: list[Supplier] = suppliers
         self.additional_settings: dict[str, t.Any] = dict(kwargs)
 
         # Debug only

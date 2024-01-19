@@ -1,5 +1,8 @@
+import dataclasses
 import enum
 import typing as t
+
+from viur.core.i18n import translate
 
 
 class ArticleAvailability(enum.Enum):
@@ -98,3 +101,12 @@ class QuantityMode(enum.Enum):
 
 
 QuantityModeType = t.Literal["replace", "increase", "decrease"]
+
+
+@dataclasses.dataclass
+class Supplier:
+    key: str
+    """Internal identifier"""
+
+    name: str | translate
+    """Public name"""
