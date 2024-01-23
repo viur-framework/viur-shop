@@ -15,8 +15,10 @@ class ShippingPreconditionRelSkel(RelSkel):  # STATE: Complete (as in model)
 
     country = SelectCountryBone(
         descr="country",
+        multiple=True,
     )
 
     zip_code = StringBone(
         descr="zip_code",
+        multiple=True,
     )
