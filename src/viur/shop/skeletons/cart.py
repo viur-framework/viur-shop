@@ -168,6 +168,7 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
             "shop_vat", "shop_shipping",
             "shop_is_weee", "shop_is_low_price",
         ],
+        consistency=RelationalConsistency.CascadeDeletion,
     )
 
     quantity = NumericBone(
@@ -220,12 +221,14 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
         kind="shop_vat",
         module="shop.vat",
         refKeys=["key", "name", "rate"],
+        consistency=RelationalConsistency.PreventDeletion,
     )
 
     shop_shipping = RelationalBone(
         descr="Versandkosten",
         kind="shop_shipping_config",
         module="shop.shipping_config",
+        consistency=RelationalConsistency.SetNull,
     )
 
     shop_is_weee = BooleanBone(

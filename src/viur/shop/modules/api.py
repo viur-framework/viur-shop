@@ -270,15 +270,17 @@ class Api(ShopModuleAbstract):
     def discount_add(
         self,
         *,
-        code: str,
-        discount_key: str | db.Key,
+        code: str = None,
+        discount_key: str | db.Key = None,
+        # TODO: Use always session key? parent_cart_key: str | db.Key,
     ):
         """
         parameter code xor discount_key: str | db.Key
 
         Sucht nach Rabatt mit dem code xor key, je nach Typ (Artikel/Warenkorb) suche ...ende parent_node oder erzeuge eine und setze dort die discount Relation.
         """
-        ...
+        discount_key = self._normalize_external_key(discount_key, "discount_key")
+        return JsonResponse(self.shop.discount.apply(code, discount_key))
 
     @exposed
     @force_post

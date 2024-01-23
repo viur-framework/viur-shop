@@ -44,6 +44,8 @@ class DiscountSkel(Skeleton):  # STATE: Complete (as in model)
         kind="shop_discount_condition",
         module="shop.discount_condition",
         multiple=True,
+        refKeys=["key", "name", "scope_code"],
+        consistency=RelationalConsistency.PreventDeletion,
     )
 
     condition_operator = SelectBone(

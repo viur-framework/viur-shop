@@ -11,6 +11,20 @@ logger = logging.getLogger("viur.shop").getChild(__name__)
 class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
     kindName = "shop_discount_condition"
 
+    name = StringBone(
+        descr="name",
+        compute=Compute(
+            fn=lambda skel: str({
+                key: value
+                for key, value in skel.items(True)
+                if value is not None and key not in dir(Skeleton)
+            }),
+            interval=ComputeInterval(
+                method=ComputeMethod.OnWrite,
+            ),
+        ),
+    )
+
     code_type = SelectBone(
         descr="code_type",
         values=CodeType,
@@ -24,8 +38,13 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
 
     quantity_volume = NumericBone(
         descr="quantity_volume",
+        required=True,
         defaultValue=-1,  # Unlimited
         min=-1,
+        params={
+            "tooltip": "-1 ^= unlimited",
+        },
+        getEmptyValueFunc=lambda: None,
     )
 
     quantity_used = NumericBone(
@@ -52,7 +71,10 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
 
     scope_minimum_order_value = NumericBone(
         descr="scope_minimum_order_value",
+        required=True,
         min=0,
+        defaultValue=0,
+        getEmptyValueFunc=lambda: None,
         # TODO: UnitBone / CurrencyBone
     )
 
@@ -75,7 +97,10 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
 
     scope_minimum_quantity = NumericBone(
         descr="scope_minimum_quantity",
+        required=True,
         min=0,
+        defaultValue=0,
+        getEmptyValueFunc=lambda: None,
     )
     """Minimale Anzahl
 
@@ -101,6 +126,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
     scope_article = RelationalBone(
         descr="scope_article",
         kind="...",  # will be set in Shop._set_kind_names()
+        consistency=RelationalConsistency.PreventDeletion,
     )
 
     is_subcode = BooleanBone(
@@ -117,4 +143,5 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
         descr="parent_code",
         kind="shop_discount_condition",
         module="shop.discount_condition",
+        consistency=RelationalConsistency.PreventDeletion,
     )
