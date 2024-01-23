@@ -23,16 +23,29 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
                 method=ComputeMethod.OnWrite,
             ),
         ),
+        params={
+            "category": "1 – General",
+        },
     )
 
     code_type = SelectBone(
         descr="code_type",
+        required=True,
         values=CodeType,
+        defaultValue=CodeType.NONE,
+        params={
+            "category": "1 – General",
+        },
     )
 
     application_domain = SelectBone(
         descr="application_domain",
+        required=True,
         values=ApplicationDomain,
+        defaultValue=ApplicationDomain.BASKET,
+        params={
+            "category": "1 – General",
+        },
     )
     """Anwendungsbereich"""
 
@@ -41,32 +54,48 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
         required=True,
         defaultValue=-1,  # Unlimited
         min=-1,
+        getEmptyValueFunc=lambda: None,
         params={
+            "category": "1 – General",
             "tooltip": "-1 ^= unlimited",
         },
-        getEmptyValueFunc=lambda: None,
     )
 
     quantity_used = NumericBone(
         descr="quantity_used",
         defaultValue=0,
         min=0,
+        params={
+            "category": "1 – General",
+        },
     )
     """Wie oft wurde der code Bereits verwendet?"""
 
     individual_codes_amount = NumericBone(
         descr="individual_codes_amount",
         min=1,
+        params={
+            "category": "1 – General",
+            "visibleIf": 'code_type == "individual"'
+        },
     )
 
     scope_code = StringBone(
         descr="code",
         # TODO: limit charset
+        params={
+            "category": "2 – Scope",
+            "visibleIf": 'code_type == "universal"'
+        },
     )
 
     individual_codes_prefix = StringBone(
         descr="individual_codes_prefix",
         # TODO: limit charset
+        params={
+            "category": "2 – Scope",
+            "visibleIf": 'code_type == "individual"'
+        },
     )
 
     scope_minimum_order_value = NumericBone(
@@ -76,23 +105,38 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
         defaultValue=0,
         getEmptyValueFunc=lambda: None,
         # TODO: UnitBone / CurrencyBone
+        params={
+            "category": "2 – Scope",
+        },
     )
 
     scope_date_start = DateBone(
         descr="scope_date_start",
+        params={
+            "category": "2 – Scope",
+        },
     )
 
     scope_date_end = DateBone(
         descr="scope_date_end",
+        params={
+            "category": "2 – Scope",
+        },
     )
 
     scope_language = SelectBone(
         descr="scope_language",
         values=conf.i18n.available_languages,
+        params={
+            "category": "2 – Scope",
+        },
     )
 
     scope_country = SelectCountryBone(
         descr="scope_country",
+        params={
+            "category": "2 – Scope",
+        },
     )
 
     scope_minimum_quantity = NumericBone(
@@ -101,6 +145,9 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
         min=0,
         defaultValue=0,
         getEmptyValueFunc=lambda: None,
+        params={
+            "category": "2 – Scope",
+        },
     )
     """Minimale Anzahl
 
@@ -108,16 +155,27 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
 
     scope_customer_group = SelectBone(
         descr="scope_customer_group",
+        required=True,
         values=CustomerGroup,
+        defaultValue=CustomerGroup.NONE,
+        params={
+            "category": "2 – Scope",
+        },
     )
 
     scope_combinable_other_discount = BooleanBone(
         descr="scope_combinable_other_discount",
+        params={
+            "category": "2 – Scope",
+        },
     )
     """Kombinierbar mit anderen Rabatten"""
 
     scope_combinable_low_price = BooleanBone(
         descr="scope_combinable_low_price",
+        params={
+            "category": "2 – Scope",
+        },
     )
     """Kombinierbar
 
@@ -127,6 +185,10 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
         descr="scope_article",
         kind="...",  # will be set in Shop._set_kind_names()
         consistency=RelationalConsistency.PreventDeletion,
+        params={
+            "category": "2 – Scope",
+            "visibleIf": 'application_domain == "article"'
+        },
     )
 
     is_subcode = BooleanBone(
@@ -137,6 +199,10 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
                 method=ComputeMethod.OnWrite,
             ),
         ),
+        params={
+            "category": "2 – Scope",
+            "visibleIf": 'code_type == "individual"'
+        },
     )
 
     parent_code = RelationalBone(
@@ -144,4 +210,8 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
         kind="shop_discount_condition",
         module="shop.discount_condition",
         consistency=RelationalConsistency.PreventDeletion,
+        params={
+            "category": "2 – Scope",
+            "visibleIf": 'code_type == "individual"'
+        },
     )

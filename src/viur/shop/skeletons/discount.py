@@ -29,6 +29,9 @@ class DiscountSkel(Skeleton):  # STATE: Complete (as in model)
         precision=2,
         min=0,
         # TODO: UnitBone / CurrencyBone
+        params={
+            "visibleIf": 'discount_type == "absolute"'
+        },
     )
 
     percentage = NumericBone(
@@ -37,6 +40,9 @@ class DiscountSkel(Skeleton):  # STATE: Complete (as in model)
         min=0,
         max=100,
         # TODO: UnitBone / PercentageBone
+        params={
+            "visibleIf": 'discount_type == "percentage"'
+        },
     )
 
     condition = RelationalBone(
@@ -50,5 +56,7 @@ class DiscountSkel(Skeleton):  # STATE: Complete (as in model)
 
     condition_operator = SelectBone(
         descr="condition_operator",
+        required=True,
         values=ConditionOperator,
+        defaultValue=ConditionOperator.ALL,
     )
