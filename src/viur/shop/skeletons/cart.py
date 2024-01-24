@@ -122,6 +122,12 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
         descr="shipping_address",
         kind="shop_address",
         module="shop/shop_address",
+        refKeys=[
+            "key", "name", "customer_type", "salutation", "company_name",
+            "firstname", "lastname", "street_name", "street_number",
+            "address_addition", "zip_code", "city", "country",
+            "is_default", "address_type",
+        ],
     )
 
     customer_comment = TextBone(
