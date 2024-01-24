@@ -298,18 +298,83 @@ class Cart(ShopModuleAbstract, Tree):
         if discount_key is not _sentinel and not isinstance(discount_key, (db.Key, type(None))):
             raise TypeError(f"discount_key must be an instance of db.Key")
         skel = self.addSkel("node")
-        skel["parententry"] = parent_cart_key
-        if parent_cart_key is None:
-            skel["is_root_node"] = True
-        else:
-            if not self.is_valid_node(parent_cart_key):
-                raise e.InvalidArgumentException("parent_cart_key", parent_cart_key)
-            parent_skel = self.viewSkel("node")
-            assert parent_skel.fromDB(parent_cart_key)
-            if parent_skel["is_root_node"]:
-                skel["parentrepo"] = parent_skel["key"]
+        skel = self._cart_set_values(
+            skel=skel,
+            cart_type=cart_type,
+            parent_cart_key=parent_cart_key,
+            name=name,
+            customer_comment=customer_comment,
+            shipping_address_key=shipping_address_key,
+            shipping_key=shipping_key,
+            discount_key=discount_key,
+        )
+        skel.toDB()
+        return skel
+
+    def cart_update(
+        self,
+        cart_key: db.Key,
+        parent_cart_key: str | db.Key = _sentinel,
+        cart_type: CartType = None,  # TODO: since we generate basket automatically,
+        #                                    wishlist would be the only acceptable value ...
+        name: str = _sentinel,
+        customer_comment: str = _sentinel,
+        shipping_address_key: str | db.Key = _sentinel,
+        shipping_key: str | db.Key = _sentinel,
+        discount_key: str | db.Key = _sentinel,
+    ) -> SkeletonInstance | None:
+        if not isinstance(cart_key, db.Key):
+            raise TypeError(f"cart_key must be an instance of db.Key")
+        if not isinstance(cart_type, (CartType, type(None))):
+            raise TypeError(f"cart_type must be an instance of CartType")
+        if parent_cart_key is not _sentinel and not isinstance(parent_cart_key, (db.Key, type(None))):
+            raise TypeError(f"parent_cart_key must be an instance of db.Key")
+        if discount_key is not _sentinel and not isinstance(discount_key, (db.Key, type(None))):
+            raise TypeError(f"discount_key must be an instance of db.Key")
+        skel = self.editSkel("node")
+        # TODO: must be inside a own root node ...
+        # if not self.canEdit(skel):
+        #     raise errors.Forbidden
+        assert skel.fromDB(cart_key)
+        skel = self._cart_set_values(
+            skel=skel,
+            parent_cart_key=parent_cart_key,
+            name=name,
+            customer_comment=customer_comment,
+            shipping_address_key=shipping_address_key,
+            shipping_key=shipping_key,
+            discount_key=discount_key,
+        )
+        skel.toDB()
+        return skel
+
+    def _cart_set_values(
+        self,
+        skel: SkeletonInstance | CartNodeSkel,
+        *,
+        parent_cart_key: db.Key = _sentinel,
+        cart_type: CartType = None,  # TODO: since we generate basket automatically,
+        #                                    wishlist would be the only acceptable value ...
+        name: str = _sentinel,
+        customer_comment: str = _sentinel,
+        shipping_address_key: str | db.Key = _sentinel,
+        shipping_key: str | db.Key = _sentinel,
+        discount_key: str | db.Key = _sentinel,
+    ) -> SkeletonInstance:
+        if parent_cart_key is not _sentinel:
+            skel["parententry"] = parent_cart_key
+            if parent_cart_key is None:
+                skel["is_root_node"] = True
             else:
-                skel["parentrepo"] = parent_skel["parentrepo"]
+                skel["is_root_node"] = False
+                if not self.is_valid_node(parent_cart_key):
+                    raise e.InvalidArgumentException("parent_cart_key", parent_cart_key)
+                parent_skel = self.viewSkel("node")
+                assert parent_skel.fromDB(parent_cart_key)
+                if parent_skel["is_root_node"]:
+                    skel["parentrepo"] = parent_skel["key"]
+                else:
+                    skel["parentrepo"] = parent_skel["parentrepo"]
         # Set / Change only values which were explicitly provided
         if name is not _sentinel:
             skel["name"] = name
@@ -330,7 +395,6 @@ class Cart(ShopModuleAbstract, Tree):
                 skel["discount"] = None
             else:
                 skel.setBoneValue("discount", discount_key)
-        skel.toDB()
         return skel
 
     def cart_remove(

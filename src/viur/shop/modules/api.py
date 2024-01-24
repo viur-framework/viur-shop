@@ -128,17 +128,30 @@ class Api(ShopModuleAbstract):
         customer_comment: str = None,
         shipping_address_key: str | db.Key = None,
         shipping_key: str | db.Key = None,
+        discount_key: str | db.Key = None,
     ):
         parent_cart_key = self._normalize_external_key(
             parent_cart_key, "parent_cart_key")
+        shipping_address_key = self._normalize_external_key(
+            shipping_address_key, "shipping_address_key", True)
+        shipping_key = self._normalize_external_key(
+            shipping_key, "shipping_key", True)
+        discount_key = self._normalize_external_key(
+            discount_key, "discount_key", True)
         if cart_type is not None:
             try:
                 cart_type = CartType(cart_type)
             except ValueError:
                 raise e.InvalidArgumentException("cart_type", cart_type)
         return JsonResponse(self.shop.cart.cart_add(
-            parent_cart_key, cart_type, name, customer_comment,
-            shipping_address_key, shipping_key))
+            parent_cart_key=parent_cart_key,
+            cart_type=cart_type,
+            name=name,
+            customer_comment=customer_comment,
+            shipping_address_key=shipping_address_key,
+            shipping_key=shipping_key,
+            discount_key=discount_key,
+        ))
 
     @exposed
     @force_post
@@ -146,12 +159,30 @@ class Api(ShopModuleAbstract):
         self,
         *,
         cart_key: str | db.Key,
+        cart_type: CartType = None, # TODO: necessary?
         name: str = None,
         customer_comment: str = None,
         shipping_address_key: str | db.Key = None,
         shipping_key: str | db.Key = None,
+        discount_key: str | db.Key = None,#TODO: use sentinel?
     ):
-        ...
+        cart_key = self._normalize_external_key(
+            cart_key, "parent_cart_key")
+        shipping_address_key = self._normalize_external_key(
+            shipping_address_key, "shipping_address_key", True)
+        shipping_key = self._normalize_external_key(
+            shipping_key, "shipping_key", True)
+        discount_key = self._normalize_external_key(
+            discount_key, "discount_key", True)
+        return JsonResponse(self.shop.cart.cart_update(
+            cart_key=cart_key,
+            cart_type=cart_type,
+            name=name,
+            customer_comment=customer_comment,
+            shipping_address_key=shipping_address_key,
+            shipping_key=shipping_key,
+            discount_key=discount_key,
+        ))
 
     @exposed
     @force_post
