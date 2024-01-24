@@ -3,6 +3,8 @@ import logging
 from viur.core import current, db
 from viur.core.prototypes import List
 from .abstract import ShopModuleAbstract
+from ..constants import AddressType
+from .. import exceptions as e
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
@@ -37,6 +39,11 @@ class Order(ShopModuleAbstract, List):
             skel["payment_provider"] = payment_provider  # TODO: validate
         if "billing_address_key" in current.request.get().kwargs:
             skel.setBoneValue("billing_address", billing_address_key)
+            if skel["billing_address"]["dest"]["address_type"] != AddressType.BILLING:
+                raise e.InvalidArgumentException(
+                    "shipping_address",
+                    descr_appendix="Address is not of type billing."
+                )
         if user := current.user.get():
             # us current user as default value
             skel["email"] = user["name"]

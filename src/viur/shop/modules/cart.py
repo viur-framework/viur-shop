@@ -7,7 +7,7 @@ from viur.core.bones import BaseBone
 from viur.core.prototypes import Tree
 from viur.core.skeleton import SkeletonInstance
 from viur.shop.modules.abstract import ShopModuleAbstract
-from ..constants import CartType, DiscountType, QuantityMode
+from ..constants import AddressType, CartType, DiscountType, QuantityMode
 from ..exceptions import InvalidStateError
 from ..skeletons.cart import CartItemSkel, CartNodeSkel
 
@@ -385,6 +385,11 @@ class Cart(ShopModuleAbstract, Tree):
                 skel["shipping_address"] = None
             else:
                 skel.setBoneValue("shipping_address", shipping_address_key)
+                if skel["shipping_address"]["dest"]["address_type"] != AddressType.SHIPPING:
+                    raise e.InvalidArgumentException(
+                        "shipping_address",
+                        descr_appendix="Address is not of type shipping."
+                    )
         if shipping_key is not _sentinel:
             if shipping_key is None:
                 skel["shipping"] = None
