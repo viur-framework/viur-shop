@@ -7,9 +7,12 @@ from viur.shop.constants import *
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
 
-def get_payment_providers() -> dict[str, str]:
-    return {}
-    return shop.payment_providers  # TODO
+def get_payment_providers() -> dict[str, str | translate]:
+    from viur.shop.shop import SHOP_INSTANCE
+    return {
+        pp.name: translate(f"shop.payment_provider.{pp.name}")
+        for pp in SHOP_INSTANCE.get().payment_providers
+    }
 
 
 class OrderSkel(Skeleton):  # STATE: Complete (as in model)
