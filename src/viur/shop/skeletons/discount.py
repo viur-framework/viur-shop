@@ -30,7 +30,8 @@ class DiscountSkel(Skeleton):  # STATE: Complete (as in model)
         min=0,
         # TODO: UnitBone / CurrencyBone
         params={
-            "visibleIf": 'discount_type == "absolute"'
+            "visibleIf": 'discount_type == "absolute"',
+            "requiredIf": 'discount_type == "absolute"',
         },
     )
 
@@ -41,7 +42,17 @@ class DiscountSkel(Skeleton):  # STATE: Complete (as in model)
         max=100,
         # TODO: UnitBone / PercentageBone
         params={
-            "visibleIf": 'discount_type == "percentage"'
+            "visibleIf": 'discount_type == "percentage"',
+            "requiredIf": 'discount_type == "percentage"',
+        },
+    )
+
+    free_article = RelationalBone(
+        descr="free_article",
+        kind="...",  # will be set in Shop._set_kind_names()
+        params={
+            "visibleIf": 'discount_type == "free_article"',
+            "requiredIf": 'discount_type == "free_article"',
         },
     )
 

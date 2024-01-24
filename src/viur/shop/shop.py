@@ -2,6 +2,7 @@ import logging
 import typing as t
 from contextvars import ContextVar
 
+from .skeletons.discount import DiscountSkel
 from viur.core.bones import RelationalBone
 from viur.core.decorators import exposed
 from viur.core.module import Module
@@ -82,6 +83,8 @@ class Shop(InstancedModule, Module):
         CartItemSkel.article.kind = self.article_skel.kindName
         DiscountConditionSkel.scope_article.kind = self.article_skel.kindName
         DiscountConditionSkel.scope_article.module = self.article_skel.kindName
+        DiscountSkel.free_article.kind = self.article_skel.kindName
+        DiscountSkel.free_article.module = self.article_skel.kindName
 
     def _extend_user_skeleton(self):
         """Extend the UserSkel of the project

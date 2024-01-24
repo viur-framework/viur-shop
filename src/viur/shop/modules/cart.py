@@ -13,6 +13,8 @@ from ..skeletons.cart import CartItemSkel, CartNodeSkel
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
+_sentinel= object()
+
 
 class Cart(ShopModuleAbstract, Tree):
     nodeSkelCls = CartNodeSkel
@@ -162,6 +164,7 @@ class Cart(ShopModuleAbstract, Tree):
         query: db.Query = skel.all()
         query.filter("parententry =", parent_cart_key)
         query.filter("article.dest.__key__ =", article_key)
+        query.filter("shop_listed =", True)
         skel = query.getSkel()
         return skel
 
@@ -267,15 +270,18 @@ class Cart(ShopModuleAbstract, Tree):
         parent_cart_key: str | db.Key = None,
         cart_type: CartType = None,  # TODO: since we generate basket automatically,
         #                                    wishlist would be the only acceptable value ...
-        name: str = None,
-        customer_comment: str = None,
-        shipping_address_key: str | db.Key = None,
-        shipping_key: str | db.Key = None,
+        name: str = _sentinel,
+        customer_comment: str = _sentinel,
+        shipping_address_key: str | db.Key = _sentinel,
+        shipping_key: str | db.Key = _sentinel,
+        discount_key: str | db.Key = _sentinel,
     ) -> SkeletonInstance | None:
         if not isinstance(parent_cart_key, (db.Key, type(None))):
             raise TypeError(f"parent_cart_key must be an instance of db.Key")
         if not isinstance(cart_type, (CartType, type(None))):
             raise TypeError(f"cart_type must be an instance of CartType")
+        if not isinstance(discount_key, (db.Key, type(None))) or discount_key is _sentinel:
+            raise TypeError(f"discount_key must be an instance of db.Key")
         skel = self.addSkel("node")
         skel["parententry"] = parent_cart_key
         if parent_cart_key is None:
@@ -291,15 +297,27 @@ class Cart(ShopModuleAbstract, Tree):
                 skel["parentrepo"] = parent_skel["parentrepo"]
         logger.debug(f"{current.request.get().kwargs = }")
         logger.debug(f"{current.request.get().args = }")
+        logger.debug(f"{discount_key = }")
         # Set / Change only values which were explicitly provided
-        if "name" in current.request.get().kwargs:
+        if name is not _sentinel:
             skel["name"] = name
-        if "customer_comment" in current.request.get().kwargs:
+        if customer_comment is not _sentinel:
             skel["customer_comment"] = customer_comment
-        if "shipping_address_key" in current.request.get().kwargs:
-            skel.setBoneValue("shipping_address_key", shipping_address_key)
-        if "shipping_key" in current.request.get().kwargs:
-            skel.setBoneValue("shipping_key", shipping_key)
+        if shipping_address_key is not _sentinel:
+            if shipping_address_key is None:
+                skel["shipping_address"] = None
+            else:
+                skel.setBoneValue("shipping_address", shipping_address_key)
+        if shipping_key is not _sentinel:
+            if shipping_key is None:
+                skel["shipping"] = None
+            else:
+                skel.setBoneValue("shipping", shipping_key)
+        if discount_key is not _sentinel:
+            if discount_key is None:
+                skel["discount"] = None
+            else:
+                skel.setBoneValue("discount", discount_key)
         skel.toDB()
         return skel
 

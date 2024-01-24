@@ -4,7 +4,7 @@ from viur.core import current, db, errors, utils
 from viur.core.prototypes import List
 from viur.core.skeleton import skeletonByKind
 from .abstract import ShopModuleAbstract
-from .. import CodeType
+from .. import CodeType, DiscountType, QuantityMode
 from ..exceptions import InvalidStateError
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
@@ -51,14 +51,36 @@ class Discount(ShopModuleAbstract, List):
             raise TypeError(f"discount_key must be an instance of db.Key")
         if not bool(code) ^ bool(discount_key):
             raise ValueError(f"Need code xor discount_code")
+        cart_key = self.shop.cart.current_session_cart_key  # TODO: parameter?
 
         skel = self.search(code, discount_key)
         logger.debug(f"{skel = }")
 
         if skel is None:
             raise errors.NotFound
-        if not self.can_apply(skel, self.shop.cart.current_session_cart_key):
+        if not self.can_apply(skel, cart_key):
             return False
+
+        if skel["discount_type"] == DiscountType.FREE_ARTICLE:
+            cart_node_skel = self.shop.cart.cart_add(
+                parent_cart_key=cart_key,
+                name="Free Article",
+                discount_key=skel["key"],
+            )
+            logger.debug(f"{cart_node_skel = }")
+            cart_item_skel = self.shop.cart.add_or_update_article(
+                article_key=skel["free_article"]["dest"]["key"],
+                parent_cart_key=cart_node_skel["key"],
+                quantity=1,
+                quantity_mode=QuantityMode.REPLACE,
+            )
+            logger.debug(f"{cart_item_skel = }")
+            return {
+                "discount_skel": skel,
+                "cart_node_skel": cart_node_skel,
+                "cart_item_skel": cart_item_skel,
+            }
+
         return skel
 
     def can_apply(
@@ -126,7 +148,7 @@ class Discount(ShopModuleAbstract, List):
                 logger.info(f"scope_code UNIVERSAL not reached")
                 continue
             elif (condition_skel["code_type"] == CodeType.INDIVIDUAL
-                and ...
+                  and ...
             ):
                 raise NotImplementedError
                 continue

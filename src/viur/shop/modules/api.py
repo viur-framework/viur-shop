@@ -279,7 +279,7 @@ class Api(ShopModuleAbstract):
 
         Sucht nach Rabatt mit dem code xor key, je nach Typ (Artikel/Warenkorb) suche ...ende parent_node oder erzeuge eine und setze dort die discount Relation.
         """
-        discount_key = self._normalize_external_key(discount_key, "discount_key")
+        discount_key = self._normalize_external_key(discount_key, "discount_key", True)
         return JsonResponse(self.shop.discount.apply(code, discount_key))
 
     @exposed
@@ -308,10 +308,13 @@ class Api(ShopModuleAbstract):
         self,
         external_key: str,
         parameter_name: str,
-    ) -> db.Key:
+        can_be_None: bool = False,
+    ) -> db.Key | None:
         """
         Convert urlsafe key to db.Key and raise an error on invalid in key.
         """
+        if can_be_None and not external_key:
+            return None
         try:
             return db.Key.from_legacy_urlsafe(external_key)
         except DecodeError:  # yes, the exception really comes from protobuf...
