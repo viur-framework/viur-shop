@@ -2,7 +2,6 @@ import logging
 import typing as t
 from contextvars import ContextVar
 
-from .skeletons.discount import DiscountSkel
 from viur.core.bones import RelationalBone
 from viur.core.decorators import exposed
 from viur.core.module import Module
@@ -10,8 +9,9 @@ from viur.core.modules.user import UserSkel
 from viur.core.prototypes.instanced_module import InstancedModule
 from viur.core.skeleton import MetaSkel, Skeleton, skeletonByKind
 from .constants import Supplier
-from .modules import *
+from .modules import Address, Api, Cart, Discount, DiscountCondition, Order, Shipping, ShippingConfig, Vat
 from .payment_providers import PaymentProviderAbstract
+from .skeletons.discount import DiscountSkel
 from .skeletons.discount_condition import DiscountConditionSkel
 
 logger = logging.getLogger("viur.shop").getChild(__name__)

@@ -21,6 +21,7 @@ class DiscountSkel(Skeleton):  # STATE: Complete (as in model)
 
     discount_type = SelectBone(
         descr="discount_type",
+        required=True,
         values=DiscountType,
     )
 

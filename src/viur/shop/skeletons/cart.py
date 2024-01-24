@@ -85,7 +85,7 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
         descr="Total",
         precision=2,
         compute=Compute(
-            TotalFactory("total", "shop_price_retail", True),
+            TotalFactory("total", "price_sale", True),
             ComputeInterval(ComputeMethod.Always),
         ),
     )
@@ -149,6 +149,7 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
         descr="discount",
         kind="shop_discount",
         module="shop/discount",
+        refKeys=["key", "name", "discount_type", "absolute", "percentage"],
     )
 
 
@@ -244,7 +245,43 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
         """Calculate the vat value based on price and vat rate"""
         if not (vat := self["shop_vat"]):
             return 0
-        return (vat["dest"]["rate"] or 0) / 100 * self["shop_price_retail"]
+        return (vat["dest"]["rate"] or 0) / 100 * self["price_sale"]
+
+    @property
+    def article_skel(self):
+        return self["article"]["dest"]
+
+    @property
+    def parent_skel(self):
+        if not (pk := self["parententry"]):
+            return None
+        from viur.shop.shop import SHOP_INSTANCE
+        skel = SHOP_INSTANCE.get().cart.viewSkel("node")
+        assert skel.fromDB(pk)
+        return skel
+
+    @property
+    def price_sale_(self):
+        # TODO: where to store methods like this?
+        if discount := (self.parent_skel["discount"]):
+            discount = discount["dest"]
+            # logger.debug(f'{self=} // {discount=} // {self.parent_skel=}')
+            if discount["discount_type"] == DiscountType.FREE_ARTICLE:
+                return 0
+            elif discount["discount_type"] == DiscountType.ABSOLUTE:
+                return self.article_skel["shop_price_retail"] - discount["absolute"]
+            elif discount["discount_type"] == DiscountType.PERCENTAGE:
+                return self.article_skel["shop_price_retail"] - (
+                    self.article_skel["shop_price_retail"] * discount["percentage"] / 100
+                )
+            else:
+                raise NotImplementedError(discount["discount_type"])
+        return self.article_skel["shop_price_retail"]
+
+    price_sale = NumericBone(
+        descr="sale_price_bone",
+        compute=Compute(lambda skel: skel.price_sale_, ComputeInterval(ComputeMethod.Always))
+    )
 
     @classmethod
     def toDB(cls, skelValues: SkeletonInstance, update_relations: bool = True, **kwargs) -> db.Key:

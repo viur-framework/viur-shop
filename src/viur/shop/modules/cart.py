@@ -7,13 +7,13 @@ from viur.core.bones import BaseBone
 from viur.core.prototypes import Tree
 from viur.core.skeleton import SkeletonInstance
 from viur.shop.modules.abstract import ShopModuleAbstract
-from ..constants import CartType, QuantityMode
+from ..constants import CartType, DiscountType, QuantityMode
 from ..exceptions import InvalidStateError
 from ..skeletons.cart import CartItemSkel, CartNodeSkel
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
-_sentinel= object()
+_sentinel = object()
 
 
 class Cart(ShopModuleAbstract, Tree):
@@ -183,6 +183,7 @@ class Cart(ShopModuleAbstract, Tree):
             raise TypeError(f"quantity_mode must be an instance of QuantityMode")
         if not self.is_valid_node(parent_cart_key):
             raise e.InvalidArgumentException("parent_cart_key", parent_cart_key)
+        parent_skel = None
         if not (skel := self.get_article(article_key, parent_cart_key)):
             logger.info("This is an add")
             skel = self.addSkel("leaf")
@@ -207,6 +208,8 @@ class Cart(ShopModuleAbstract, Tree):
                 else:
                     raise NotImplementedError
                 skel[bone] = value
+        else:
+            parent_skel = skel.parent_skel
         if quantity == 0 and quantity_mode in (QuantityMode.INCREASE, QuantityMode.DECREASE):
             raise e.InvalidArgumentException(
                 "quantity",
@@ -228,6 +231,19 @@ class Cart(ShopModuleAbstract, Tree):
         if skel["quantity"] == 0:
             skel.delete()
             return None
+        try:
+            discount_type = parent_skel["discount"]["dest"]["discount_type"]
+        except (TypeError, KeyError) as exc:
+            logger.debug(exc, exc_info=True)
+            discount_type = None
+        logger.debug(f"{discount_type=}")
+        if discount_type == DiscountType.FREE_ARTICLE and skel["quantity"] > 1:
+            raise e.InvalidArgumentException(
+                "quantity",
+                descr_appendix=f'Quantity of free article cannot be greater than 1! (reached {skel["quantity"]})'
+            )
+            raise e.InvalidArgumentException()
+        # TODO: Validate quantity with hook (stock availability)
         key = skel.toDB()
         return skel
 
@@ -280,7 +296,7 @@ class Cart(ShopModuleAbstract, Tree):
             raise TypeError(f"parent_cart_key must be an instance of db.Key")
         if not isinstance(cart_type, (CartType, type(None))):
             raise TypeError(f"cart_type must be an instance of CartType")
-        if not isinstance(discount_key, (db.Key, type(None))) or discount_key is _sentinel:
+        if discount_key is not _sentinel and not isinstance(discount_key, (db.Key, type(None))):
             raise TypeError(f"discount_key must be an instance of db.Key")
         skel = self.addSkel("node")
         skel["parententry"] = parent_cart_key
