@@ -22,6 +22,7 @@ class Order(ShopModuleAbstract, List):
         state_ordered: bool = None,
         state_paid: bool = None,
         state_rts: bool = None,
+        # TODO: use sentinel as in cart
     ):
         if not isinstance(cart_key, db.Key):
             raise TypeError(f"cart_key must be an instance of db.Key")
@@ -61,4 +62,7 @@ class Order(ShopModuleAbstract, List):
         if "state_rts" in current.request.get().kwargs:
             skel["state_rts"] = state_rts
         skel.toDB()
+        if cart_key == self.shop.cart.current_session_cart_key:
+            # This is now a order basket and should no longer be modified
+            self.shop.cart.detach_session_cart()
         return skel

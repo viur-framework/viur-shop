@@ -253,7 +253,7 @@ class Api(ShopModuleAbstract):
     ):
         cart_key = self._normalize_external_key(cart_key, "cart_key")
         billing_address_key = self._normalize_external_key(billing_address_key, "billing_address_key")
-        customer_key = self._normalize_external_key(customer_key, "customer_key")
+        customer_key = self._normalize_external_key(customer_key, "customer_key", True)
         ...
         return JsonResponse(self.shop.order.order_add(
             cart_key, payment_provider, billing_address_key,
@@ -346,6 +346,8 @@ class Api(ShopModuleAbstract):
         """
         if can_be_None and not external_key:
             return None
+        elif not external_key:
+            raise InvalidKeyException(external_key, parameter_name)
         try:
             return db.Key.from_legacy_urlsafe(external_key)
         except DecodeError:  # yes, the exception really comes from protobuf...

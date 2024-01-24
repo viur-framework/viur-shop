@@ -75,11 +75,13 @@ class Discount(ShopModuleAbstract, List):
                 quantity_mode=QuantityMode.REPLACE,
             )
             logger.debug(f"{cart_item_skel = }")
-            return {
+            return {  # TODO: what should be returned?
                 "discount_skel": skel,
                 "cart_node_skel": cart_node_skel,
                 "cart_item_skel": cart_item_skel,
             }
+
+        raise errors.NotImplemented(f'{skel["discount_type"]=} is not implemented yet :(')
 
         return skel
 

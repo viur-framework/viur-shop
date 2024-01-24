@@ -34,6 +34,9 @@ class Cart(ShopModuleAbstract, Tree):
     def current_session_cart(self):  # TODO: Caching
         skel = self.viewSkel("node")
         if not skel.fromDB(self.current_session_cart_key):
+            logger.critical(f"Invalid session_cart_key {self.current_session_cart_key} ?! Not in DB!")
+            self.detach_session_cart()
+            return self.current_session_cart
             raise InvalidStateError(f"Invalid session_cart_key {self.current_session_cart_key} ?! Not in DB!")
         return skel
 
@@ -54,6 +57,18 @@ class Cart(ShopModuleAbstract, Tree):
                 user_skel.setBoneValue("basket", key)
                 user_skel.toDB()
         return self.session["session_cart_key"]
+
+    def detach_session_cart(self) -> db.Key:
+        key = self.session["session_cart_key"]
+        self.session["session_cart_key"] = None
+        current.session.get().markChanged()
+        if user := current.user.get():
+            user_skel = conf.main_app.user.editSkel()
+            user_skel.fromDB(user["key"])
+            user_skel["basket"]= None
+            user_skel.toDB()
+        return key
+
 
     def get_available_root_nodes(self, *args, **kwargs) -> list[dict[t.Literal["name", "key"], str]]:
         root_nodes = [self.current_session_cart]
@@ -408,12 +423,14 @@ class Cart(ShopModuleAbstract, Tree):
     ) -> None:
         self.deleteRecursive(cart_key)
         skel = self.editSkel("node")
-        skel.fromDB(cart_key)
+        if not skel.fromDB(cart_key):
+            raise errors.NotFound
         if skel["parententry"] is None or skel["is_root_node"]:
             logger.info(f"{skel['key']} was a root node!")
-            raise NotImplementedError("Cannot delete root node")
+            # raise NotImplementedError("Cannot delete root node")
             # TODO: remove relation or block deletion
-            if skel["parententry"] == self.current_session_cart_key:
-                del self.session["session_cart_key"]
-                current.session.get().markChanged()
+            if skel["key"] == self.current_session_cart_key:
+                self.detach_session_cart()
+                # del self.session["session_cart_key"]
+                # current.session.get().markChanged()
         skel.delete()
