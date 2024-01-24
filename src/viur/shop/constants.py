@@ -46,8 +46,8 @@ class ApplicationDomain(enum.Enum):
 
 
 class CustomerGroup(enum.Enum):
-    NONE = None  # TODO: is this working?
-    """none (alle Kunden)"""
+    ALL = "all"
+    """alle Kunden"""
 
     FIRST_ORDER = "first_order"
     """Erstbestellung"""

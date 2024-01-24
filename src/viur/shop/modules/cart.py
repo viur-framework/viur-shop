@@ -242,7 +242,6 @@ class Cart(ShopModuleAbstract, Tree):
                 "quantity",
                 descr_appendix=f'Quantity of free article cannot be greater than 1! (reached {skel["quantity"]})'
             )
-            raise e.InvalidArgumentException()
         # TODO: Validate quantity with hook (stock availability)
         key = skel.toDB()
         return skel
@@ -311,9 +310,6 @@ class Cart(ShopModuleAbstract, Tree):
                 skel["parentrepo"] = parent_skel["key"]
             else:
                 skel["parentrepo"] = parent_skel["parentrepo"]
-        logger.debug(f"{current.request.get().kwargs = }")
-        logger.debug(f"{current.request.get().args = }")
-        logger.debug(f"{discount_key = }")
         # Set / Change only values which were explicitly provided
         if name is not _sentinel:
             skel["name"] = name

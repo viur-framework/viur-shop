@@ -28,9 +28,17 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
         },
     )
 
+    description = TextBone(
+        descr="description",
+        validHtml=None,
+        params={
+            "category": "1 – General",
+        },
+    )
+
     code_type = SelectBone(
         descr="code_type",
-        required=True,
+        # required=True,
         values=CodeType,
         defaultValue=CodeType.NONE,
         params={
@@ -157,7 +165,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
         descr="scope_customer_group",
         required=True,
         values=CustomerGroup,
-        defaultValue=CustomerGroup.NONE,
+        defaultValue=CustomerGroup.ALL,
         params={
             "category": "2 – Scope",
         },

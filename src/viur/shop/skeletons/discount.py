@@ -10,6 +10,31 @@ logger = logging.getLogger("viur.shop").getChild(__name__)
 class DiscountSkel(Skeleton):  # STATE: Complete (as in model)
     kindName = "shop_discount"
 
+    interBoneValidations = [
+        # Make percentage required if selected as discount_type
+        lambda skel: (
+            [ReadFromClientError(
+                ReadFromClientErrorSeverity.Invalid,
+                "Percentage must be greater than 0",
+                ["percentage"],
+                ["percentage"],
+            )]
+            if skel["discount_type"] == DiscountType.PERCENTAGE and not skel["percentage"]
+            else []
+        ),
+        # Make absolute required if selected as discount_type
+        lambda skel: (
+            [ReadFromClientError(
+                ReadFromClientErrorSeverity.Invalid,
+                "Absolute must be greater than 0",
+                ["absolute"],
+                ["absolute"],
+            )]
+            if skel["discount_type"] == DiscountType.ABSOLUTE and not skel["absolute"]
+            else []
+        ),
+    ]
+
     name = StringBone(
         descr="name",
     )

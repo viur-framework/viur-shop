@@ -160,6 +160,7 @@ class Discount(ShopModuleAbstract, List):
         else:
             return False
         # TODO: depending on condition_operator we have to use continue or return False
+        # TODO: implement combineable check
 
         logger.debug(f"{condition=}")
 
