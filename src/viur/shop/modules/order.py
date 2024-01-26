@@ -34,6 +34,7 @@ class Order(ShopModuleAbstract, List):
         cart_skel = self.shop.cart.viewSkel("node")
         if not self.shop.cart.is_valid_node(cart_key, root_node=True):
             raise ValueError(f"Invalid {cart_key=}!")
+        assert cart_skel.fromDB(cart_key)
         skel.setBoneValue("cart", cart_key)
         skel["total"] = cart_skel["total"]
         if "payment_provider" in current.request.get().kwargs:
