@@ -252,7 +252,7 @@ class Api(ShopModuleAbstract):
         state_rts: bool = None,
     ):
         cart_key = self._normalize_external_key(cart_key, "cart_key")
-        billing_address_key = self._normalize_external_key(billing_address_key, "billing_address_key")
+        billing_address_key = self._normalize_external_key(billing_address_key, "billing_address_key", True)
         customer_key = self._normalize_external_key(customer_key, "customer_key", True)
         ...
         return JsonResponse(self.shop.order.order_add(

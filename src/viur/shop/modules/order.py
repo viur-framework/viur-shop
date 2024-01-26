@@ -1,10 +1,12 @@
 import logging
 
-from viur.core import current, db
+from viur.core import current, db, exposed
 from viur.core.prototypes import List
 from .abstract import ShopModuleAbstract
 from .. import exceptions as e
 from ..constants import AddressType
+from ..response_types import JsonResponse
+from ..skeletons.order import get_payment_providers
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
@@ -13,6 +15,10 @@ _sentinel = object()
 
 class Order(ShopModuleAbstract, List):
     kindName = "shop_order"
+
+    @exposed
+    def payment_providers_list(self):
+        return JsonResponse(get_payment_providers())
 
     def order_add(
         self,
@@ -41,12 +47,15 @@ class Order(ShopModuleAbstract, List):
         if payment_provider is not _sentinel:
             skel["payment_provider"] = payment_provider  # TODO: validate
         if billing_address_key is not _sentinel:
-            skel.setBoneValue("billing_address", billing_address_key)
-            if skel["billing_address"]["dest"]["address_type"] != AddressType.BILLING:
-                raise e.InvalidArgumentException(
-                    "shipping_address",
-                    descr_appendix="Address is not of type billing."
-                )
+            if billing_address_key is None:
+                skel["billing_address"] = None
+            else:
+                skel.setBoneValue("billing_address", billing_address_key)
+                if skel["billing_address"]["dest"]["address_type"] != AddressType.BILLING:
+                    raise e.InvalidArgumentException(
+                        "shipping_address",
+                        descr_appendix="Address is not of type billing."
+                    )
         if user := current.user.get():
             # us current user as default value
             skel["email"] = user["name"]
