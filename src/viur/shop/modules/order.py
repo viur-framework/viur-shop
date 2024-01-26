@@ -3,10 +3,12 @@ import logging
 from viur.core import current, db
 from viur.core.prototypes import List
 from .abstract import ShopModuleAbstract
-from ..constants import AddressType
 from .. import exceptions as e
+from ..constants import AddressType
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
+
+_sentinel = object()
 
 
 class Order(ShopModuleAbstract, List):
@@ -15,20 +17,19 @@ class Order(ShopModuleAbstract, List):
     def order_add(
         self,
         cart_key: db.Key,
-        payment_provider: str = None,
-        billing_address_key: db.Key = None,
-        email: str = None,
-        customer_key: db.Key = None,
-        state_ordered: bool = None,
-        state_paid: bool = None,
-        state_rts: bool = None,
-        # TODO: use sentinel as in cart
+        payment_provider: str = _sentinel,
+        billing_address_key: db.Key = _sentinel,
+        email: str = _sentinel,
+        customer_key: db.Key = _sentinel,
+        state_ordered: bool = _sentinel,
+        state_paid: bool = _sentinel,
+        state_rts: bool = _sentinel,
     ):
         if not isinstance(cart_key, db.Key):
             raise TypeError(f"cart_key must be an instance of db.Key")
-        if not isinstance(billing_address_key, (db.Key, type(None))):
+        if billing_address_key is not _sentinel and not isinstance(billing_address_key, (db.Key, type(None))):
             raise TypeError(f"billing_address_key must be an instance of db.Key")
-        if not isinstance(customer_key, (db.Key, type(None))):
+        if customer_key is not _sentinel and not isinstance(customer_key, (db.Key, type(None))):
             raise TypeError(f"customer_key must be an instance of db.Key")
         skel = self.addSkel()
         cart_skel = self.shop.cart.viewSkel("node")
@@ -37,9 +38,9 @@ class Order(ShopModuleAbstract, List):
         assert cart_skel.fromDB(cart_key)
         skel.setBoneValue("cart", cart_key)
         skel["total"] = cart_skel["total"]
-        if "payment_provider" in current.request.get().kwargs:
+        if payment_provider is not _sentinel:
             skel["payment_provider"] = payment_provider  # TODO: validate
-        if "billing_address_key" in current.request.get().kwargs:
+        if billing_address_key is not _sentinel:
             skel.setBoneValue("billing_address", billing_address_key)
             if skel["billing_address"]["dest"]["address_type"] != AddressType.BILLING:
                 raise e.InvalidArgumentException(
@@ -50,20 +51,20 @@ class Order(ShopModuleAbstract, List):
             # us current user as default value
             skel["email"] = user["name"]
             skel.setBoneValue("customer", user["key"])
-        if "email" in current.request.get().kwargs:
+        if email is not _sentinel:
             skel["email"] = email
-        if "customer_key" in current.request.get().kwargs:
+        if customer_key is not _sentinel:
             skel.setBoneValue("customer", customer_key)  # TODO: validate (must be self of an admin)
         # TODO(discussion): Do we really want to set this by the frontend?
         #  Or what are the pre conditions?
-        if "state_ordered" in current.request.get().kwargs:
+        if state_ordered is not _sentinel:
             skel["state_ordered"] = state_ordered
-        if "state_paid" in current.request.get().kwargs:
+        if state_paid is not _sentinel:
             skel["state_paid"] = state_paid
-        if "state_rts" in current.request.get().kwargs:
+        if state_rts is not _sentinel:
             skel["state_rts"] = state_rts
         skel.toDB()
         if cart_key == self.shop.cart.current_session_cart_key:
-            # This is now a order basket and should no longer be modified
+            # This is now an order basket and should no longer be modified
             self.shop.cart.detach_session_cart()
         return skel
