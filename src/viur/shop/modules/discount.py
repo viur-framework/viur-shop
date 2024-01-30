@@ -1,3 +1,4 @@
+import functools
 import logging
 
 from viur.core import current, db, errors, utils
@@ -93,9 +94,12 @@ class Discount(ShopModuleAbstract, List):
     ):
         logger.debug(f"{skel = }")
 
-        cart = self.shop.cart.viewSkel("node")
-        if not cart.fromDB(cart_key):
-            raise errors.NotFound
+        if cart_key is None:
+            cart = None
+        else:
+            cart = self.shop.cart.viewSkel("node")
+            if not cart.fromDB(cart_key):
+                raise errors.NotFound
 
         # We need the full skel with all bones (otherwise the refSkel would be to large)
         condition_skel = skeletonByKind(skel.condition.kind)()
@@ -107,20 +111,24 @@ class Discount(ShopModuleAbstract, List):
             # Check if one scope is in conflict, then we skip the entire condition
             # Therefore we're testing the negation of the desired scope!
             # But we only check the values that are set.
-            if (condition_skel["scope_minimum_order_value"] is not None
+            if (
+                cart is not None  # TODO
+                and condition_skel["scope_minimum_order_value"] is not None
                 and condition_skel["scope_minimum_order_value"] > cart["total"]
             ):
                 logger.info(f"scope_minimum_order_value not reached")
                 continue
 
             now = utils.utcNow()
-            if (condition_skel["scope_date_start"] is not None
+            if (
+                condition_skel["scope_date_start"] is not None
                 and condition_skel["scope_date_start"] > now
             ):
                 logger.info(f"scope_date_start not reached")
                 continue
 
-            if (condition_skel["scope_date_end"] is not None
+            if (
+                condition_skel["scope_date_end"] is not None
                 and condition_skel["scope_date_end"] < now
             ):
                 logger.info(f"scope_date_end not reached")
@@ -132,25 +140,25 @@ class Discount(ShopModuleAbstract, List):
                 logger.info(f"scope_language not reached")
                 continue
 
-            if (condition_skel["scope_minimum_quantity"] is not None
+            if (
+                cart is not None
+                and condition_skel["scope_minimum_quantity"] is not None
                 and condition_skel["scope_minimum_quantity"] > cart["total_quantity"]
             ):
                 logger.info(f"scope_minimum_quantity not reached")
                 continue
 
-            if (condition_skel["scope_minimum_quantity"] is not None
-                and condition_skel["scope_minimum_quantity"] > cart["total_quantity"]
-            ):
-                logger.info(f"scope_minimum_quantity not reached")
-                continue
+            #TODO: if not scope_combinable_other_discount and article.shop_current_discount is not None
 
-            if (condition_skel["code_type"] == CodeType.UNIVERSAL
-                and condition_skel["scope_code"] == code
+            if (
+                condition_skel["code_type"] == CodeType.UNIVERSAL
+                and condition_skel["scope_code"] != code
             ):
                 logger.info(f"scope_code UNIVERSAL not reached")
                 continue
-            elif (condition_skel["code_type"] == CodeType.INDIVIDUAL
-                  and ...
+            elif (
+                condition_skel["code_type"] == CodeType.INDIVIDUAL
+                and ...
             ):
                 raise NotImplementedError
                 continue
@@ -167,3 +175,17 @@ class Discount(ShopModuleAbstract, List):
         logger.debug(f"{condition=}")
 
         return True
+
+    @property
+    @functools.cache
+    def current_automatically_discounts(self):
+        query = self.viewSkel().all().filter("activate_automatically =", True)
+        discounts = []
+        for skel in query.fetch(100):
+            if not self.can_apply(skel):
+                # TODO: this can_apply must be limited (check only active state, time range, ... but not lang)
+                logger.debug(f'Skipping discount {skel["key"]}')
+                continue
+            discounts.append(skel)
+        logger.debug(f'current {discounts=}')
+        return discounts

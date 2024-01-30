@@ -46,9 +46,10 @@ class TotalFactory:
                     value = self.bone_leaf(child)
                 else:
                     value = child[self.bone_leaf]
-                if self.multiply_quantity:
-                    value *= child["quantity"]
-                total += value
+                if value:
+                    if self.multiply_quantity:
+                        value *= child["quantity"]
+                    total += value
         return round(
             total,
             self.precision if self.precision is not None else bone.precision
@@ -174,6 +175,7 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
             "shop_image", "shop_art_no_or_gtin",
             "shop_vat", "shop_shipping",
             "shop_is_weee", "shop_is_low_price",
+            "shop_price_current",
         ],
         consistency=RelationalConsistency.CascadeDeletion,
     )
@@ -269,20 +271,23 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     @property
     def price_sale_(self):
         # TODO: where to store methods like this?
+        article_price = self.article_skel["shop_price_current"]
         if discount := (self.parent_skel["discount"]):
+            # At this point we can make sure the discount is valid applied
+            # -- even if the article is already discounted
             discount = discount["dest"]
             # logger.debug(f'{self=} // {discount=} // {self.parent_skel=}')
             if discount["discount_type"] == DiscountType.FREE_ARTICLE:
                 return 0
             elif discount["discount_type"] == DiscountType.ABSOLUTE:
-                return self.article_skel["shop_price_retail"] - discount["absolute"]
+                return article_price - discount["absolute"]
             elif discount["discount_type"] == DiscountType.PERCENTAGE:
-                return self.article_skel["shop_price_retail"] - (
-                    self.article_skel["shop_price_retail"] * discount["percentage"] / 100
+                return article_price - (
+                    article_price * discount["percentage"] / 100
                 )
             else:
                 raise NotImplementedError(discount["discount_type"])
-        return self.article_skel["shop_price_retail"]
+        return article_price
 
     price_sale = NumericBone(
         descr="sale_price_bone",

@@ -97,3 +97,7 @@ class DiscountSkel(Skeleton):  # STATE: Complete (as in model)
         values=ConditionOperator,
         defaultValue=ConditionOperator.ALL,
     )
+
+    activate_automatically = BooleanBone(
+        descr="activate_automatically",
+    )
