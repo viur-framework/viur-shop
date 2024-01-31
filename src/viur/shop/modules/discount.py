@@ -3,7 +3,7 @@ import logging
 
 from viur.core import current, db, errors, utils
 from viur.core.prototypes import List
-from viur.core.skeleton import skeletonByKind
+from viur.core.skeleton import SkeletonInstance, skeletonByKind
 from .abstract import ShopModuleAbstract
 from .. import CodeType, DiscountType, QuantityMode
 from ..exceptions import InvalidStateError
@@ -59,7 +59,7 @@ class Discount(ShopModuleAbstract, List):
 
         if skel is None:
             raise errors.NotFound
-        if not self.can_apply(skel, cart_key):
+        if not self.can_apply(skel, cart_key, code):
             return False
 
         if skel["discount_type"] == DiscountType.FREE_ARTICLE:
@@ -88,7 +88,7 @@ class Discount(ShopModuleAbstract, List):
 
     def can_apply(
         self,
-        skel,
+        skel: SkeletonInstance,
         cart_key: db.Key | None = None,
         code: str | None = None,
     ):
@@ -100,6 +100,10 @@ class Discount(ShopModuleAbstract, List):
             cart = self.shop.cart.viewSkel("node")
             if not cart.fromDB(cart_key):
                 raise errors.NotFound
+
+        if skel["activate_automatically"]:
+            logger.info(f"is activate_automatically")
+            return False
 
         # We need the full skel with all bones (otherwise the refSkel would be to large)
         condition_skel = skeletonByKind(skel.condition.kind)()
@@ -154,7 +158,7 @@ class Discount(ShopModuleAbstract, List):
                 condition_skel["code_type"] == CodeType.UNIVERSAL
                 and condition_skel["scope_code"] != code
             ):
-                logger.info(f"scope_code UNIVERSAL not reached")
+                logger.info(f'scope_code UNIVERSAL not reached ({condition_skel["scope_code"]=} != {code=})')
                 continue
             elif (
                 condition_skel["code_type"] == CodeType.INDIVIDUAL

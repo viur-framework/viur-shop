@@ -2,6 +2,7 @@ import logging
 
 from viur.core import errors, exposed
 from . import PaymentProviderAbstract
+from ...core.skeleton import SkeletonInstance
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
@@ -22,8 +23,24 @@ class UnzerAbstract(PaymentProviderAbstract):
         self.language = language
         self.client = ...
 
+    def can_checkout(
+        self,
+        order_skel: SkeletonInstance,
+    ) -> list["Error"]:
+        errs = []
+        if not order_skel["billing_address"]:
+            errs.append("billing_address is missing")
+        return errs
+
     def checkout(self):
         raise errors.NotImplemented()
+
+    def can_order(
+        self,
+        order_skel: SkeletonInstance,
+    ) -> list["Error"]:
+        # TODO: if payment is prepared ...
+        return []
 
     def charge(self):
         raise errors.NotImplemented()

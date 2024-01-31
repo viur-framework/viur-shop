@@ -1,6 +1,7 @@
 import abc
-
 import logging
+
+from viur.core.skeleton import SkeletonInstance
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
@@ -11,9 +12,21 @@ class PaymentProviderAbstract(abc.ABC):
     def name(self) -> str:
         ...
 
+    def can_checkout(
+        self,
+        order_skel: SkeletonInstance,
+    ) -> list["Error"]:
+        return []
+
     @abc.abstractmethod
     def checkout(self):
         ...
+
+    def can_order(
+        self,
+        order_skel: SkeletonInstance,
+    ) -> list["Error"]:
+        return []
 
     @abc.abstractmethod
     def charge(self):
