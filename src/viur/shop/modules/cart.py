@@ -65,10 +65,9 @@ class Cart(ShopModuleAbstract, Tree):
         if user := current.user.get():
             user_skel = conf.main_app.user.editSkel()
             user_skel.fromDB(user["key"])
-            user_skel["basket"]= None
+            user_skel["basket"] = None
             user_skel.toDB()
         return key
-
 
     def get_available_root_nodes(self, *args, **kwargs) -> list[dict[t.Literal["name", "key"], str]]:
         root_nodes = [self.current_session_cart]
@@ -434,3 +433,11 @@ class Cart(ShopModuleAbstract, Tree):
                 # del self.session["session_cart_key"]
                 # current.session.get().markChanged()
         skel.delete()
+
+    def freeze_cart(
+        self,
+        cart_key: db.Key,
+    ) -> None:
+        # TODO: for node in tree:
+        #   freeze node with values, discount, shipping (JSON dump? bone duplication?)
+        ...

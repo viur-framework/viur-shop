@@ -85,7 +85,7 @@ class Order(ShopModuleAbstract, List):
         return skel
 
     @exposed
-    # @force_post
+    @force_post
     def checkout_start(
         self,
         order_key: db.Key,
@@ -130,6 +130,7 @@ class Order(ShopModuleAbstract, List):
         # TODO:
         #  - recalculate cart
         #  - copy values (should not be hit by update relations)
+        self.shop.cart.freeze_cart(order_skel["cart"]["dest"]["key"])
 
         return order_skel
 
@@ -145,7 +146,7 @@ class Order(ShopModuleAbstract, List):
         return order_skel
 
     @exposed
-    # @force_post
+    @force_post
     def checkout_order(
         self,
         order_key: db.Key,
