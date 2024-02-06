@@ -159,12 +159,12 @@ class Api(ShopModuleAbstract):
         self,
         *,
         cart_key: str | db.Key,
-        cart_type: CartType = None, # TODO: necessary?
+        cart_type: CartType = None,  # TODO: necessary?
         name: str = None,
         customer_comment: str = None,
         shipping_address_key: str | db.Key = None,
         shipping_key: str | db.Key = None,
-        discount_key: str | db.Key = None,#TODO: use sentinel?
+        discount_key: str | db.Key = None,  # TODO: use sentinel?
     ):
         cart_key = self._normalize_external_key(
             cart_key, "parent_cart_key")
@@ -350,7 +350,7 @@ class Api(ShopModuleAbstract):
             raise InvalidKeyException(external_key, parameter_name)
         try:
             return db.Key.from_legacy_urlsafe(external_key)
-        except DecodeError:  # yes, the exception really comes from protobuf...
+        except (ValueError, DecodeError):  # yes, the exception really comes from protobuf...
             raise InvalidKeyException(external_key, parameter_name)
 
     # --- Testing only --------------------------------------------------------
