@@ -1,8 +1,9 @@
 import logging
+import typing as t
 
 from viur.core import errors, exposed
+from viur.core.skeleton import SkeletonInstance
 from . import PaymentProviderAbstract
-from ...core.skeleton import SkeletonInstance
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
@@ -32,7 +33,10 @@ class UnzerAbstract(PaymentProviderAbstract):
             errs.append("billing_address is missing")
         return errs
 
-    def checkout(self):
+    def checkout(
+        self,
+        order_skel: SkeletonInstance,
+    ) -> t.Any:
         raise errors.NotImplemented()
 
     def can_order(

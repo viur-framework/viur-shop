@@ -1,7 +1,7 @@
 import logging
 
-from viur.core.i18n import translate
 from viur.core.bones import *
+from viur.core.i18n import translate
 from viur.core.skeleton import Skeleton
 
 logger = logging.getLogger("viur.shop").getChild(__name__)

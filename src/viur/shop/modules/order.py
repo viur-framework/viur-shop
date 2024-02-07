@@ -104,7 +104,6 @@ class Order(ShopModuleAbstract, List):
             raise e.InvalidStateError(", ".join(errors))
 
         skel = self.freeze_order(skel)
-        skel = self.assign_uid(skel)
         skel.toDB()
         return JsonResponse(skel)
 
@@ -165,11 +164,16 @@ class Order(ShopModuleAbstract, List):
             }, status_code=400)
             raise e.InvalidStateError(", ".join(error_))
 
+        skel = self.assign_uid(skel)
         skel["is_ordered"] = True
         # TODO: call hooks
         # TODO: charge order if it should directly be charged
+        pp_res = self.get_payment_provider_by_name(skel["payment_provider"]).checkout(skel)
         skel.toDB()
-        return JsonResponse(skel)
+        return JsonResponse({
+            "skel": skel,
+            "payment": pp_res,
+        })
 
     def can_order(
         self,

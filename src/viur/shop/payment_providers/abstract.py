@@ -1,5 +1,6 @@
 import abc
 import logging
+import typing as t
 
 from viur.core.skeleton import SkeletonInstance
 
@@ -19,7 +20,10 @@ class PaymentProviderAbstract(abc.ABC):
         return []
 
     @abc.abstractmethod
-    def checkout(self):
+    def checkout(
+        self,
+        order_skel: SkeletonInstance,
+    ) -> t.Any:
         ...
 
     def can_order(

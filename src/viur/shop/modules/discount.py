@@ -152,7 +152,7 @@ class Discount(ShopModuleAbstract, List):
                 logger.info(f"scope_minimum_quantity not reached")
                 continue
 
-            #TODO: if not scope_combinable_other_discount and article.shop_current_discount is not None
+            # TODO: if not scope_combinable_other_discount and article.shop_current_discount is not None
 
             if (
                 condition_skel["code_type"] == CodeType.UNIVERSAL
