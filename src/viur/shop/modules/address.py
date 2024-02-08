@@ -19,6 +19,7 @@ class Address(ShopModuleAbstract, List):
         # The current customer is only allowed to see his own addresses
         if (user := current.user.get()) and self.render.kind == "json":
             query.filter("customer.dest.__key__ =", user["key"])
+            query.filter("cloned_from =", None)
 
         if user and (f"{self.moduleName}-view" in user["access"] or "root" in user["access"]):
             return query
