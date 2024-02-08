@@ -1,6 +1,8 @@
 import logging
 import typing as t
 
+import unzer
+
 from viur.core import errors, exposed
 from viur.core.skeleton import SkeletonInstance
 from . import PaymentProviderAbstract
@@ -22,7 +24,13 @@ class UnzerAbstract(PaymentProviderAbstract):
         self.public_key = public_key
         self.sandbox = sandbox
         self.language = language
-        self.client = ...
+        self.client = unzer.UnzerClient(
+            private_key=self.private_key,
+            public_key=self.public_key,
+            sandbox=self.sandbox,
+            language=self.language,
+        )
+        logger.debug(f"{self.client.getKeyPair() = }")
 
     def can_checkout(
         self,
