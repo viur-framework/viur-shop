@@ -27,7 +27,7 @@ class UnzerPayPal(UnzerAbstract):
         raise errors.NotImplemented()
 
     @exposed
-    def return_hook(self):
+    def return_handler(self):
         raise errors.NotImplemented()
 
     @exposed

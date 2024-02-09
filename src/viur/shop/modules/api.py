@@ -9,7 +9,7 @@ from viur.shop.exceptions import InvalidKeyException
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.response_types import JsonResponse
 from ..constants import CartType, QuantityMode, QuantityModeType
-
+from .order import  _sentinel
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
 
@@ -265,15 +265,20 @@ class Api(ShopModuleAbstract):
         self,
         *,
         order_key: str | db.Key,
-        payment_provider: str = None,
-        billing_address_key: str | db.Key = None,
-        email: str = None,
-        customer_key: str | db.Key = None,
-        state_ordered: bool = None,
-        state_paid: bool = None,
-        state_rts: bool = None,
+        payment_provider: str = _sentinel,
+        billing_address_key: str | db.Key = _sentinel,
+        email: str = _sentinel,
+        customer_key: str | db.Key = _sentinel,
+        state_ordered: bool = _sentinel,
+        state_paid: bool = _sentinel,
+        state_rts: bool = _sentinel,
     ):
-        ...
+        order_key = self._normalize_external_key(order_key, "order_key")
+        billing_address_key = self._normalize_external_key(billing_address_key, "billing_address_key", True)
+        customer_key = self._normalize_external_key(customer_key, "customer_key", True)
+        return JsonResponse(self.shop.order.order_update(
+            order_key, payment_provider, billing_address_key,
+            email, customer_key, state_ordered, state_paid, state_rts))
 
     @exposed
     @force_post
@@ -344,6 +349,8 @@ class Api(ShopModuleAbstract):
         """
         Convert urlsafe key to db.Key and raise an error on invalid in key.
         """
+        if can_be_None and external_key is _sentinel:
+            return _sentinel
         if can_be_None and not external_key:
             return None
         elif not external_key:

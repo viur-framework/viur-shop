@@ -39,6 +39,7 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
         descr="cart",
         kind="shop_cart_node",
         module="shop.cart_node",
+        refKeys=["key", "name", "shipping_address"],
     )
 
     total = NumericBone(
@@ -92,3 +93,8 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
     )
     """Zusätzliche Daten vom Projekt für eine Bestellung.
     Ggf. überlegen ob einzelne Bones durch Skeleton Modifizierung besser sind."""
+
+    payment = JsonBone(
+        descr="payment",
+        defaultValue=lambda skel, self: {},
+    )

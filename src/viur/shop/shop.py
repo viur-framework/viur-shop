@@ -50,6 +50,7 @@ class Shop(InstancedModule, Module):
     def __call__(self, *args, **kwargs):
         logger.debug(f"Shop.__call__({args=}, {kwargs=})")
         self: Shop = super().__call__(*args, **kwargs)  # noqa
+        is_default_renderer = self.modulePath == f"/{self.moduleName}"
 
         # Modify some objects dynamically
         self._set_kind_names()
@@ -65,10 +66,24 @@ class Shop(InstancedModule, Module):
         self.shipping = Shipping(shop=self)
         self.shipping_config = ShippingConfig(moduleName="shipping_config", shop=self)
         self.vat = Vat(shop=self)
+
+        # Make payment_providers routable as sub modules
+        for idx, pp in enumerate(self.payment_providers):
+            module_name = f"pp_{pp.name}".replace("-", "_")
+            original_pp = pp
+            pp = pp(module_name, f"{self.modulePath}/{module_name}")
+            pp.shop = self
+            setattr(self, module_name, pp)
+            # logger.debug(f"Saved {pp} ({vars(pp)}) under {module_name}")
+            if is_default_renderer:
+                original_pp.shop = self
+                original_pp.moduleName = pp.moduleName
+                original_pp.modulePath = pp.modulePath
+
         self._update_methods()
 
         # set the instance references
-        if self.modulePath == f"/{self.moduleName}":
+        if is_default_renderer:
             SHOP_INSTANCE.set(self)
         elif self.modulePath == f"/vi/{self.moduleName}":
             SHOP_INSTANCE_VI.set(self)

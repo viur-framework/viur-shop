@@ -84,6 +84,58 @@ class Order(ShopModuleAbstract, List):
             self.shop.cart.detach_session_cart()
         return skel
 
+    def order_update(
+        self,
+        order_key: db.Key,
+        payment_provider: str = _sentinel,
+        billing_address_key: db.Key = _sentinel,
+        email: str = _sentinel,
+        customer_key: db.Key = _sentinel,
+        state_ordered: bool = _sentinel,
+        state_paid: bool = _sentinel,
+        state_rts: bool = _sentinel,
+    ):
+        if not isinstance(order_key, db.Key):
+            raise TypeError(f"order_key must be an instance of db.Key")
+        if billing_address_key is not _sentinel and not isinstance(billing_address_key, (db.Key, type(None))):
+            raise TypeError(f"billing_address_key must be an instance of db.Key")
+        if customer_key is not _sentinel and not isinstance(customer_key, (db.Key, type(None))):
+            raise TypeError(f"customer_key must be an instance of db.Key")
+        skel = self.editSkel()
+        if not skel.fromDB(order_key):
+            raise core_errors.NotFound
+        # TODO: refactor duplicate code!
+        if payment_provider is not _sentinel:
+            skel["payment_provider"] = payment_provider  # TODO: validate
+        if billing_address_key is not _sentinel:
+            if billing_address_key is None:
+                skel["billing_address"] = None
+            else:
+                skel.setBoneValue("billing_address", billing_address_key)
+                if skel["billing_address"]["dest"]["address_type"] != AddressType.BILLING:
+                    raise e.InvalidArgumentException(
+                        "shipping_address",
+                        descr_appendix="Address is not of type billing."
+                    )
+        if user := current.user.get():
+            # us current user as default value
+            skel["email"] = user["name"]
+            skel.setBoneValue("customer", user["key"])
+        if email is not _sentinel:
+            skel["email"] = email
+        if customer_key is not _sentinel:
+            skel.setBoneValue("customer", customer_key)  # TODO: validate (must be self of an admin)
+        # TODO(discussion): Do we really want to set this by the frontend?
+        #  Or what are the pre conditions?
+        if state_ordered is not _sentinel:
+            skel["state_ordered"] = state_ordered
+        if state_paid is not _sentinel:
+            skel["state_paid"] = state_paid
+        if state_rts is not _sentinel:
+            skel["state_rts"] = state_rts
+        skel.toDB()
+        return skel
+
     @exposed
     @force_post
     def checkout_start(
@@ -93,19 +145,23 @@ class Order(ShopModuleAbstract, List):
         order_key = self.shop.api._normalize_external_key(order_key, "order_key")
         if not isinstance(order_key, db.Key):
             raise TypeError(f"order_key must be an instance of db.Key")
-        skel = self.editSkel()
-        if not skel.fromDB(order_key):
+        order_skel = self.editSkel()
+        if not order_skel.fromDB(order_key):
             raise core_errors.NotFound()
-        if errors := self.can_checkout(skel):
+        if errors := self.can_checkout(order_skel):
             logging.error(errors)
             return JsonResponse({
                 "errors": errors,
             }, status_code=400)
             raise e.InvalidStateError(", ".join(errors))
 
-        skel = self.freeze_order(skel)
-        skel.toDB()
-        return JsonResponse(skel)
+        order_skel = self.freeze_order(order_skel)
+        order_skel.toDB()
+        return JsonResponse({
+            "skel": order_skel,
+            "payment": self.get_payment_provider_by_name(order_skel["payment_provider"]).get_checkout_start_data(
+                order_skel),
+        })
 
     def can_checkout(
         self,
@@ -182,25 +238,26 @@ class Order(ShopModuleAbstract, List):
         order_key = self.shop.api._normalize_external_key(order_key, "order_key")
         if not isinstance(order_key, db.Key):
             raise TypeError(f"order_key must be an instance of db.Key")
-        skel = self.editSkel()
-        if not skel.fromDB(order_key):
+        order_skel = self.editSkel()
+        if not order_skel.fromDB(order_key):
             raise core_errors.NotFound()
 
-        if errors := self.can_order(skel):
+        if errors := self.can_order(order_skel):
             logging.error(errors)
             return JsonResponse({
                 "errors": errors,
             }, status_code=400)
             raise e.InvalidStateError(", ".join(error_))
 
-        skel = self.assign_uid(skel)
-        skel["is_ordered"] = True
+        order_skel = self.assign_uid(order_skel)
+        order_skel["is_ordered"] = True
         # TODO: call hooks
         # TODO: charge order if it should directly be charged
-        pp_res = self.get_payment_provider_by_name(skel["payment_provider"]).checkout(skel)
-        skel.toDB()
+        pp_res = self.get_payment_provider_by_name(order_skel["payment_provider"]).checkout(order_skel)
+        # TODO: write in transaction
+        order_skel.toDB()
         return JsonResponse({
-            "skel": skel,
+            "skel": order_skel,
             "payment": pp_res,
         })
 
