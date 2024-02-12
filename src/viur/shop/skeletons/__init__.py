@@ -6,6 +6,11 @@ from viur.core import conf
 _dir = str(Path(__file__).parent)
 if _dir not in conf.skeleton_search_path:
     conf.skeleton_search_path.append(_dir)
+    conf.skeleton_search_path.append(
+        _dir
+        .replace(str(conf.instance.project_base_path), "")
+        .replace(str(conf.instance.core_base_path), "")
+    )
 
 from .address import AddressSkel
 from .article import ArticleAbstractSkel
