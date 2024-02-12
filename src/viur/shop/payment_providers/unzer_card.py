@@ -2,10 +2,12 @@ import logging
 import typing as t
 
 import unzer
-
-from viur.core import current, errors, exposed
+from unzer.model.payment import PaymentState
+from viur.core import current, db, errors, exposed
 from viur.core.skeleton import SkeletonInstance
+
 from .unzer_abstract import UnzerAbstract
+from .. import exceptions as e
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
@@ -57,13 +59,46 @@ class UnzerCard(UnzerAbstract):
     def charge(self):
         raise errors.NotImplemented()
 
-    def check_payment_state(self):
-        raise errors.NotImplemented()
+    def check_payment_state(
+        self,
+        order_skel: SkeletonInstance,
+    ) -> tuple[bool, unzer.PaymentGetResponse]:
+        payment_id = order_skel["payment"]["payments"][-1]["payment_id"]
+        logger.debug(f"{payment_id = }")
+        payment = self.client.getPayment(payment_id)
+        payment_id = str(order_skel["key"].id_or_name)
+        logger.debug(f"{payment_id = }")
+        payment = self.client.getPayment(payment_id)
+        logger.debug(f"{payment = }")
+
+        if str(payment.invoiceId) != str(order_skel["order_uid"]):
+            raise e.InvalidStateError(f'{payment.invoiceId} != {order_skel["order_uid"]}')
+
+        if payment.state == PaymentState.COMPLETED and payment.amountCharged == order_skel["total"]:
+            return True, payment
+        return False, payment
 
     @exposed
-    def return_handler(self):
-        # TODO: check payment
-        raise errors.NotImplemented()
+    def return_handler(
+        self,
+        order_key: db.Key,
+    ) -> t.Any:
+        order_key = self.shop.api._normalize_external_key(order_key, "order_key")
+        order_skel = self.shop.order.viewSkel()
+        if not order_skel.fromDB(order_key):
+            raise errors.NotFound
+        is_paid, payment = self.check_payment_state(order_skel)
+        charges = payment.getChargedTransactions()
+        logger.debug(f"{charges = }")
+        if is_paid and order_skel["is_paid"]:
+            logger.info(f'Order {order_skel["key"]} already marked as paid. Nothing to do.')
+        elif is_paid:
+            logger.info(f'Mark order {order_skel["key"]} as paid')
+            order_skel["is_paid"] = True  # TODO: transaction
+            order_skel.toDB()
+        else:
+            raise errors.NotImplemented("Order not paid")
+        return "OKAY, paid"
 
     @exposed
     def webhook(self):

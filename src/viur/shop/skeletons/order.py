@@ -42,6 +42,8 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
         refKeys=["key", "name", "shipping_address"],
     )
 
+    print(f"{cart.refKeys = }")
+
     total = NumericBone(
         descr="total",
         precision=2,
