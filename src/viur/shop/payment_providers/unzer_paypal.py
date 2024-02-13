@@ -1,8 +1,11 @@
 import logging
 import typing as t
 
+import unzer
+from unzer.model import PaymentType
 from viur.core import errors, exposed
 from viur.core.skeleton import SkeletonInstance
+
 from .unzer_abstract import UnzerAbstract
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
@@ -11,23 +14,17 @@ logger = logging.getLogger("viur.shop").getChild(__name__)
 class UnzerPayPal(UnzerAbstract):
     name = "unzer-paypal"
 
-    def checkout(
+    def get_payment_type(
         self,
         order_skel: SkeletonInstance,
-    ) -> t.Any:
-        raise errors.NotImplemented()
+        type_id: str
+    ) -> PaymentType:
+        return unzer.PayPal(key=type_id)
 
     def charge(
         self,
         order_skel: SkeletonInstance,
     ) -> t.Any:
-        raise errors.NotImplemented()
-
-    def check_payment_state(self):
-        raise errors.NotImplemented()
-
-    @exposed
-    def return_handler(self):
         raise errors.NotImplemented()
 
     @exposed

@@ -1,13 +1,16 @@
+import abc
 import logging
 import typing as t
 
 import unzer
+from unzer.model import PaymentType
 from unzer.model.customer import Salutation as UnzerSalutation
-
-from viur.core import db, errors, exposed, utils
+from unzer.model.payment import PaymentState
+from viur.core import current, db, errors, exposed, utils
 from viur.core.skeleton import SkeletonInstance
+
 from . import PaymentProviderAbstract
-from .. import Salutation
+from .. import Salutation, exceptions as e
 from ..response_types import JsonResponse
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
@@ -48,7 +51,52 @@ class UnzerAbstract(PaymentProviderAbstract):
         self,
         order_skel: SkeletonInstance,
     ) -> t.Any:
-        raise errors.NotImplemented()
+        customer = self.customer_from_order_skel(order_skel)
+        logger.debug(f"{customer = }")
+
+        customer = self.client.createOrUpdateCustomer(customer)
+        logger.debug(f"{customer = } [RESPONSE]")
+
+        host = current.request.get().request.host_url
+        return_url = f'{host.rstrip("/")}/{self.modulePath.rstrip("/")}/return_handler?order_key={order_skel["key"].to_legacy_urlsafe().decode("ASCII")}'
+        unzer_session = current.session.get()["unzer"] = {
+            "customer_id": customer.key,
+        }
+        type_id = order_skel["payment"]["payments"][-1]["type_id"]
+
+        payment = self.client.charge(
+            unzer.PaymentRequest(
+                self.get_payment_type(order_skel, type_id),
+                # unzer.Card(key=type_id),
+                amount=order_skel["total"],
+                returnUrl=return_url,
+                card3ds=True,
+                customerId=customer.key,
+                orderId=order_skel["key"].id_or_name,
+                invoiceId=order_skel["order_uid"],
+            )
+        )
+        logger.debug(f"{payment=} [charge response]")
+        unzer_session["paymentId"] = payment.paymentId
+        unzer_session["redirectUrl"] = payment.redirectUrl
+
+        logger.debug(f"{unzer_session = }")
+        current.session.get().markChanged()
+
+        # TODO: write in transaction
+        order_skel["payment"]["payments"][-1]["payment_id"] = payment.paymentId
+        order_skel.toDB()
+
+        return unzer_session
+
+    @abc.abstractmethod
+    def get_payment_type(
+        self,
+        order_skel: SkeletonInstance,
+        type_id: str
+    ) -> PaymentType:
+        ...
+        return unzer.Card(key=type_id)
 
     def get_checkout_start_data(
         self,
@@ -63,17 +111,56 @@ class UnzerAbstract(PaymentProviderAbstract):
         order_skel: SkeletonInstance,
     ) -> list["Error"]:
         # TODO: if payment is prepared ...
-        return []
+        errs = []
+        if not order_skel["cart"]:
+            errs.append("cart is missing")
+            if not order_skel["cart"]["dest"]["shipping_address"]:
+                errs.append("shipping_address is missing")
+        return errs
 
     def charge(self):
         raise errors.NotImplemented()
 
-    def check_payment_state(self):
-        raise errors.NotImplemented()
+    def check_payment_state(
+        self,
+        order_skel: SkeletonInstance,
+    ) -> tuple[bool, unzer.PaymentGetResponse]:
+        payment_id = order_skel["payment"]["payments"][-1]["payment_id"]
+        logger.debug(f"{payment_id = }")
+        payment = self.client.getPayment(payment_id)
+        payment_id = str(order_skel["key"].id_or_name)
+        logger.debug(f"{payment_id = }")
+        payment = self.client.getPayment(payment_id)
+        logger.debug(f"{payment = }")
+
+        if str(payment.invoiceId) != str(order_skel["order_uid"]):
+            raise e.InvalidStateError(f'{payment.invoiceId} != {order_skel["order_uid"]}')
+
+        if payment.state == PaymentState.COMPLETED and payment.amountCharged == order_skel["total"]:
+            return True, payment
+        return False, payment
 
     @exposed
-    def return_handler(self):
-        raise errors.NotImplemented()
+    def return_handler(
+        self,
+        order_key: db.Key,
+    ) -> t.Any:
+        order_key = self.shop.api._normalize_external_key(order_key, "order_key")
+        order_skel = self.shop.order.viewSkel()
+        if not order_skel.fromDB(order_key):
+            raise errors.NotFound
+        is_paid, payment = self.check_payment_state(order_skel)
+        charges = payment.getChargedTransactions()
+        logger.debug(f"{charges = }")
+        if is_paid and order_skel["is_paid"]:
+            logger.info(f'Order {order_skel["key"]} already marked as paid. Nothing to do.')
+        elif is_paid:
+            logger.info(f'Mark order {order_skel["key"]} as paid')
+            order_skel["is_paid"] = True  # TODO: transaction
+            order_skel.toDB()
+        else:
+            raise errors.NotImplemented("Order not paid")
+        return "OKAY, paid"
 
     @exposed
     def webhook(self):

@@ -73,7 +73,10 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
         ...
 
     @abc.abstractmethod
-    def check_payment_state(self):
+    def check_payment_state(
+        self,
+        order_skel: SkeletonInstance,
+    ) -> tuple[bool, t.Any]:
         ...
 
     @abc.abstractmethod
