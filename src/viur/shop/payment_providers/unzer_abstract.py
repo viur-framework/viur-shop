@@ -60,16 +60,13 @@ class UnzerAbstract(PaymentProviderAbstract):
         logger.debug(f"{customer = } [RESPONSE]")
 
         host = current.request.get().request.host_url
-        return_url = f'{host.rstrip("/")}/{self.modulePath.rstrip("/")}/return_handler?order_key={order_skel["key"].to_legacy_urlsafe().decode("ASCII")}'
+        return_url = f'{host.rstrip("/")}/{self.modulePath.strip("/")}/return_handler?order_key={order_skel["key"].to_legacy_urlsafe().decode("ASCII")}'
         unzer_session = current.session.get()["unzer"] = {
             "customer_id": customer.key,
         }
-        type_id = order_skel["payment"]["payments"][-1]["type_id"]
-
         payment = self.client.charge(
             unzer.PaymentRequest(
-                self.get_payment_type(order_skel, type_id),
-                # unzer.Card(key=type_id),
+                self.get_payment_type(order_skel),
                 amount=order_skel["total"],
                 returnUrl=return_url,
                 card3ds=True,
@@ -95,10 +92,8 @@ class UnzerAbstract(PaymentProviderAbstract):
     def get_payment_type(
         self,
         order_skel: SkeletonInstance,
-        type_id: str
     ) -> PaymentType:
         ...
-        return unzer.Card(key=type_id)
 
     def get_checkout_start_data(
         self,
@@ -126,6 +121,8 @@ class UnzerAbstract(PaymentProviderAbstract):
         payment_id = order_skel["payment"]["payments"][-1]["payment_id"]
         logger.debug(f"{payment_id = }")
         payment = self.client.getPayment(payment_id)
+        logger.debug(f"{payment = }")
+        # payment.charge(order_skel["total"])
         payment_id = str(order_skel["key"].id_or_name)
         logger.debug(f"{payment_id = }")
         payment = self.client.getPayment(payment_id)

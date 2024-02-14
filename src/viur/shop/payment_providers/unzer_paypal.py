@@ -17,8 +17,8 @@ class UnzerPayPal(UnzerAbstract):
     def get_payment_type(
         self,
         order_skel: SkeletonInstance,
-        type_id: str
     ) -> PaymentType:
+        type_id = order_skel["payment"]["payments"][-1]["type_id"]
         return unzer.PayPal(key=type_id)
 
     def charge(
