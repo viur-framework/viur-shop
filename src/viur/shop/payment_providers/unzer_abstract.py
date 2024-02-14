@@ -45,6 +45,8 @@ class UnzerAbstract(PaymentProviderAbstract):
         errs = []
         if not order_skel["billing_address"]:
             errs.append("billing_address is missing")
+        if not order_skel["cart"] or not order_skel["cart"]["dest"]["shipping_address"]:
+            errs.append("cart.shipping_address is missing")
         return errs
 
     def checkout(
@@ -112,10 +114,6 @@ class UnzerAbstract(PaymentProviderAbstract):
     ) -> list["Error"]:
         # TODO: if payment is prepared ...
         errs = []
-        if not order_skel["cart"]:
-            errs.append("cart is missing")
-            if not order_skel["cart"]["dest"]["shipping_address"]:
-                errs.append("shipping_address is missing")
         return errs
 
     def charge(self):
