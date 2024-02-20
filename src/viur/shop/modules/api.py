@@ -243,13 +243,13 @@ class Api(ShopModuleAbstract):
         self,
         *,
         cart_key: str | db.Key,
-        payment_provider: str = None,
-        billing_address_key: str | db.Key = None,
-        email: str = None,
-        customer_key: str | db.Key = None,
-        state_ordered: bool = None,
-        state_paid: bool = None,
-        state_rts: bool = None,
+        payment_provider: str = _sentinel,
+        billing_address_key: str | db.Key = _sentinel,
+        email: str = _sentinel,
+        customer_key: str | db.Key = _sentinel,
+        state_ordered: bool = _sentinel,
+        state_paid: bool = _sentinel,
+        state_rts: bool = _sentinel,
     ):
         cart_key = self._normalize_external_key(cart_key, "cart_key")
         billing_address_key = self._normalize_external_key(billing_address_key, "billing_address_key", True)

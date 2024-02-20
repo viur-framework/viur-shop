@@ -20,6 +20,7 @@ class UnzerAbstract(PaymentProviderAbstract):
 
     def __init__(
         self,
+        *,
         private_key: str,
         public_key: str,
         sandbox: bool = False,
@@ -101,6 +102,7 @@ class UnzerAbstract(PaymentProviderAbstract):
     ) -> t.Any:
         return {
             "public_key": self.public_key,
+            "sandbox": self.sandbox,
         }
 
     def can_order(
