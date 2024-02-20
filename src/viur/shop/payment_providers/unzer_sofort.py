@@ -20,17 +20,3 @@ class UnzerSofort(UnzerAbstract):
     ) -> PaymentType:
         type_id = order_skel["payment"]["payments"][-1]["type_id"]
         return unzer.Sofort(key=type_id)
-
-    def charge(
-        self,
-        order_skel: SkeletonInstance,
-    ) -> t.Any:
-        raise errors.NotImplemented()
-
-    @exposed
-    def webhook(self):
-        raise errors.NotImplemented()
-
-    @exposed
-    def get_debug_information(self):
-        raise errors.NotImplemented()

@@ -2,9 +2,11 @@ import abc
 import logging
 import typing as t
 
-from viur.core import Module, exposed
+from viur.core import Module
 from viur.core.prototypes.instanced_module import InstancedModule
 from viur.core.skeleton import SkeletonInstance
+
+from .. import ClientError
 
 if t.TYPE_CHECKING:
     from ..shop import Shop
@@ -15,38 +17,21 @@ logger = logging.getLogger("viur.shop").getChild(__name__)
 class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
     shop: "Shop" = None
 
-    # _module_name = None
-    # _module_path = None
-    #
-    # @property
-    # def moduleName(self) -> str:
-    #     if self._module_name is not None:
-    #         return self._module_name
-    #     return f"pp_{self.name}".replace("-", "_")
-    #
-    # @moduleName.setter
-    # def moduleName(self, value: str) -> None:
-    #     self._module_name = value
-    #
-    # @property
-    # def modulePath(self) -> str:
-    #     if self._module_path is not None:
-    #         return self._module_path
-    #     return f"{self.shop.modulePath}/{self.moduleName}"
-    #
-    # @modulePath.setter
-    # def modulePath(self, value: str) -> None:
-    #     self._module_path = value
-
     @property
     @abc.abstractmethod
     def name(self) -> str:
+        """Define the name of the payment provider"""
         ...
 
     def can_checkout(
         self,
         order_skel: SkeletonInstance,
-    ) -> list["Error"]:
+    ) -> list[ClientError]:
+        """Check if a checkout process can be started
+
+        An empty list means not error,
+        a list with errors rejects the checkout start.
+        """
         return []
 
     @abc.abstractmethod
@@ -65,7 +50,7 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
     def can_order(
         self,
         order_skel: SkeletonInstance,
-    ) -> list["Error"]:
+    ) -> list[ClientError]:
         return []
 
     @abc.abstractmethod

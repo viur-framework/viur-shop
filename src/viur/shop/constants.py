@@ -102,11 +102,3 @@ class QuantityMode(enum.Enum):
 
 QuantityModeType = t.Literal["replace", "increase", "decrease"]
 
-
-@dataclasses.dataclass
-class Supplier:
-    key: str
-    """Internal identifier"""
-
-    name: str | translate
-    """Public name"""

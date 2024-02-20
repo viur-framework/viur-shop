@@ -6,7 +6,7 @@ from viur.core import current, db, errors as core_errors, exposed, force_post
 from viur.core.prototypes import List
 
 from .abstract import ShopModuleAbstract
-from .. import exceptions as e
+from .. import ClientError, exceptions as e
 from ..constants import AddressType
 from ..payment_providers import PaymentProviderAbstract
 from ..response_types import JsonResponse
@@ -168,12 +168,12 @@ class Order(ShopModuleAbstract, List):
     def can_checkout(
         self,
         order_skel: "SkeletonInstance",
-    ) -> list["ErrorClassTBD"]:  # TODO
+    ) -> list[ClientError]:
         errors = []
         if not order_skel["cart"]:
-            errors.append("cart is missing")
+            errors.append(ClientError("cart is missing"))
         if not order_skel["payment_provider"]:
-            errors.append("missing payment_provider")
+            errors.append(ClientError("missing payment_provider"))
         if pp_errors := self.get_payment_provider_by_name(order_skel["payment_provider"]).can_checkout(order_skel):
             errors.extend(pp_errors)
 
@@ -266,18 +266,18 @@ class Order(ShopModuleAbstract, List):
     def can_order(
         self,
         order_skel: "SkeletonInstance",
-    ) -> list["ErrorClassTBD"]:  # TODO
+    ) -> list[ClientError]:
         errors = []
         if order_skel["is_ordered"]:
-            errors.append("already is_ordered")
+            errors.append(ClientError("already is_ordered"))
         if not order_skel["cart"]:
-            errors.append("cart is missing")
+            errors.append(ClientError("cart is missing"))
         if not order_skel["cart"] or not order_skel["cart"]["dest"]["shipping_address"]:
-            errors.append("cart.shipping_address is missing")
+            errors.append(ClientError("cart.shipping_address is missing"))
         if not order_skel["payment_provider"]:
-            errors.append("missing payment_provider")
+            errors.append(ClientError("missing payment_provider"))
         if not order_skel["billing_address"]:
-            errors.append("billing_address is missing")
+            errors.append(ClientError("billing_address is missing"))
         if pp_errors := self.get_payment_provider_by_name(order_skel["payment_provider"]).can_order(order_skel):
             errors.extend(pp_errors)
 

@@ -10,7 +10,7 @@ from viur.core import current, db, errors, exposed, utils
 from viur.core.skeleton import SkeletonInstance
 
 from . import PaymentProviderAbstract
-from .. import Salutation, exceptions as e
+from .. import ClientError, Salutation, exceptions as e
 from ..response_types import JsonResponse
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
@@ -41,12 +41,12 @@ class UnzerAbstract(PaymentProviderAbstract):
     def can_checkout(
         self,
         order_skel: SkeletonInstance,
-    ) -> list["Error"]:
+    ) -> list[ClientError]:
         errs = []
         if not order_skel["billing_address"]:
-            errs.append("billing_address is missing")
+            errs.append(ClientError("billing_address is missing"))
         if not order_skel["cart"] or not order_skel["cart"]["dest"]["shipping_address"]:
-            errs.append("cart.shipping_address is missing")
+            errs.append(ClientError("cart.shipping_address is missing"))
         return errs
 
     def checkout(
@@ -106,7 +106,7 @@ class UnzerAbstract(PaymentProviderAbstract):
     def can_order(
         self,
         order_skel: SkeletonInstance,
-    ) -> list["Error"]:
+    ) -> list[ClientError]:
         # TODO: if payment is prepared ...
         errs = []
         return errs
