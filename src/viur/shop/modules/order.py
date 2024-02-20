@@ -10,6 +10,7 @@ from .. import ClientError, exceptions as e
 from ..constants import AddressType
 from ..payment_providers import PaymentProviderAbstract
 from ..response_types import JsonResponse
+from ..services.hooks import Kind, hook_service
 from ..skeletons.order import get_payment_providers
 
 if t.TYPE_CHECKING:
@@ -251,7 +252,7 @@ class Order(ShopModuleAbstract, List):
             }, status_code=400)
             raise e.InvalidStateError(", ".join(error_))
 
-        order_skel = self.assign_uid(order_skel)
+        order_skel = hook_service.dispatch(Kind.ORDER_ASSIGN_UID, self.assign_uid)(order_skel)
         order_skel["is_ordered"] = True
         # TODO: call hooks
         # TODO: charge order if it should directly be charged
