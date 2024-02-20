@@ -54,6 +54,7 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
 
     order_uid = StringBone(
         descr="order_uid",
+        unique=UniqueValue(UniqueLockMethod.SameValue, False, "UID must be unique")
     )
     """Bestellnummer"""
 
