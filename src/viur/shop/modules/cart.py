@@ -23,7 +23,7 @@ class Cart(ShopModuleAbstract, Tree):
     @property
     def current_session_cart_key(self):
         if user := current.user.get():
-            user_skel = conf.main_app.user.viewSkel()
+            user_skel = conf.main_app.vi.user.viewSkel()
             user_skel.fromDB(user["key"])
             if user_skel["basket"]:
                 self.session["session_cart_key"] = user_skel["basket"]["dest"]["key"]
@@ -52,7 +52,7 @@ class Cart(ShopModuleAbstract, Tree):
             current.session.get().markChanged()
             # Store basket at the user skel, it will be shared over multiple sessions / devices
             if user := current.user.get():
-                user_skel = conf.main_app.user.editSkel()
+                user_skel = conf.main_app.vi.user.editSkel()
                 user_skel.fromDB(user["key"])
                 user_skel.setBoneValue("basket", key)
                 user_skel.toDB()
@@ -63,7 +63,7 @@ class Cart(ShopModuleAbstract, Tree):
         self.session["session_cart_key"] = None
         current.session.get().markChanged()
         if user := current.user.get():
-            user_skel = conf.main_app.user.editSkel()
+            user_skel = conf.main_app.vi.user.editSkel()
             user_skel.fromDB(user["key"])
             user_skel["basket"] = None
             user_skel.toDB()
