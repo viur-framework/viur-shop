@@ -4,13 +4,12 @@ import typing as t
 
 from viur.core import current, db, errors as core_errors, exposed, force_post
 from viur.core.prototypes import List
-
 from .abstract import ShopModuleAbstract
 from .. import ClientError, exceptions as e
 from ..constants import AddressType
 from ..payment_providers import PaymentProviderAbstract
 from ..response_types import JsonResponse
-from ..services.hooks import Kind, hook_service
+from ..services import EVENT_SERVICE, Event, HOOK_SERVICE, Hook
 from ..skeletons.order import get_payment_providers
 
 if t.TYPE_CHECKING:
@@ -160,6 +159,7 @@ class Order(ShopModuleAbstract, List):
 
         order_skel = self.freeze_order(order_skel)
         order_skel.toDB()
+        EVENT_SERVICE.call(Event.ORDER_STARTED, order_skel=order_skel)
         return JsonResponse({
             "skel": order_skel,
             "payment": self.get_payment_provider_by_name(order_skel["payment_provider"]).get_checkout_start_data(
@@ -252,13 +252,15 @@ class Order(ShopModuleAbstract, List):
             }, status_code=400)
             raise e.InvalidStateError(", ".join(error_))
 
-        order_skel = hook_service.dispatch(Kind.ORDER_ASSIGN_UID, self.assign_uid)(order_skel)
-        order_skel["is_ordered"] = True
+        order_skel = HOOK_SERVICE.dispatch(Hook.ORDER_ASSIGN_UID, self.assign_uid)(order_skel)
+        # order_skel["is_ordered"] = True
         # TODO: call hooks
         # TODO: charge order if it should directly be charged
         pp_res = self.get_payment_provider_by_name(order_skel["payment_provider"]).checkout(order_skel)
         # TODO: write in transaction
-        order_skel.toDB()
+        # order_skel.toDB()
+        order_skel = self.set_ordered(order_skel, pp_res)
+        # EVENT_SERVICE.call(Event.ORDER_ORDERED, order_skel=order_skel, payment=pp_res)
         return JsonResponse({
             "skel": order_skel,
             "payment": pp_res,
@@ -284,6 +286,18 @@ class Order(ShopModuleAbstract, List):
 
         # TODO: ...
         return errors
+
+    def set_ordered(self, order_skel: "SkeletonInstance", payment: t.Any) -> "SkeletonInstance":
+        order_skel["is_ordered"] = True  # TODO: transaction
+        order_skel.toDB()
+        EVENT_SERVICE.call(Event.ORDER_ORDERED, order_skel=order_skel, payment=payment)
+        return order_skel
+
+    def set_paid(self, order_skel: "SkeletonInstance") -> "SkeletonInstance":
+        order_skel["is_paid"] = True  # TODO: transaction
+        order_skel.toDB()
+        EVENT_SERVICE.call(Event.ORDER_PAID, order_skel=order_skel)
+        return order_skel
 
     # --- Internal helpers  ----------------------------------------------------
     def get_payment_provider_by_name(

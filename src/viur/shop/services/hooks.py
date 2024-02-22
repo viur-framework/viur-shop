@@ -6,14 +6,14 @@ import typing as t
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
 
-class Kind(enum.IntEnum):
+class Hook(enum.IntEnum):
     ORDER_ASSIGN_UID = enum.auto()
 
 
 class Customization(abc.ABC):
     @property
     @abc.abstractmethod
-    def kind(self) -> Kind:
+    def kind(self) -> Hook:
         ...
 
     @abc.abstractmethod
@@ -24,7 +24,7 @@ class Customization(abc.ABC):
         return f"<Customization {self.__class__.__name__} for {self.kind.name}>"
 
     @classmethod
-    def from_method(cls, func: t.Callable, kind: Kind) -> t.Self:
+    def from_method(cls, func: t.Callable, kind: Hook) -> t.Self:
         return type(
             f"{kind}_{func.__name__}{cls.__name__}",
             (cls,),
@@ -57,4 +57,4 @@ class HookService:
         return default
 
 
-hook_service = HookService()
+HOOK_SERVICE = HookService()

@@ -153,8 +153,9 @@ class UnzerAbstract(PaymentProviderAbstract):
             logger.info(f'Order {order_skel["key"]} already marked as paid. Nothing to do.')
         elif is_paid:
             logger.info(f'Mark order {order_skel["key"]} as paid')
-            order_skel["is_paid"] = True  # TODO: transaction
-            order_skel.toDB()
+            self.shop.order.set_paid(order_skel)
+            # order_skel["is_paid"] = True  # TODO: transaction
+            # order_skel.toDB()
         else:
             raise errors.NotImplemented("Order not paid")
         return "OKAY, paid"

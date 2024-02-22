@@ -9,7 +9,7 @@ from viur.core.modules.user import UserSkel
 from viur.core.prototypes.instanced_module import InstancedModule
 from viur.core.skeleton import MetaSkel, Skeleton, skeletonByKind
 
-from .services.hooks import hook_service
+from .services.hooks import HOOK_SERVICE
 from .types import Supplier
 from .modules import Address, Api, Cart, Discount, DiscountCondition, Order, Shipping, ShippingConfig, Vat
 from .payment_providers import PaymentProviderAbstract
@@ -38,7 +38,7 @@ class Shop(InstancedModule, Module):
         *args, **kwargs,
     ):
         super().__init__()
-        self.hooks = hook_service
+        self.hooks = HOOK_SERVICE
 
         # Store arguments
         self.name: str = name
