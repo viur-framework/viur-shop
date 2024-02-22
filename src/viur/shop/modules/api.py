@@ -8,8 +8,9 @@ from viur.core.render.json.default import DefaultRender as JsonRenderer
 from viur.shop.exceptions import InvalidKeyException
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.response_types import JsonResponse
+from .order import _sentinel
 from ..constants import CartType, QuantityMode, QuantityModeType
-from .order import  _sentinel
+
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
 
@@ -359,23 +360,6 @@ class Api(ShopModuleAbstract):
             return db.Key.from_legacy_urlsafe(external_key)
         except (ValueError, DecodeError):  # yes, the exception really comes from protobuf...
             raise InvalidKeyException(external_key, parameter_name)
-
-    # --- Testing only --------------------------------------------------------
-
-    @exposed
-    def tmp_article_list(self):  # TODO testing only
-        return [
-            skel["shop_name"]
-            for skel in self.shop.article_skel().all().fetch()
-        ]
-
-    @exposed
-    def tmp_article_gen(self):  # TODO testing only
-        for i in range(10):
-            skel = self.shop.article_skel()
-            skel["shop_name"] = f"Article #{str(i).zfill(5)}"
-            skel.toDB()
-            logger.info(f"Added article skel {skel}")
 
 
 Api.html = True
