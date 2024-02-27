@@ -306,8 +306,8 @@ export class ViURShopClient {
     // --- Discount -----------------------------------------------------------
 
     discount_add({
-                     code = null,
-                     discount_key = null,
+                     code,
+                     discount_key,
                  } = {}) {
         return request(`${this.api_url}/discount_add`, {
             method: 'POST',
