@@ -33,7 +33,7 @@ class ShopModuleAbstract(Module):
         """Return a own session scope for this module"""
         session = current.session.get()
         if session is None:
-            logging.warning(f"Session is None!")
+            logger.warning(f"Session is None!")
             return None
         # TODO: custom session name
         # TODO: Implement .setdefault() in viur.core.Session
