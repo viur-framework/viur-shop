@@ -59,4 +59,4 @@ jobs:
         # if: "!startsWith(github.ref_name, 'v-test-')"
         with:
           generate_release_notes: true
-          prerelease: contains(github.ref_name, 'dev')
+          prerelease: "contains(github.ref_name, 'dev')"
