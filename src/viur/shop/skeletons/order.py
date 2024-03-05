@@ -1,5 +1,6 @@
 import logging
 
+from viur.core import translate
 from viur.core.bones import *
 from viur.core.skeleton import Skeleton
 from viur.shop.constants import *
