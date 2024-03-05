@@ -1,7 +1,7 @@
 import logging
 import typing as t
 
-from viur.core import Module, current
+from viur.core import Module, current, translate
 
 if t.TYPE_CHECKING:
     from viur.shop import Shop
@@ -13,6 +13,7 @@ class ShopModuleAbstract(Module):
 
     def adminInfo(self) -> dict:
         return {
+            "name": translate(f"viur.shop.module.{self.moduleName.lower()}"),
             "moduleGroup": self.shop.admin_info_module_group,
         }
 

@@ -8,12 +8,16 @@ from viur.core.module import Module
 from viur.core.modules.user import UserSkel
 from viur.core.prototypes.instanced_module import InstancedModule
 from viur.core.skeleton import MetaSkel, Skeleton, skeletonByKind
+from .data.translations import TRANSLATIONS
 from .modules import Address, Api, Cart, Discount, DiscountCondition, Order, Shipping, ShippingConfig, Vat
 from .payment_providers import PaymentProviderAbstract
 from .services.hooks import HOOK_SERVICE
 from .skeletons.discount import DiscountSkel
 from .skeletons.discount_condition import DiscountConditionSkel
 from .types import Supplier
+from ..core import conf, db
+from ..core.i18n import KINDNAME
+from ..core.modules.translation import Creator, TranslationSkel
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
@@ -51,6 +55,7 @@ class Shop(InstancedModule, Module):
 
         # Debug only
         # logger.debug(f"{vars(self) = }")
+        self._add_translations()
 
     def __call__(self, *args, **kwargs):
         logger.debug(f"Shop.__call__({args=}, {kwargs=})")
@@ -126,6 +131,26 @@ class Shop(InstancedModule, Module):
         )
         # rebuild bonemap
         skel_cls.__boneMap__ = MetaSkel.generate_bonemap(skel_cls)
+
+    def _add_translations(self):
+        """Setup translations required for the viur-shop"""
+        if not conf.i18n.add_missing_translations:
+            return
+
+        for key, tr_dict in TRANSLATIONS.items():
+            # Ensure lowercase key
+            key = key.lower()
+            entity = db.Query(KINDNAME).filter("tr_key =", key).getEntry()
+            if entity is not None:
+                continue
+            logging.info(f"Add missing translation {key}")
+            skel = TranslationSkel()
+            skel["tr_key"] = key
+            skel["translations"] = tr_dict
+            skel["default_text"] = tr_dict.get("_default_text") or None
+            skel["hint"] = tr_dict.get("_hint") or None
+            skel["creator"] = Creator.VIUR
+            skel.toDB()
 
 
 Shop.html = True
