@@ -12,6 +12,11 @@ logger = logging.getLogger("viur.shop").getChild(__name__)
 class Address(ShopModuleAbstract, List):
     kindName = "shop_address"
 
+    def adminInfo(self) -> dict:
+        admin_info = super().adminInfo()
+        admin_info["icon"] = "person-vcard"
+        return admin_info
+
     def canAdd(self) -> bool:
         return True
 

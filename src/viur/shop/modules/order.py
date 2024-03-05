@@ -23,6 +23,11 @@ _sentinel = object()
 class Order(ShopModuleAbstract, List):
     kindName = "shop_order"
 
+    def adminInfo(self) -> dict:
+        admin_info = super().adminInfo()
+        admin_info["icon"] = "cart-check"
+        return admin_info
+
     @exposed
     def payment_providers_list(self):
         return JsonResponse(get_payment_providers())

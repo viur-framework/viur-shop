@@ -8,13 +8,12 @@ from viur.core.module import Module
 from viur.core.modules.user import UserSkel
 from viur.core.prototypes.instanced_module import InstancedModule
 from viur.core.skeleton import MetaSkel, Skeleton, skeletonByKind
-
-from .services.hooks import HOOK_SERVICE
-from .types import Supplier
 from .modules import Address, Api, Cart, Discount, DiscountCondition, Order, Shipping, ShippingConfig, Vat
 from .payment_providers import PaymentProviderAbstract
+from .services.hooks import HOOK_SERVICE
 from .skeletons.discount import DiscountSkel
 from .skeletons.discount_condition import DiscountConditionSkel
+from .types import Supplier
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
@@ -31,11 +30,13 @@ class Shop(InstancedModule, Module):
 
     def __init__(
         self,
+        *,
         name: str,
         article_skel: t.Type[Skeleton],
         payment_providers: list[PaymentProviderAbstract],
         suppliers: list[Supplier],
-        *args, **kwargs,
+        admin_info_module_group: str | None = "viur-shop",
+        **kwargs,
     ):
         super().__init__()
         self.hooks = HOOK_SERVICE
@@ -45,6 +46,7 @@ class Shop(InstancedModule, Module):
         self.article_skel: t.Type[Skeleton] = article_skel
         self.payment_providers: list[PaymentProviderAbstract] = payment_providers
         self.suppliers: list[Supplier] = suppliers
+        self.admin_info_module_group: str | None = admin_info_module_group
         self.additional_settings: dict[str, t.Any] = dict(kwargs)
 
         # Debug only

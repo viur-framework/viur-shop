@@ -1,8 +1,5 @@
-import dataclasses
 import enum
 import typing as t
-
-from viur.core.i18n import translate
 
 
 class ArticleAvailability(enum.Enum):
@@ -101,4 +98,3 @@ class QuantityMode(enum.Enum):
 
 
 QuantityModeType = t.Literal["replace", "increase", "decrease"]
-

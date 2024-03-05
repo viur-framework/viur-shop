@@ -11,6 +11,11 @@ logger = logging.getLogger("viur.shop").getChild(__name__)
 
 class ShopModuleAbstract(Module):
 
+    def adminInfo(self) -> dict:
+        return {
+            "moduleGroup": self.shop.admin_info_module_group,
+        }
+
     def __init__(
         self,
         moduleName: str = None,

@@ -1,11 +1,9 @@
 import logging
-import typing as t
 
 import unzer
 from unzer.model import PaymentType
-from viur.core import errors, exposed
-from viur.core.skeleton import SkeletonInstance
 
+from viur.core.skeleton import SkeletonInstance
 from .unzer_abstract import UnzerAbstract
 
 logger = logging.getLogger("viur.shop").getChild(__name__)

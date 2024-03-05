@@ -3,7 +3,6 @@ import typing as t
 
 from viur.core import current, errors, exposed
 from viur.core.skeleton import SkeletonInstance
-
 from . import PaymentProviderAbstract
 
 logger = logging.getLogger("viur.shop").getChild(__name__)

@@ -20,6 +20,11 @@ class Cart(ShopModuleAbstract, Tree):
     nodeSkelCls = CartNodeSkel
     leafSkelCls = CartItemSkel
 
+    def adminInfo(self) -> dict:
+        admin_info = super().adminInfo()
+        admin_info["icon"] = "cart3"
+        return admin_info
+
     @property
     def current_session_cart_key(self):
         if user := current.user.get():

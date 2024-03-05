@@ -14,6 +14,11 @@ logger = logging.getLogger("viur.shop").getChild(__name__)
 class Discount(ShopModuleAbstract, List):
     kindName = "shop_discount"
 
+    def adminInfo(self) -> dict:
+        admin_info = super().adminInfo()
+        admin_info["icon"] = "percent"
+        return admin_info
+
     def search(
         self,
         code: str | None = None,
