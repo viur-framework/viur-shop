@@ -211,6 +211,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
             "category": "2 – Scope",
             "visibleIf": 'code_type == "individual"'
         },
+        readOnly=True,
     )
 
     parent_code = RelationalBone(
@@ -222,4 +223,5 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
             "category": "2 – Scope",
             "visibleIf": 'code_type == "individual"'
         },
+        readOnly=True,
     )

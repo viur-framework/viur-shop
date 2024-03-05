@@ -19,6 +19,8 @@ class Discount(ShopModuleAbstract, List):
         admin_info["icon"] = "percent"
         return admin_info
 
+    # --- Apply logic ---------------------------------------------------------
+
     def search(
         self,
         code: str | None = None,

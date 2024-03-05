@@ -1,0 +1,27 @@
+indexes:
+
+- kind: shop_cart_leaf
+  properties:
+  - name: parententry
+  - name: sortindex
+
+- kind: shop_cart_node
+  properties:
+  - name: parententry
+  - name: sortindex
+
+- kind: shop_discount_condition
+  properties:
+  - name: is_subcode
+  - name: name
+
+- kind: shop_discount_condition
+  properties:
+  - name: parent_code.dest.__key__
+  - name: name
+
+- kind: shop_discount_condition
+  properties:
+  - name: is_subcode
+  - name: parent_code.dest.__key__
+  - name: scope_code
