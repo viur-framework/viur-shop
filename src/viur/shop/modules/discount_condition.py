@@ -2,6 +2,7 @@ import logging
 import pprint
 import random
 import string
+import typing as t
 
 from viur.core import current, db, tasks
 from viur.core.prototypes import List
@@ -126,3 +127,16 @@ class DiscountCondition(ShopModuleAbstract, List):
                 return
 
         logger.info(f"Finished code generation for {parent_key} ({prefix=}).")
+
+    # --- Apply logic ---------------------------------------------------------
+
+    def get_by_code(self, code: str = None) -> t.Iterator[SkeletonInstance]:
+        query = self.viewSkel().all().filter("scope_code =", code)
+        for cond_skel in query.fetch(100):
+            if cond_skel["is_subcode"]:
+                parent_cond_skel = self.viewSkel()
+                assert parent_cond_skel.fromDB(cond_skel["parent_code"]["dest"]["key"])
+                yield parent_cond_skel
+                # yield cond_skel["parent_code"]["dest"]
+            else:
+                yield cond_skel

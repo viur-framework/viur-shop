@@ -1,5 +1,6 @@
 import functools
 import logging
+import typing as t
 
 from viur.core import current, db, errors, utils
 from viur.core.prototypes import List
@@ -25,7 +26,7 @@ class Discount(ShopModuleAbstract, List):
         self,
         code: str | None = None,
         discount_key: db.Key | None = None,
-    ) -> None:
+    ) -> list[SkeletonInstance]:
         if not isinstance(code, (str, type(None))):
             raise TypeError(f"code must be an instance of str")
         if not isinstance(discount_key, (db.Key, type(None))):
@@ -37,22 +38,23 @@ class Discount(ShopModuleAbstract, List):
         if discount_key is not None:
             if not skel.fromDB(discount_key):
                 raise errors.NotFound
+            return [skel]
         elif code is not None:
-            skel = skel.all().filter("condition.dest.scope_code =", code).getSkel()
-            if skel is None:
+            cond_skels = list(self.shop.discount_condition.get_by_code(code))
+            logger.debug(f"{code = } yields <{len(cond_skels)}>{cond_skels = }")
+            if not cond_skels:
                 raise errors.NotFound
+            skels = skel.all().filter("condition.dest.__key__ IN", [s["key"] for s in cond_skels]).fetch(100)
+            logger.debug(f"{code = } yields <{len(skels)}>{skels = }")
+            return skels
         else:
             raise InvalidStateError
-
-        logger.debug(f"{skel = }")
-
-        return skel
 
     def apply(
         self,
         code: str | None = None,
         discount_key: db.Key | None = None,
-    ) -> None:
+    ) -> t.Any:
         if not isinstance(code, (str, type(None))):
             raise TypeError(f"code must be an instance of str")
         if not isinstance(discount_key, (db.Key, type(None))):
@@ -61,12 +63,15 @@ class Discount(ShopModuleAbstract, List):
             raise ValueError(f"Need code xor discount_code")
         cart_key = self.shop.cart.current_session_cart_key  # TODO: parameter?
 
-        skel = self.search(code, discount_key)
-        logger.debug(f"{skel = }")
+        skels = self.search(code, discount_key)
+        logger.debug(f"{skels = }")
 
-        if skel is None:
+        if not skels:
             raise errors.NotFound
-        if not self.can_apply(skel, cart_key, code):
+        for skel in skels:
+            if self.can_apply(skel, cart_key, code):
+                break
+        else:
             return False
 
         if skel["discount_type"] == DiscountType.FREE_ARTICLE:
@@ -169,10 +174,16 @@ class Discount(ShopModuleAbstract, List):
                 continue
             elif (
                 condition_skel["code_type"] == CodeType.INDIVIDUAL
-                and ...
             ):
-                raise NotImplementedError
-                continue
+                sub = (
+                    self.shop.discount_condition.viewSkel().all()
+                    .filter("parent_code.dest.__key__ =", condition_skel["key"])
+                    .getSkel()
+                )
+                logger.debug(f"{sub = }")
+                if sub["quantity_used"] > 0:
+                    logger.info(f'code_type INDIVIDUAL not reached (sub already used)')
+                    continue
             # TODO: implement all scopes
             # TODO: recheck code against this condition (any condition relation could've caused the query match!)
 

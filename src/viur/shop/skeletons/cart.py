@@ -1,10 +1,12 @@
 import logging
+import typing as t
+
+from viur.shop.constants import *
 
 from viur.core import conf, db
 from viur.core.bones import *
 from viur.core.prototypes.tree import TreeSkel
 from viur.core.skeleton import SkeletonInstance
-from viur.shop.constants import *
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 

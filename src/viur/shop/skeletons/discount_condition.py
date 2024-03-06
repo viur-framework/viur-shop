@@ -95,6 +95,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
             "category": "2 – Scope",
             "visibleIf": 'code_type == "universal"'
         },
+        unique=UniqueValue(UniqueLockMethod.SameValue, False, "Code exist already"),  # TODO
     )
 
     individual_codes_prefix = StringBone(

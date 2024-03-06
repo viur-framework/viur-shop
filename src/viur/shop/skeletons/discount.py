@@ -2,7 +2,7 @@ import logging
 
 from viur.core.bones import *
 from viur.core.skeleton import Skeleton
-from viur.shop.constants import *
+from ..constants import *
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
@@ -85,7 +85,7 @@ class DiscountSkel(Skeleton):  # STATE: Complete (as in model)
     condition = RelationalBone(
         descr="condition",
         kind="shop_discount_condition",
-        module="shop.discount_condition",
+        module="shop/discount_condition",
         multiple=True,
         refKeys=["key", "name", "scope_code"],
         consistency=RelationalConsistency.PreventDeletion,

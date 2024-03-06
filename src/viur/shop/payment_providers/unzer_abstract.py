@@ -37,7 +37,7 @@ class UnzerAbstract(PaymentProviderAbstract):
             sandbox=self.sandbox,
             language=self.language,
         )
-        logger.debug(f"{self.client.getKeyPair() = }")
+        # logger.debug(f"{self.client.getKeyPair() = }")
 
     def can_checkout(
         self,
