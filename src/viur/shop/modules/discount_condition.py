@@ -42,19 +42,24 @@ class DiscountCondition(ShopModuleAbstract, List):
 
     # --- Generation / admin logic --------------------------------------------
 
+    def canEdit(self, skel):
+        if skel["is_subcode"]:
+            return False
+        return super().canEdit(skel)
+
     def editSkel(self, *args, **kwargs) -> SkeletonInstance:
         skel = super().editSkel().ensure_is_cloned()
         skel.individual_codes_prefix.readOnly = True
         skel.code_type.readOnly = True
+        skel.individual_codes_prefix.readOnly = True
         return skel
-
 
     def onAdd(self, skel: SkeletonInstance):
         super().onAdd(skel)
         self.on_change(skel, "add")
 
     def onEdit(self, skel: SkeletonInstance):
-        super().onAdd(skel)
+        super().onEdit(skel)
         self.on_change(skel, "edit")
 
     def onAdded(self, skel: SkeletonInstance):
@@ -62,7 +67,7 @@ class DiscountCondition(ShopModuleAbstract, List):
         self.on_changed(skel, "added")
 
     def onEdited(self, skel: SkeletonInstance):
-        super().onAdded(skel)
+        super().onEdited(skel)
         self.on_changed(skel, "edited")
 
     def on_change(self, skel, event: str):
@@ -88,7 +93,7 @@ class DiscountCondition(ShopModuleAbstract, List):
         """Generate subcodes for a parent individual code."""
         chunk_amount = amount
         while chunk_amount > 0:
-            skel = self.viewSkel()  # .subSkel("individual")
+            skel = self.addSkel()  # .subSkel("individual")
             skel["is_subcode"] = True
             skel["quantity_volume"] = 1
             skel.setBoneValue("parent_code", parent_key)
@@ -104,7 +109,7 @@ class DiscountCondition(ShopModuleAbstract, List):
                     self.onAdded(skel)
                     break
                 except ValueError as e:
-                    if "The unique value" in e.message:
+                    if "The unique value" in str(e):
                         if _try == 30:
                             logger.error(f"Try %d failed. Terminate generation.", _try)
                             raise
