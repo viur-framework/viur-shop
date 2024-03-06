@@ -25,6 +25,8 @@ class Cart(ShopModuleAbstract, Tree):
         admin_info["icon"] = "cart3"
         return admin_info
 
+    # --- Session -------------------------------------------------------------
+
     @property
     def current_session_cart_key(self):
         if user := current.user.get():
@@ -167,6 +169,8 @@ class Cart(ShopModuleAbstract, Tree):
         children = list(self.get_children(parent_cart_key))
         cache[parent_cart_key] = children
         return children
+
+    # --- (internal) API methods ----------------------------------------------
 
     def get_article(
         self,
@@ -439,6 +443,8 @@ class Cart(ShopModuleAbstract, Tree):
                 # current.session.get().markChanged()
         skel.delete()
 
+    # --- Cart / order calculations -------------------------------------------
+
     def freeze_cart(
         self,
         cart_key: db.Key,
@@ -446,3 +452,26 @@ class Cart(ShopModuleAbstract, Tree):
         # TODO: for node in tree:
         #   freeze node with values, discount, shipping (JSON dump? bone duplication?)
         ...
+    # -------------------------------------------------------------------------
+
+    def get_discount_for_leaf(
+        self,
+        leaf_key_or_skel: db.Key | SkeletonInstance,
+    ) -> list[SkeletonInstance]:
+        if isinstance(leaf_key_or_skel, db.Key):
+            skel = self.viewSkel("leaf")
+            skel.fromDB(leaf_key_or_skel)
+        else:
+            skel = leaf_key_or_skel
+        discounts = []
+        while (pk := skel["parententry"]):
+            # if not (pk := skel["parententry"]):
+            #     break
+            skel = self.viewSkel("node")
+            assert skel.fromDB(pk)
+            if discount := skel["discount"]:
+                discounts.append(discount)
+        logger.debug(f"{discounts = }")
+        return discounts
+
+

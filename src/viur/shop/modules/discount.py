@@ -6,7 +6,7 @@ from viur.core import current, db, errors, utils
 from viur.core.prototypes import List
 from viur.core.skeleton import SkeletonInstance, skeletonByKind
 from .abstract import ShopModuleAbstract
-from .. import CodeType, DiscountType, QuantityMode
+from .. import ApplicationDomain, CodeType, DiscountType, QuantityMode
 from ..exceptions import InvalidStateError
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
@@ -69,10 +69,12 @@ class Discount(ShopModuleAbstract, List):
         if not skels:
             raise errors.NotFound
         for skel in skels:
-            if self.can_apply(skel, cart_key, code):
+            if (res := self.can_apply(skel, cart_key, code))[0]:
+                _, cond_skel = res
                 break
         else:
             return False
+        logger.debug(f"Using {skel=} and {cond_skel=}")
 
         if skel["discount_type"] == DiscountType.FREE_ARTICLE:
             cart_node_skel = self.shop.cart.cart_add(
@@ -93,6 +95,16 @@ class Discount(ShopModuleAbstract, List):
                 "cart_node_skel": cart_node_skel,
                 "cart_item_skel": cart_item_skel,
             }
+        elif skel["discount_type"] == DiscountType.PERCENTAGE:
+            if cond_skel["application_domain"] == ApplicationDomain.BASKET:
+                cart = self.shop.cart.cart_update(
+                    cart_key=cart_key,
+                    discount_key=skel["key"]
+                )
+                logger.debug(f"{cart = }")
+                return {  # TODO: what should be returned?
+                    "discount_skel": skel,
+                }
 
         raise errors.NotImplemented(f'{skel["discount_type"]=} is not implemented yet :(')
 
@@ -103,7 +115,7 @@ class Discount(ShopModuleAbstract, List):
         skel: SkeletonInstance,
         cart_key: db.Key | None = None,
         code: str | None = None,
-    ):
+    ) -> tuple[bool, SkeletonInstance | None]:
         logger.debug(f"{skel = }")
 
         if cart_key is None:
@@ -115,10 +127,10 @@ class Discount(ShopModuleAbstract, List):
 
         if skel["activate_automatically"]:
             logger.info(f"is activate_automatically")
-            return False
+            return False, None
 
         # We need the full skel with all bones (otherwise the refSkel would be to large)
-        condition_skel = skeletonByKind(skel.condition.kind)()
+        condition_skel: SkeletonInstance = skeletonByKind(skel.condition.kind)()  # noqa
         for condition in skel["condition"]:
             if not condition_skel.fromDB(condition["dest"]["key"]):
                 logger.warning(f'Broken relation {condition=} in {skel["key"]}?!')
@@ -190,13 +202,13 @@ class Discount(ShopModuleAbstract, List):
             # All checks are passed, we have a suitable condition
             break
         else:
-            return False
+            return False, None
         # TODO: depending on condition_operator we have to use continue or return False
         # TODO: implement combineable check
 
         logger.debug(f"{condition=}")
 
-        return True
+        return True, condition_skel
 
     @property
     @functools.cache
@@ -204,7 +216,7 @@ class Discount(ShopModuleAbstract, List):
         query = self.viewSkel().all().filter("activate_automatically =", True)
         discounts = []
         for skel in query.fetch(100):
-            if not self.can_apply(skel):
+            if not self.can_apply(skel)[0]:
                 # TODO: this can_apply must be limited (check only active state, time range, ... but not lang)
                 logger.debug(f'Skipping discount {skel["key"]}')
                 continue

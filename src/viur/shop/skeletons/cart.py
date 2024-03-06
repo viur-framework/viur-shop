@@ -1,12 +1,10 @@
 import logging
-import typing as t
-
-from viur.shop.constants import *
 
 from viur.core import conf, db
 from viur.core.bones import *
 from viur.core.prototypes.tree import TreeSkel
 from viur.core.skeleton import SkeletonInstance
+from viur.shop.constants import *
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
@@ -274,7 +272,14 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     def price_sale_(self):
         # TODO: where to store methods like this?
         article_price = self.article_skel["shop_price_current"]
-        if discount := (self.parent_skel["discount"]):
+        from viur.shop.shop import SHOP_INSTANCE
+        try:
+            discount = next(iter(SHOP_INSTANCE.get().cart.get_discount_for_leaf(self)))
+        except Exception as exc:
+            logger.exception(exc)
+            discount = None
+        logger.debug(f"{discount=}")
+        if discount:  # := (self.parent_skel["discount"]):
             # At this point we can make sure the discount is valid applied
             # -- even if the article is already discounted
             discount = discount["dest"]
