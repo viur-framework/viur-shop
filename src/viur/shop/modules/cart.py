@@ -465,12 +465,10 @@ class Cart(ShopModuleAbstract, Tree):
             skel = leaf_key_or_skel
         discounts = []
         while (pk := skel["parententry"]):
-            # if not (pk := skel["parententry"]):
-            #     break
             skel = self.viewSkel("node")
             assert skel.fromDB(pk)
             if discount := skel["discount"]:
-                discounts.append(discount)
+                discounts.append(discount["dest"])
         logger.debug(f"{discounts = }")
         return discounts
 

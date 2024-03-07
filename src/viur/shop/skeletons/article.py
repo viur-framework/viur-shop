@@ -4,6 +4,7 @@ import typing as t
 
 from viur.core.bones import *
 from viur.shop import DiscountType
+from viur.shop.price import Price
 
 if t.TYPE_CHECKING:
     from viur.core.skeleton import SkeletonInstance
@@ -117,3 +118,9 @@ class ArticleAbstractSkel:  # FIXME: (abc.ABC):
         compute=Compute(lambda skel: skel.shop_current_price, ComputeInterval(ComputeMethod.Always)),
         precision=2,
     )
+
+    shop_price = RawBone( # FIXME: JsonBone doesn't work (https://github.com/viur-framework/viur-core/issues/1092)
+        descr="price",
+        compute=Compute(lambda skel: Price.get_or_create(skel).to_dict(), ComputeInterval(ComputeMethod.Always))
+    )
+    shop_price.type = JsonBone.type

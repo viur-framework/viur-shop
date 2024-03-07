@@ -115,6 +115,7 @@ class Discount(ShopModuleAbstract, List):
         skel: SkeletonInstance,
         cart_key: db.Key | None = None,
         code: str | None = None,
+        as_automatically: bool = False,
     ) -> tuple[bool, SkeletonInstance | None]:
         logger.debug(f"{skel = }")
 
@@ -125,7 +126,7 @@ class Discount(ShopModuleAbstract, List):
             if not cart.fromDB(cart_key):
                 raise errors.NotFound
 
-        if skel["activate_automatically"]:
+        if not as_automatically and  skel["activate_automatically"]:
             logger.info(f"is activate_automatically")
             return False, None
 
@@ -216,9 +217,9 @@ class Discount(ShopModuleAbstract, List):
         query = self.viewSkel().all().filter("activate_automatically =", True)
         discounts = []
         for skel in query.fetch(100):
-            if not self.can_apply(skel)[0]:
+            if not self.can_apply(skel, as_automatically=True)[0]:
                 # TODO: this can_apply must be limited (check only active state, time range, ... but not lang)
-                logger.debug(f'Skipping discount {skel["key"]}')
+                logger.debug(f'Skipping discount {skel["key"]} {skel["name"]}')
                 continue
             discounts.append(skel)
         logger.debug(f'current {discounts=}')

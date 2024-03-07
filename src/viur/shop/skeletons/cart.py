@@ -5,6 +5,7 @@ from viur.core.bones import *
 from viur.core.prototypes.tree import TreeSkel
 from viur.core.skeleton import SkeletonInstance
 from viur.shop.constants import *
+from ..price import Price
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
@@ -260,6 +261,13 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
         return self["article"]["dest"]
 
     @property
+    def article_skel_full(self):
+        from viur.shop.shop import SHOP_INSTANCE
+        skel = SHOP_INSTANCE.get().article_skel()
+        assert skel.fromDB(self.article_skel["key"])
+        return skel
+
+    @property
     def parent_skel(self):
         if not (pk := self["parententry"]):
             return None
@@ -282,7 +290,7 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
         if discount:  # := (self.parent_skel["discount"]):
             # At this point we can make sure the discount is valid applied
             # -- even if the article is already discounted
-            discount = discount["dest"]
+            # discount = discount["dest"]
             # logger.debug(f'{self=} // {discount=} // {self.parent_skel=}')
             if discount["discount_type"] == DiscountType.FREE_ARTICLE:
                 return 0
@@ -300,6 +308,12 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
         descr="sale_price_bone",
         compute=Compute(lambda skel: skel.price_sale_, ComputeInterval(ComputeMethod.Always))
     )
+
+    price = RawBone( # FIXME: JsonBone doesn't work (https://github.com/viur-framework/viur-core/issues/1092)
+        descr="price",
+        compute=Compute(lambda skel: Price.get_or_create(skel).to_dict(), ComputeInterval(ComputeMethod.Always))
+    )
+    price.type = JsonBone.type
 
     @classmethod
     def toDB(cls, skelValues: SkeletonInstance, update_relations: bool = True, **kwargs) -> db.Key:
