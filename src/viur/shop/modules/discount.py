@@ -95,8 +95,8 @@ class Discount(ShopModuleAbstract, List):
                 "cart_node_skel": cart_node_skel,
                 "cart_item_skel": cart_item_skel,
             }
-        elif skel["discount_type"] == DiscountType.PERCENTAGE:
-            if cond_skel["application_domain"] == ApplicationDomain.BASKET:
+        elif cond_skel["application_domain"] == ApplicationDomain.BASKET:
+            if skel["discount_type"] in {DiscountType.PERCENTAGE, DiscountType.ABSOLUTE}:
                 cart = self.shop.cart.cart_update(
                     cart_key=cart_key,
                     discount_key=skel["key"]
@@ -105,7 +105,31 @@ class Discount(ShopModuleAbstract, List):
                 return {  # TODO: what should be returned?
                     "discount_skel": skel,
                 }
-
+        elif cond_skel["application_domain"] == ApplicationDomain.ARTICLE:
+            leaf_skels = (
+                self.shop.cart.viewSkel("leaf").all()
+                .filter("parentrepo =", cart_key)
+                .filter("article.dest.__key__ =", cond_skel["scope_article"]["dest"]["key"])
+                .fetch()
+            )
+            logger.debug(f"<{len(leaf_skels)}>{leaf_skels = }")
+            if not leaf_skels:
+                raise errors.NotFound("expected article is missing on cart")
+            if len(leaf_skels) > 1:
+                raise NotImplementedError("article is ambiguous")
+            leaf_skel = leaf_skels[0]
+            # Assign discount on new parent node for the leaf where the article is
+            parent_skel = self.shop.cart.add_new_parent(leaf_skel, name=f'Discount {skel["name"]}')
+            cart = self.shop.cart.cart_update(
+                cart_key=parent_skel["key"],
+                discount_key=skel["key"]
+            )
+            logger.debug(f"{cart = }")
+            return {  # TODO: what should be returned?
+                "leaf_skel": leaf_skel,
+                "parent_skel": parent_skel,
+                "discount_skel": skel,
+            }
         raise errors.NotImplemented(f'{skel["discount_type"]=} is not implemented yet :(')
 
         return skel
@@ -126,7 +150,7 @@ class Discount(ShopModuleAbstract, List):
             if not cart.fromDB(cart_key):
                 raise errors.NotFound
 
-        if not as_automatically and  skel["activate_automatically"]:
+        if not as_automatically and skel["activate_automatically"]:
             logger.info(f"is activate_automatically")
             return False, None
 

@@ -46,12 +46,14 @@ class DiscountCondition(ShopModuleAbstract, List):
     def canEdit(self, skel):
         if skel["is_subcode"]:
             return False
+        if skel["code_type"] is not None:
+            skel.code_type.readOnly = True
         return super().canEdit(skel)
 
     def editSkel(self, *args, **kwargs) -> SkeletonInstance:
         skel = super().editSkel().ensure_is_cloned()
         skel.individual_codes_prefix.readOnly = True
-        skel.code_type.readOnly = True
+        # skel.code_type.readOnly = True
         skel.individual_codes_prefix.readOnly = True
         return skel
 

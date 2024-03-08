@@ -452,6 +452,7 @@ class Cart(ShopModuleAbstract, Tree):
         # TODO: for node in tree:
         #   freeze node with values, discount, shipping (JSON dump? bone duplication?)
         ...
+
     # -------------------------------------------------------------------------
 
     def get_discount_for_leaf(
@@ -472,4 +473,13 @@ class Cart(ShopModuleAbstract, Tree):
         logger.debug(f"{discounts = }")
         return discounts
 
-
+    def add_new_parent(self, leaf_skel, **kwargs):
+        new_parent_skel = self.addSkel("node")
+        new_parent_skel["parententry"] = leaf_skel["parententry"]
+        new_parent_skel["parentrepo"] = leaf_skel["parentrepo"]
+        for key, value in kwargs:
+            new_parent_skel[key] = value # TODO: use .setBoneValue?
+        new_parent_skel.toDB()
+        leaf_skel["parententry"] = new_parent_skel["key"]
+        leaf_skel.toDB()
+        return new_parent_skel

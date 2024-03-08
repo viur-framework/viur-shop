@@ -15,7 +15,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
         descr="name",
         compute=Compute(
             fn=lambda skel: str({
-                key: value
+                key: "..." if key == "scope_article" else value
                 for key, value in skel.items(True)
                 if value is not None and key not in dir(Skeleton)
             }),
@@ -198,6 +198,8 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
             "category": "2 – Scope",
             "visibleIf": 'application_domain == "article"'
         },
+        refKeys=["name", "shop_name", "shop_*"],
+        format="$(dest.shop_name) | $(dest.shop_shop_art_no_or_gtin) | $(dest.shop_price_retail) €",
     )
 
     is_subcode = BooleanBone(
@@ -226,3 +228,6 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
         },
         readOnly=True,
     )
+
+
+print(f"{DiscountConditionSkel.scope_article.refKeys = }")
