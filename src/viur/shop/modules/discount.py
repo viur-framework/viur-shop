@@ -130,6 +130,14 @@ class Discount(ShopModuleAbstract, List):
             logger.info(f"is activate_automatically")
             return False, None
 
+        # TODO:
+        """
+        class ScopeCondition:
+            def precondition(self, skel):#
+            def is_satisfied(self, skel):#
+        register from project custom
+        """
+
         # We need the full skel with all bones (otherwise the refSkel would be to large)
         condition_skel: SkeletonInstance = skeletonByKind(skel.condition.kind)()  # noqa
         for condition in skel["condition"]:

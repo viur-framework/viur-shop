@@ -37,7 +37,7 @@ class Price:
         # logger.debug(f"{self.article_skel = }")
         # logger.debug(f"{self.article_skel.shop_current_discount = }")
 
-        if (best_discount := self.article_skel.shop_current_discount) is not None:
+        if (best_discount := self.shop_current_discount(self.article_skel)) is not None:
             price, skel = best_discount
             self.article_discount = skel
             # self.cart_discounts.insert(0, skel)  # the general shop discount without a code
@@ -55,6 +55,11 @@ class Price:
         return self.retail - self.current
 
     @property
+    def saved_percentage(self) -> float:
+        return self.current / self.saved
+
+    @property
+    # @functools.cached_property
     def current(self) -> float:
         if (not self.is_in_cart or not self.cart_discounts) and self.article_discount:
             # only the article_discount is applicable
@@ -67,14 +72,53 @@ class Price:
             return price
         return self.retail
 
+    def shop_current_discount(self, skel) -> None | tuple[float, "SkeletonInstance"]:
+        """Best permanent discount campaign for article"""
+        from viur.shop.shop import SHOP_INSTANCE
+        best_discount = None
+        article_price = self.retail or 0.0  # FIXME: how to handle None prices?
+        if not article_price:
+            return None
+        for skel in SHOP_INSTANCE.get().discount.current_automatically_discounts:
+            # TODO: if can apply (article range, lang, ...)
+            price = self.apply_discount(skel, article_price)
+            if best_discount is None or price < best_discount[1]:
+                best_discount = price, skel
+        return best_discount
+
+    def choose_best_discount_set(self):
+        ...
+
+    @property
+    def vat_rate(self) -> float:
+        """Vat rate for the article
+
+        :returns: value as float (0.0 <= value <= 1.0)
+        """
+        if not (vat := self.article_skel["shop_vat"]):
+            return 0.0
+        return (vat["dest"]["rate"] or 0.0) / 100
+
+    @property
+    def vat_value(self) -> float:
+        """Calculate the vat value based on current price and vat rate"""
+        return self.vat_rate * self.current
+
     def to_dict(self):
-        current = self.current
+        _current = self.current
+
+        return {
+            attr_name: getattr(self, attr_name)
+            for attr_name, attr_value in vars(self.__class__).items()
+            if isinstance(attr_value, property)
+        }
+
         return {
             "retail": self.retail,
             "recommended": self.recommended,
-            "current": current,
+            "current": _current,
             "saved": self.saved,
-            "saved_percentage": current / self.saved,
+            "saved_percentage": self.saved_percentage,
             "cart_discounts": self.cart_discounts,
             "article_discount": self.article_discount,
         }
@@ -84,7 +128,9 @@ class Price:
         discount_skel: SkeletonInstance,
         article_price: float
     ):
-        if discount_skel["discount_type"] == DiscountType.ABSOLUTE:
+        if discount_skel["discount_type"] == DiscountType.FREE_ARTICLE:
+            return 0.0
+        elif discount_skel["discount_type"] == DiscountType.ABSOLUTE:
             price = article_price - discount_skel["absolute"]
         elif discount_skel["discount_type"] == DiscountType.PERCENTAGE:
             price = article_price - (

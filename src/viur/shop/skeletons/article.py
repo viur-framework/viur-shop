@@ -14,6 +14,11 @@ logger = logging.getLogger("viur.shop").getChild(__name__)
 
 # FIXME: TypeError: metaclass conflict: the metaclass of a derived class must be a (non-strict) subclass of the metaclasses of all its bases
 class ArticleAbstractSkel:  # FIXME: (abc.ABC):
+    """Abstract skeleton class which the project has to implement for the article skeletons
+
+    All members in this abstract skeleton has to be prefixed with `shop_` to
+    avoid name collisions with bones in the project skeleton
+    """
 
     @property
     @abc.abstractmethod
@@ -80,6 +85,7 @@ class ArticleAbstractSkel:  # FIXME: (abc.ABC):
 
     # --- Calculating helpers -------------------------------------------------
 
+    '''
     @property
     def shop_current_discount(self) -> None | tuple[float, "SkeletonInstance"]:
         """Best permanent discount campaign for article"""
@@ -118,6 +124,7 @@ class ArticleAbstractSkel:  # FIXME: (abc.ABC):
         compute=Compute(lambda skel: skel.shop_current_price, ComputeInterval(ComputeMethod.Always)),
         precision=2,
     )
+    '''
 
     shop_price = RawBone( # FIXME: JsonBone doesn't work (https://github.com/viur-framework/viur-core/issues/1092)
         descr="price",

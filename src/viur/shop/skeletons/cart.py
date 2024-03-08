@@ -87,7 +87,7 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
         descr="Total",
         precision=2,
         compute=Compute(
-            TotalFactory("total", "price_sale", True),
+            TotalFactory("total", lambda child: child.price_.current, True),
             ComputeInterval(ComputeMethod.Always),
         ),
     )
@@ -96,7 +96,7 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
         descr="Total",
         precision=2,
         compute=Compute(
-            TotalFactory("vat_total", lambda child: child.shop_vat_value, True),
+            TotalFactory("vat_total", lambda child: child.price_.vat_value, True),
             ComputeInterval(ComputeMethod.Always),
         ),
     )
@@ -249,12 +249,12 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
         descr="shop_is_low_price",
     )
 
-    @property
-    def shop_vat_value(self):
-        """Calculate the vat value based on price and vat rate"""
-        if not (vat := self["shop_vat"]):
-            return 0
-        return (vat["dest"]["rate"] or 0) / 100 * self["price_sale"]
+    # @property
+    # def shop_vat_value(self):
+    #     """Calculate the vat value based on price and vat rate"""
+    #     if not (vat := self["shop_vat"]):
+    #         return 0
+    #     return (vat["dest"]["rate"] or 0) / 100 * self["price_sale"]
 
     @property
     def article_skel(self):
@@ -276,6 +276,7 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
         assert skel.fromDB(pk)
         return skel
 
+    '''
     @property
     def price_sale_(self):
         # TODO: where to store methods like this?
@@ -308,6 +309,12 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
         descr="sale_price_bone",
         compute=Compute(lambda skel: skel.price_sale_, ComputeInterval(ComputeMethod.Always))
     )
+    '''
+
+    @property
+    def price_(self)->Price:
+        return Price.get_or_create(self)
+
 
     price = RawBone( # FIXME: JsonBone doesn't work (https://github.com/viur-framework/viur-core/issues/1092)
         descr="price",
