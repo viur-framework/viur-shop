@@ -9,7 +9,7 @@ from viur.core import current, db, tasks
 from viur.core.prototypes import List
 from viur.core.skeleton import SkeletonInstance
 from .abstract import ShopModuleAbstract
-from .. import CodeType
+from ..types import CodeType
 from ..services import Event, on_event
 
 logger = logging.getLogger("viur.shop").getChild(__name__)

@@ -1,16 +1,15 @@
 import logging
 import time
-import typing as t
+import typing as t  # noqa
 
 from viur.core import current, db, errors as core_errors, exposed, force_post
 from viur.core.prototypes import List
+from viur.shop.types import *
 from .abstract import ShopModuleAbstract
-from .. import ClientError, exceptions as e
-from ..constants import AddressType
 from ..payment_providers import PaymentProviderAbstract
-from ..response_types import JsonResponse
 from ..services import EVENT_SERVICE, Event, HOOK_SERVICE, Hook
 from ..skeletons.order import get_payment_providers
+from ..types import exceptions as e
 
 if t.TYPE_CHECKING:
     from viur.core.skeleton import SkeletonInstance

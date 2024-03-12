@@ -1,13 +1,12 @@
 import abc
 import logging
-import typing as t
+import typing as t  # noqa
 
 from viur.core.bones import *
-from viur.shop import DiscountType
-from viur.shop.price import Price
+from viur.shop.types import *
 
 if t.TYPE_CHECKING:
-    from viur.core.skeleton import SkeletonInstance
+    pass
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
@@ -126,7 +125,7 @@ class ArticleAbstractSkel:  # FIXME: (abc.ABC):
     )
     '''
 
-    shop_price = RawBone( # FIXME: JsonBone doesn't work (https://github.com/viur-framework/viur-core/issues/1092)
+    shop_price = RawBone(  # FIXME: JsonBone doesn't work (https://github.com/viur-framework/viur-core/issues/1092)
         descr="price",
         compute=Compute(lambda skel: Price.get_or_create(skel).to_dict(), ComputeInterval(ComputeMethod.Always))
     )

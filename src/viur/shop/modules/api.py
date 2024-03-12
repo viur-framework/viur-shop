@@ -1,15 +1,14 @@
 import logging
+import typing as t  # noqa
 
 from google.protobuf.message import DecodeError
 
-import viur.shop.exceptions as e
 from viur.core import conf, db, errors, exposed, force_post
 from viur.core.render.json.default import DefaultRender as JsonRenderer
-from viur.shop.exceptions import InvalidKeyException
 from viur.shop.modules.abstract import ShopModuleAbstract
-from viur.shop.response_types import JsonResponse
+from viur.shop.types import *
+import viur.shop.types.exceptions as e
 from .order import _sentinel
-from ..constants import CartType, QuantityMode, QuantityModeType
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 

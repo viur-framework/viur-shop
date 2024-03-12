@@ -5,7 +5,7 @@ import typing as t
 from viur.core import Module
 from viur.core.prototypes.instanced_module import InstancedModule
 from viur.core.skeleton import SkeletonInstance
-from .. import ClientError
+from ..types import ClientError
 
 if t.TYPE_CHECKING:
     from ..shop import Shop

@@ -1,6 +1,6 @@
 import abc
 import logging
-import typing as t
+import typing as t  # noqa
 
 import unzer
 from unzer.model import PaymentType
@@ -9,9 +9,9 @@ from unzer.model.payment import PaymentState
 
 from viur.core import current, db, errors, exposed, utils
 from viur.core.skeleton import SkeletonInstance
+from viur.shop.types import *
 from . import PaymentProviderAbstract
-from .. import ClientError, Salutation, exceptions as e
-from ..response_types import JsonResponse
+from ..types import exceptions as e
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 

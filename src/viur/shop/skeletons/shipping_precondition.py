@@ -1,4 +1,5 @@
 import logging
+import typing as t  # noqa
 
 from viur.core.bones import *
 from viur.core.skeleton import RelSkel

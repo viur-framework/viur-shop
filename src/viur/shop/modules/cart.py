@@ -1,14 +1,14 @@
 import logging
-import typing as t
+import typing as t  # noqa
 
-import viur.shop.exceptions as e
+import viur.shop.types.exceptions as e
 from viur.core import conf, current, db, errors, exposed, utils
 from viur.core.bones import BaseBone
 from viur.core.prototypes import Tree
 from viur.core.skeleton import SkeletonInstance
 from viur.shop.modules.abstract import ShopModuleAbstract
-from ..constants import AddressType, CartType, DiscountType, QuantityMode
-from ..exceptions import InvalidStateError
+from viur.shop.types import *
+from viur.shop.types.exceptions import InvalidStateError
 from ..skeletons.cart import CartItemSkel, CartNodeSkel
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
@@ -478,7 +478,7 @@ class Cart(ShopModuleAbstract, Tree):
         new_parent_skel["parententry"] = leaf_skel["parententry"]
         new_parent_skel["parentrepo"] = leaf_skel["parentrepo"]
         for key, value in kwargs:
-            new_parent_skel[key] = value # TODO: use .setBoneValue?
+            new_parent_skel[key] = value  # TODO: use .setBoneValue?
         new_parent_skel.toDB()
         leaf_skel["parententry"] = new_parent_skel["key"]
         leaf_skel.toDB()

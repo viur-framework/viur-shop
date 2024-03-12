@@ -1,11 +1,11 @@
 import logging
+import typing as t  # noqa
 
 from viur.core import conf, db
 from viur.core.bones import *
 from viur.core.prototypes.tree import TreeSkel
 from viur.core.skeleton import SkeletonInstance
-from viur.shop.constants import *
-from ..price import Price
+from viur.shop.types import *
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
@@ -312,11 +312,10 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     '''
 
     @property
-    def price_(self)->Price:
+    def price_(self) -> Price:
         return Price.get_or_create(self)
 
-
-    price = RawBone( # FIXME: JsonBone doesn't work (https://github.com/viur-framework/viur-core/issues/1092)
+    price = RawBone(  # FIXME: JsonBone doesn't work (https://github.com/viur-framework/viur-core/issues/1092)
         descr="price",
         compute=Compute(lambda skel: Price.get_or_create(skel).to_dict(), ComputeInterval(ComputeMethod.Always))
     )

@@ -1,8 +1,9 @@
 import logging
+import typing as t  # noqa
 
 from viur.core.bones import *
 from viur.core.skeleton import Skeleton
-from ..constants import *
+from viur.shop.types import *
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 

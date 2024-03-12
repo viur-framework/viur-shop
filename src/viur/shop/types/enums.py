@@ -1,3 +1,7 @@
+"""
+A lot of enums used for SelectBones in Skeletons
+"""
+
 import enum
 import typing as t
 

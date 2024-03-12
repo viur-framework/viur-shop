@@ -1,13 +1,12 @@
 import functools
 import logging
-import typing as t
+import typing as t  # noqa
 
 from viur.core import current, db, errors, utils
 from viur.core.prototypes import List
 from viur.core.skeleton import SkeletonInstance, skeletonByKind
+from viur.shop.types import *
 from .abstract import ShopModuleAbstract
-from .. import ApplicationDomain, CodeType, DiscountType, QuantityMode
-from ..exceptions import InvalidStateError
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 

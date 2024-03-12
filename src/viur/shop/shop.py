@@ -1,28 +1,25 @@
 import logging
 import typing as t
-from contextvars import ContextVar
 
+from viur.core import conf, db
 from viur.core.bones import RelationalBone
 from viur.core.decorators import exposed
+from viur.core.i18n import KINDNAME
 from viur.core.module import Module
+from viur.core.modules.translation import Creator, TranslationSkel
 from viur.core.modules.user import UserSkel
 from viur.core.prototypes.instanced_module import InstancedModule
 from viur.core.skeleton import MetaSkel, Skeleton, skeletonByKind
-from .data.translations import TRANSLATIONS
+from viur.shop.data.translations import TRANSLATIONS
+from .globals import SHOP_INSTANCE, SHOP_INSTANCE_VI, SHOP_LOGGER
 from .modules import Address, Api, Cart, Discount, DiscountCondition, Order, Shipping, ShippingConfig, Vat
 from .payment_providers import PaymentProviderAbstract
 from .services.hooks import HOOK_SERVICE
 from .skeletons.discount import DiscountSkel
 from .skeletons.discount_condition import DiscountConditionSkel
 from .types import Supplier
-from ..core import conf, db
-from ..core.i18n import KINDNAME
-from ..core.modules.translation import Creator, TranslationSkel
 
-logger = logging.getLogger("viur.shop").getChild(__name__)
-
-SHOP_INSTANCE: ContextVar["Shop"] = ContextVar("ShopInstance")
-SHOP_INSTANCE_VI: ContextVar["Shop"] = ContextVar("ShopInstanceVi")
+logger = SHOP_LOGGER.getChild(__name__)
 
 
 class Shop(InstancedModule, Module):

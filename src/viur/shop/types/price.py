@@ -5,7 +5,7 @@ import typing as t  # noqa
 from viur import toolkit
 from viur.core import current
 from viur.core.skeleton import SkeletonInstance
-from viur.shop import ConditionOperator, DiscountType
+from .enums import ConditionOperator, DiscountType
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
@@ -21,7 +21,7 @@ class Price:
     def __init__(self, src_object):
         super().__init__()
         # logger.debug(f"Creating new price object based on {src_object=}")
-        from .shop import SHOP_INSTANCE
+        from ..shop import SHOP_INSTANCE
 
         shop = SHOP_INSTANCE.get()
         if isinstance(src_object, SkeletonInstance) and issubclass(src_object.skeletonCls, shop.cart.leafSkelCls):
