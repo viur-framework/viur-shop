@@ -4,11 +4,13 @@ import random
 import string
 import typing as t
 
+from viur import toolkit
 from viur.core import current, db, tasks
 from viur.core.prototypes import List
 from viur.core.skeleton import SkeletonInstance
 from .abstract import ShopModuleAbstract
 from .. import CodeType
+from ..services import Event, on_event
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
@@ -142,3 +144,31 @@ class DiscountCondition(ShopModuleAbstract, List):
                 # yield cond_skel["parent_code"]["dest"]
             else:
                 yield cond_skel
+
+    def get_discounts_from_cart(self, cart_key: db.Key) -> list[db.Key]:
+        nodes = self.shop.cart.viewSkel("node").all().filter("parentrepo =", cart_key).fetch(100)
+        discounts = []
+        for node in nodes:
+            logger.debug(f"{node = }")
+            if node["discount"]:
+                discounts.append(node["discount"]["dest"]["key"])
+        # TODO: collect used from price and automatically as well
+        return discounts
+
+    @on_event(Event.ORDER_ORDERED)
+    @staticmethod
+    def mark_discount_used(order_skel, payment):
+        logger.info(f"Calling mark_discount_used with {order_skel=} {payment=}")
+        from ..shop import SHOP_INSTANCE
+        self = SHOP_INSTANCE.get().discount_condition
+        discounts = self.get_discounts_from_cart(order_skel["cart"]["dest"]["key"])
+        logger.debug(f"{discounts = }")
+
+        for discount in discounts:
+            d_skel = self.shop.discount.viewSkel()
+            d_skel.fromDB(discount)
+            for condition in d_skel["condition"]:
+                # TODO: Increase only "active" conditions in case of OR operator
+                # cond_skel = toolkit.get_full_skel_from_ref_skel(condition["dest"])
+                res = toolkit.increase_counter(condition["dest"]["key"], "quantity_used", 1)
+                logger.debug(f"old value: {res = }")

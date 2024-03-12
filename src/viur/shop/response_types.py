@@ -1,3 +1,4 @@
+import dataclasses
 import json
 import logging
 import typing as t
@@ -5,6 +6,7 @@ import typing as t
 from viur.core import current
 from viur.core.render.json.default import CustomJsonEncoder
 from viur.core.skeleton import SkeletonInstance
+from viur.shop import ClientError
 
 logger = logging.getLogger("viur.shop").getChild(__name__)
 
@@ -15,6 +17,8 @@ class ExtendedCustomJsonEncoder(CustomJsonEncoder):
         if isinstance(o, SkeletonInstance):
             # We're using the ViRender of the (hopefully) always existing user module
             return SHOP_INSTANCE_VI.get().render.renderSkelValues(o)
+        elif isinstance(o, ClientError):
+            return {"ClientError": dataclasses.asdict(o)}
         return super().default(o)
 
 
