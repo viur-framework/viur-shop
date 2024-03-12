@@ -158,6 +158,7 @@ class DiscountCondition(ShopModuleAbstract, List):
     @on_event(Event.ORDER_ORDERED)
     @staticmethod
     def mark_discount_used(order_skel, payment):
+        """Increase quantity_used on discount of an ordered cart"""
         logger.info(f"Calling mark_discount_used with {order_skel=} {payment=}")
         from ..shop import SHOP_INSTANCE
         self = SHOP_INSTANCE.get().discount_condition
