@@ -1,10 +1,10 @@
-import logging
-
 from viur.core.bones import *
 from viur.core.skeleton import Skeleton
 from viur.shop.types import *
 
-logger = logging.getLogger("viur.shop").getChild(__name__)
+from ..globals import SHOP_LOGGER
+
+logger = SHOP_LOGGER.getChild(__name__)
 
 
 # TODO: should these bones required or will this be handled in a editSkel?

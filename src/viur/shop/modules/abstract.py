@@ -1,12 +1,12 @@
-import logging
 import typing as t
 
 from viur.core import Module, current, translate
+from ..globals import SHOP_LOGGER
 
 if t.TYPE_CHECKING:
     from viur.shop import Shop
 
-logger = logging.getLogger("viur.shop").getChild(__name__)
+logger = SHOP_LOGGER.getChild(__name__)
 
 
 class ShopModuleAbstract(Module):

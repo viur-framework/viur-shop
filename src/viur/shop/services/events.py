@@ -1,9 +1,10 @@
 import collections
 import enum
-import logging
 import typing as t
 
-logger = logging.getLogger("viur.shop").getChild(__name__)
+from ..globals import SHOP_LOGGER
+
+logger = SHOP_LOGGER.getChild(__name__)
 
 
 class Event(enum.IntEnum):

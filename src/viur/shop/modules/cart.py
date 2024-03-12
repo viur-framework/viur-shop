@@ -1,4 +1,3 @@
-import logging
 import typing as t  # noqa
 
 import viur.shop.types.exceptions as e
@@ -9,11 +8,10 @@ from viur.core.skeleton import SkeletonInstance
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.types import *
 from viur.shop.types.exceptions import InvalidStateError
+from ..globals import SENTINEL, SHOP_LOGGER
 from ..skeletons.cart import CartItemSkel, CartNodeSkel
 
-logger = logging.getLogger("viur.shop").getChild(__name__)
-
-_sentinel = object()
+logger = SHOP_LOGGER.getChild(__name__)
 
 
 class Cart(ShopModuleAbstract, Tree):
@@ -308,17 +306,17 @@ class Cart(ShopModuleAbstract, Tree):
         parent_cart_key: str | db.Key = None,
         cart_type: CartType = None,  # TODO: since we generate basket automatically,
         #                                    wishlist would be the only acceptable value ...
-        name: str = _sentinel,
-        customer_comment: str = _sentinel,
-        shipping_address_key: str | db.Key = _sentinel,
-        shipping_key: str | db.Key = _sentinel,
-        discount_key: str | db.Key = _sentinel,
+        name: str = SENTINEL,
+        customer_comment: str = SENTINEL,
+        shipping_address_key: str | db.Key = SENTINEL,
+        shipping_key: str | db.Key = SENTINEL,
+        discount_key: str | db.Key = SENTINEL,
     ) -> SkeletonInstance | None:
         if not isinstance(parent_cart_key, (db.Key, type(None))):
             raise TypeError(f"parent_cart_key must be an instance of db.Key")
         if not isinstance(cart_type, (CartType, type(None))):
             raise TypeError(f"cart_type must be an instance of CartType")
-        if discount_key is not _sentinel and not isinstance(discount_key, (db.Key, type(None))):
+        if discount_key is not SENTINEL and not isinstance(discount_key, (db.Key, type(None))):
             raise TypeError(f"discount_key must be an instance of db.Key")
         skel = self.addSkel("node")
         skel = self._cart_set_values(
@@ -337,22 +335,22 @@ class Cart(ShopModuleAbstract, Tree):
     def cart_update(
         self,
         cart_key: db.Key,
-        parent_cart_key: str | db.Key = _sentinel,
+        parent_cart_key: str | db.Key = SENTINEL,
         cart_type: CartType = None,  # TODO: since we generate basket automatically,
         #                                    wishlist would be the only acceptable value ...
-        name: str = _sentinel,
-        customer_comment: str = _sentinel,
-        shipping_address_key: str | db.Key = _sentinel,
-        shipping_key: str | db.Key = _sentinel,
-        discount_key: str | db.Key = _sentinel,
+        name: str = SENTINEL,
+        customer_comment: str = SENTINEL,
+        shipping_address_key: str | db.Key = SENTINEL,
+        shipping_key: str | db.Key = SENTINEL,
+        discount_key: str | db.Key = SENTINEL,
     ) -> SkeletonInstance | None:
         if not isinstance(cart_key, db.Key):
             raise TypeError(f"cart_key must be an instance of db.Key")
         if not isinstance(cart_type, (CartType, type(None))):
             raise TypeError(f"cart_type must be an instance of CartType")
-        if parent_cart_key is not _sentinel and not isinstance(parent_cart_key, (db.Key, type(None))):
+        if parent_cart_key is not SENTINEL and not isinstance(parent_cart_key, (db.Key, type(None))):
             raise TypeError(f"parent_cart_key must be an instance of db.Key")
-        if discount_key is not _sentinel and not isinstance(discount_key, (db.Key, type(None))):
+        if discount_key is not SENTINEL and not isinstance(discount_key, (db.Key, type(None))):
             raise TypeError(f"discount_key must be an instance of db.Key")
         skel = self.editSkel("node")
         # TODO: must be inside a own root node ...
@@ -375,16 +373,16 @@ class Cart(ShopModuleAbstract, Tree):
         self,
         skel: SkeletonInstance | CartNodeSkel,
         *,
-        parent_cart_key: db.Key = _sentinel,
+        parent_cart_key: db.Key = SENTINEL,
         cart_type: CartType = None,  # TODO: since we generate basket automatically,
         #                                    wishlist would be the only acceptable value ...
-        name: str = _sentinel,
-        customer_comment: str = _sentinel,
-        shipping_address_key: str | db.Key = _sentinel,
-        shipping_key: str | db.Key = _sentinel,
-        discount_key: str | db.Key = _sentinel,
+        name: str = SENTINEL,
+        customer_comment: str = SENTINEL,
+        shipping_address_key: str | db.Key = SENTINEL,
+        shipping_key: str | db.Key = SENTINEL,
+        discount_key: str | db.Key = SENTINEL,
     ) -> SkeletonInstance:
-        if parent_cart_key is not _sentinel:
+        if parent_cart_key is not SENTINEL:
             skel["parententry"] = parent_cart_key
             if parent_cart_key is None:
                 skel["is_root_node"] = True
@@ -399,11 +397,11 @@ class Cart(ShopModuleAbstract, Tree):
                 else:
                     skel["parentrepo"] = parent_skel["parentrepo"]
         # Set / Change only values which were explicitly provided
-        if name is not _sentinel:
+        if name is not SENTINEL:
             skel["name"] = name
-        if customer_comment is not _sentinel:
+        if customer_comment is not SENTINEL:
             skel["customer_comment"] = customer_comment
-        if shipping_address_key is not _sentinel:
+        if shipping_address_key is not SENTINEL:
             if shipping_address_key is None:
                 skel["shipping_address"] = None
             else:
@@ -413,12 +411,12 @@ class Cart(ShopModuleAbstract, Tree):
                         "shipping_address",
                         descr_appendix="Address is not of type shipping."
                     )
-        if shipping_key is not _sentinel:
+        if shipping_key is not SENTINEL:
             if shipping_key is None:
                 skel["shipping"] = None
             else:
                 skel.setBoneValue("shipping", shipping_key)
-        if discount_key is not _sentinel:
+        if discount_key is not SENTINEL:
             if discount_key is None:
                 skel["discount"] = None
             else:

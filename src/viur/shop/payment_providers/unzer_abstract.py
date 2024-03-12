@@ -1,5 +1,4 @@
 import abc
-import logging
 import typing as t  # noqa
 
 import unzer
@@ -11,9 +10,10 @@ from viur.core import current, db, errors, exposed, utils
 from viur.core.skeleton import SkeletonInstance
 from viur.shop.types import *
 from . import PaymentProviderAbstract
+from ..globals import SHOP_LOGGER
 from ..types import exceptions as e
 
-logger = logging.getLogger("viur.shop").getChild(__name__)
+logger = SHOP_LOGGER.getChild(__name__)
 
 
 class UnzerAbstract(PaymentProviderAbstract):

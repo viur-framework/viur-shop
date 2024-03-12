@@ -1,11 +1,11 @@
-import logging
 import typing as t
 
 from viur.core import current, errors, exposed
 from viur.core.skeleton import SkeletonInstance
 from . import PaymentProviderAbstract
+from ..globals import SHOP_LOGGER
 
-logger = logging.getLogger("viur.shop").getChild(__name__)
+logger = SHOP_LOGGER.getChild(__name__)
 
 
 class AmazonPay(PaymentProviderAbstract):

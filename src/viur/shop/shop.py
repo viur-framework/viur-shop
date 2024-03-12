@@ -21,6 +21,8 @@ from .types import Supplier
 
 logger = SHOP_LOGGER.getChild(__name__)
 
+__all__ = ["Shop"]
+
 
 class Shop(InstancedModule, Module):
     @exposed

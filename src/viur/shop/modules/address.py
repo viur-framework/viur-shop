@@ -1,12 +1,12 @@
-import logging
 import typing as t
 
 from viur.core import current, db
 from viur.core.prototypes import List
 from viur.core.skeleton import SkeletonInstance
 from .abstract import ShopModuleAbstract
+from ..globals import SHOP_LOGGER
 
-logger = logging.getLogger("viur.shop").getChild(__name__)
+logger = SHOP_LOGGER.getChild(__name__)
 
 
 class Address(ShopModuleAbstract, List):

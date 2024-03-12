@@ -1,5 +1,4 @@
 import abc
-import logging
 import typing as t
 
 from viur.core import Module
@@ -10,7 +9,9 @@ from ..types import ClientError
 if t.TYPE_CHECKING:
     from ..shop import Shop
 
-logger = logging.getLogger("viur.shop").getChild(__name__)
+from ..globals import SHOP_LOGGER
+
+logger = SHOP_LOGGER.getChild(__name__)
 
 
 class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):

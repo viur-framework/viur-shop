@@ -1,12 +1,12 @@
-import logging
 import typing as t  # noqa
 
 from viur.core import conf
 from viur.core.bones import *
 from viur.core.skeleton import Skeleton
 from viur.shop.types import *
+from ..globals import SHOP_LOGGER
 
-logger = logging.getLogger("viur.shop").getChild(__name__)
+logger = SHOP_LOGGER.getChild(__name__)
 
 
 class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)

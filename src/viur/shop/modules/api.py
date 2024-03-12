@@ -1,16 +1,15 @@
-import logging
 import typing as t  # noqa
 
 from google.protobuf.message import DecodeError
 
+import viur.shop.types.exceptions as e
 from viur.core import conf, db, errors, exposed, force_post
 from viur.core.render.json.default import DefaultRender as JsonRenderer
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.types import *
-import viur.shop.types.exceptions as e
-from .order import _sentinel
+from ..globals import SENTINEL, SHOP_LOGGER
 
-logger = logging.getLogger("viur.shop").getChild(__name__)
+logger = SHOP_LOGGER.getChild(__name__)
 
 
 # TODO: add methods
@@ -249,13 +248,13 @@ class Api(ShopModuleAbstract):
         self,
         *,
         cart_key: str | db.Key,
-        payment_provider: str = _sentinel,
-        billing_address_key: str | db.Key = _sentinel,
-        email: str = _sentinel,
-        customer_key: str | db.Key = _sentinel,
-        state_ordered: bool = _sentinel,
-        state_paid: bool = _sentinel,
-        state_rts: bool = _sentinel,
+        payment_provider: str = SENTINEL,
+        billing_address_key: str | db.Key = SENTINEL,
+        email: str = SENTINEL,
+        customer_key: str | db.Key = SENTINEL,
+        state_ordered: bool = SENTINEL,
+        state_paid: bool = SENTINEL,
+        state_rts: bool = SENTINEL,
     ):
         cart_key = self._normalize_external_key(cart_key, "cart_key")
         billing_address_key = self._normalize_external_key(billing_address_key, "billing_address_key", True)
@@ -271,13 +270,13 @@ class Api(ShopModuleAbstract):
         self,
         *,
         order_key: str | db.Key,
-        payment_provider: str = _sentinel,
-        billing_address_key: str | db.Key = _sentinel,
-        email: str = _sentinel,
-        customer_key: str | db.Key = _sentinel,
-        state_ordered: bool = _sentinel,
-        state_paid: bool = _sentinel,
-        state_rts: bool = _sentinel,
+        payment_provider: str = SENTINEL,
+        billing_address_key: str | db.Key = SENTINEL,
+        email: str = SENTINEL,
+        customer_key: str | db.Key = SENTINEL,
+        state_ordered: bool = SENTINEL,
+        state_paid: bool = SENTINEL,
+        state_rts: bool = SENTINEL,
     ):
         order_key = self._normalize_external_key(order_key, "order_key")
         billing_address_key = self._normalize_external_key(billing_address_key, "billing_address_key", True)
@@ -355,8 +354,8 @@ class Api(ShopModuleAbstract):
         """
         Convert urlsafe key to db.Key and raise an error on invalid in key.
         """
-        if can_be_None and external_key is _sentinel:
-            return _sentinel
+        if can_be_None and external_key is SENTINEL:
+            return SENTINEL
         if can_be_None and not external_key:
             return None
         elif not external_key:

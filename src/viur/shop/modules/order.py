@@ -6,6 +6,7 @@ from viur.core import current, db, errors as core_errors, exposed, force_post
 from viur.core.prototypes import List
 from viur.shop.types import *
 from .abstract import ShopModuleAbstract
+from ..globals import SENTINEL, SHOP_LOGGER
 from ..payment_providers import PaymentProviderAbstract
 from ..services import EVENT_SERVICE, Event, HOOK_SERVICE, Hook
 from ..skeletons.order import get_payment_providers
@@ -14,9 +15,7 @@ from ..types import exceptions as e
 if t.TYPE_CHECKING:
     from viur.core.skeleton import SkeletonInstance
 
-logger = logging.getLogger("viur.shop").getChild(__name__)
-
-_sentinel = object()
+logger = SHOP_LOGGER.getChild(__name__)
 
 
 class Order(ShopModuleAbstract, List):
@@ -34,19 +33,19 @@ class Order(ShopModuleAbstract, List):
     def order_add(
         self,
         cart_key: db.Key,
-        payment_provider: str = _sentinel,
-        billing_address_key: db.Key = _sentinel,
-        email: str = _sentinel,
-        customer_key: db.Key = _sentinel,
-        state_ordered: bool = _sentinel,
-        state_paid: bool = _sentinel,
-        state_rts: bool = _sentinel,
+        payment_provider: str = SENTINEL,
+        billing_address_key: db.Key = SENTINEL,
+        email: str = SENTINEL,
+        customer_key: db.Key = SENTINEL,
+        state_ordered: bool = SENTINEL,
+        state_paid: bool = SENTINEL,
+        state_rts: bool = SENTINEL,
     ):
         if not isinstance(cart_key, db.Key):
             raise TypeError(f"cart_key must be an instance of db.Key")
-        if billing_address_key is not _sentinel and not isinstance(billing_address_key, (db.Key, type(None))):
+        if billing_address_key is not SENTINEL and not isinstance(billing_address_key, (db.Key, type(None))):
             raise TypeError(f"billing_address_key must be an instance of db.Key")
-        if customer_key is not _sentinel and not isinstance(customer_key, (db.Key, type(None))):
+        if customer_key is not SENTINEL and not isinstance(customer_key, (db.Key, type(None))):
             raise TypeError(f"customer_key must be an instance of db.Key")
         skel = self.addSkel()
         cart_skel = self.shop.cart.viewSkel("node")
@@ -55,9 +54,9 @@ class Order(ShopModuleAbstract, List):
         assert cart_skel.fromDB(cart_key)
         skel.setBoneValue("cart", cart_key)
         skel["total"] = cart_skel["total"]
-        if payment_provider is not _sentinel:
+        if payment_provider is not SENTINEL:
             skel["payment_provider"] = payment_provider  # TODO: validate
-        if billing_address_key is not _sentinel:
+        if billing_address_key is not SENTINEL:
             if billing_address_key is None:
                 skel["billing_address"] = None
             else:
@@ -71,17 +70,17 @@ class Order(ShopModuleAbstract, List):
             # us current user as default value
             skel["email"] = user["name"]
             skel.setBoneValue("customer", user["key"])
-        if email is not _sentinel:
+        if email is not SENTINEL:
             skel["email"] = email
-        if customer_key is not _sentinel:
+        if customer_key is not SENTINEL:
             skel.setBoneValue("customer", customer_key)  # TODO: validate (must be self of an admin)
         # TODO(discussion): Do we really want to set this by the frontend?
         #  Or what are the pre conditions?
-        if state_ordered is not _sentinel:
+        if state_ordered is not SENTINEL:
             skel["state_ordered"] = state_ordered
-        if state_paid is not _sentinel:
+        if state_paid is not SENTINEL:
             skel["state_paid"] = state_paid
-        if state_rts is not _sentinel:
+        if state_rts is not SENTINEL:
             skel["state_rts"] = state_rts
         skel.toDB()
         if cart_key == self.shop.cart.current_session_cart_key:
@@ -92,27 +91,27 @@ class Order(ShopModuleAbstract, List):
     def order_update(
         self,
         order_key: db.Key,
-        payment_provider: str = _sentinel,
-        billing_address_key: db.Key = _sentinel,
-        email: str = _sentinel,
-        customer_key: db.Key = _sentinel,
-        state_ordered: bool = _sentinel,
-        state_paid: bool = _sentinel,
-        state_rts: bool = _sentinel,
+        payment_provider: str = SENTINEL,
+        billing_address_key: db.Key = SENTINEL,
+        email: str = SENTINEL,
+        customer_key: db.Key = SENTINEL,
+        state_ordered: bool = SENTINEL,
+        state_paid: bool = SENTINEL,
+        state_rts: bool = SENTINEL,
     ):
         if not isinstance(order_key, db.Key):
             raise TypeError(f"order_key must be an instance of db.Key")
-        if billing_address_key is not _sentinel and not isinstance(billing_address_key, (db.Key, type(None))):
+        if billing_address_key is not SENTINEL and not isinstance(billing_address_key, (db.Key, type(None))):
             raise TypeError(f"billing_address_key must be an instance of db.Key")
-        if customer_key is not _sentinel and not isinstance(customer_key, (db.Key, type(None))):
+        if customer_key is not SENTINEL and not isinstance(customer_key, (db.Key, type(None))):
             raise TypeError(f"customer_key must be an instance of db.Key")
         skel = self.editSkel()
         if not skel.fromDB(order_key):
             raise core_errors.NotFound
         # TODO: refactor duplicate code!
-        if payment_provider is not _sentinel:
+        if payment_provider is not SENTINEL:
             skel["payment_provider"] = payment_provider  # TODO: validate
-        if billing_address_key is not _sentinel:
+        if billing_address_key is not SENTINEL:
             if billing_address_key is None:
                 skel["billing_address"] = None
             else:
@@ -126,17 +125,17 @@ class Order(ShopModuleAbstract, List):
             # us current user as default value
             skel["email"] = user["name"]
             skel.setBoneValue("customer", user["key"])
-        if email is not _sentinel:
+        if email is not SENTINEL:
             skel["email"] = email
-        if customer_key is not _sentinel:
+        if customer_key is not SENTINEL:
             skel.setBoneValue("customer", customer_key)  # TODO: validate (must be self of an admin)
         # TODO(discussion): Do we really want to set this by the frontend?
         #  Or what are the pre conditions?
-        if state_ordered is not _sentinel:
+        if state_ordered is not SENTINEL:
             skel["state_ordered"] = state_ordered
-        if state_paid is not _sentinel:
+        if state_paid is not SENTINEL:
             skel["state_paid"] = state_paid
-        if state_rts is not _sentinel:
+        if state_rts is not SENTINEL:
             skel["state_rts"] = state_rts
         skel.toDB()
         return skel

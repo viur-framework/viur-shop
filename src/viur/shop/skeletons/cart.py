@@ -1,4 +1,3 @@
-import logging
 import typing as t  # noqa
 
 from viur.core import conf, db
@@ -6,8 +5,9 @@ from viur.core.bones import *
 from viur.core.prototypes.tree import TreeSkel
 from viur.core.skeleton import SkeletonInstance
 from viur.shop.types import *
+from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 
-logger = logging.getLogger("viur.shop").getChild(__name__)
+logger = SHOP_LOGGER.getChild(__name__)
 
 
 class TotalFactory:
@@ -262,7 +262,6 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
 
     @property
     def article_skel_full(self):
-        from viur.shop.shop import SHOP_INSTANCE
         skel = SHOP_INSTANCE.get().article_skel()
         assert skel.fromDB(self.article_skel["key"])
         return skel
@@ -271,45 +270,9 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     def parent_skel(self):
         if not (pk := self["parententry"]):
             return None
-        from viur.shop.shop import SHOP_INSTANCE
         skel = SHOP_INSTANCE.get().cart.viewSkel("node")
         assert skel.fromDB(pk)
         return skel
-
-    '''
-    @property
-    def price_sale_(self):
-        # TODO: where to store methods like this?
-        article_price = self.article_skel["shop_price_current"]
-        from viur.shop.shop import SHOP_INSTANCE
-        try:
-            discount = next(iter(SHOP_INSTANCE.get().cart.get_discount_for_leaf(self)))
-        except Exception as exc:
-            logger.exception(exc)
-            discount = None
-        logger.debug(f"{discount=}")
-        if discount:  # := (self.parent_skel["discount"]):
-            # At this point we can make sure the discount is valid applied
-            # -- even if the article is already discounted
-            # discount = discount["dest"]
-            # logger.debug(f'{self=} // {discount=} // {self.parent_skel=}')
-            if discount["discount_type"] == DiscountType.FREE_ARTICLE:
-                return 0
-            elif discount["discount_type"] == DiscountType.ABSOLUTE:
-                return article_price - discount["absolute"]
-            elif discount["discount_type"] == DiscountType.PERCENTAGE:
-                return article_price - (
-                    article_price * discount["percentage"] / 100
-                )
-            else:
-                raise NotImplementedError(discount["discount_type"])
-        return article_price
-
-    price_sale = NumericBone(
-        descr="sale_price_bone",
-        compute=Compute(lambda skel: skel.price_sale_, ComputeInterval(ComputeMethod.Always))
-    )
-    '''
 
     @property
     def price_(self) -> Price:
@@ -317,7 +280,7 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
 
     price = RawBone(  # FIXME: JsonBone doesn't work (https://github.com/viur-framework/viur-core/issues/1092)
         descr="price",
-        compute=Compute(lambda skel: Price.get_or_create(skel).to_dict(), ComputeInterval(ComputeMethod.Always))
+        compute=Compute(lambda skel: skel.price_.to_dict(), ComputeInterval(ComputeMethod.Always))
     )
     price.type = JsonBone.type
 

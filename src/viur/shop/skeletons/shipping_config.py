@@ -1,11 +1,11 @@
-import logging
 import typing as t  # noqa
 
 from viur.core.bones import *
 from viur.core.skeleton import Skeleton
 from .shipping_precondition import ShippingPreconditionRelSkel
+from ..globals import SHOP_LOGGER
 
-logger = logging.getLogger("viur.shop").getChild(__name__)
+logger = SHOP_LOGGER.getChild(__name__)
 
 
 class ShippingConfigSkel(Skeleton):  # STATE: Complete (as in model)

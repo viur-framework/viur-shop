@@ -1,4 +1,3 @@
-import logging
 import pprint
 import random
 import string
@@ -9,10 +8,11 @@ from viur.core import current, db, tasks
 from viur.core.prototypes import List
 from viur.core.skeleton import SkeletonInstance
 from .abstract import ShopModuleAbstract
-from ..types import CodeType
+from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 from ..services import Event, on_event
+from ..types import CodeType
 
-logger = logging.getLogger("viur.shop").getChild(__name__)
+logger = SHOP_LOGGER.getChild(__name__)
 
 CODE_CHARS = sorted(set(string.ascii_letters + string.digits).difference(set("0OIl1")))
 CODE_LENGTH = 8
@@ -160,7 +160,6 @@ class DiscountCondition(ShopModuleAbstract, List):
     def mark_discount_used(order_skel, payment):
         """Increase quantity_used on discount of an ordered cart"""
         logger.info(f"Calling mark_discount_used with {order_skel=} {payment=}")
-        from ..shop import SHOP_INSTANCE
         self = SHOP_INSTANCE.get().discount_condition
         discounts = self.get_discounts_from_cart(order_skel["cart"]["dest"]["key"])
         logger.debug(f"{discounts = }")

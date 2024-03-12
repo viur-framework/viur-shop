@@ -1,11 +1,11 @@
-import logging
 import typing as t  # noqa
 
 from viur.core.bones import *
 from viur.core.i18n import translate
 from viur.core.skeleton import Skeleton
+from ..globals import SHOP_LOGGER
 
-logger = logging.getLogger("viur.shop").getChild(__name__)
+logger = SHOP_LOGGER.getChild(__name__)
 
 
 def get_suppliers() -> dict[str, str]:

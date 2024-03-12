@@ -1,13 +1,13 @@
 import functools
-import logging
 import typing as t  # noqa
 
 from viur import toolkit
 from viur.core import current
 from viur.core.skeleton import SkeletonInstance
 from .enums import ConditionOperator, DiscountType
+from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 
-logger = logging.getLogger("viur.shop").getChild(__name__)
+logger = SHOP_LOGGER.getChild(__name__)
 
 
 class Price:
@@ -21,8 +21,6 @@ class Price:
     def __init__(self, src_object):
         super().__init__()
         # logger.debug(f"Creating new price object based on {src_object=}")
-        from ..shop import SHOP_INSTANCE
-
         shop = SHOP_INSTANCE.get()
         if isinstance(src_object, SkeletonInstance) and issubclass(src_object.skeletonCls, shop.cart.leafSkelCls):
             self.is_in_cart = True
@@ -77,7 +75,6 @@ class Price:
 
     def shop_current_discount(self, skel) -> None | tuple[float, "SkeletonInstance"]:
         """Best permanent discount campaign for article"""
-        from viur.shop.shop import SHOP_INSTANCE
         best_discount = None
         article_price = self.retail or 0.0  # FIXME: how to handle None prices?
         if not article_price:

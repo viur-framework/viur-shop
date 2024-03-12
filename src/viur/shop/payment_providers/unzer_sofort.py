@@ -1,12 +1,11 @@
-import logging
-
 import unzer
 from unzer.model import PaymentType
 
 from viur.core.skeleton import SkeletonInstance
 from .unzer_abstract import UnzerAbstract
+from ..globals import SHOP_LOGGER
 
-logger = logging.getLogger("viur.shop").getChild(__name__)
+logger = SHOP_LOGGER.getChild(__name__)
 
 
 class UnzerSofort(UnzerAbstract):
