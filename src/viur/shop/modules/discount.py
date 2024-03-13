@@ -7,6 +7,7 @@ from viur.core.skeleton import SkeletonInstance, skeletonByKind
 from viur.shop.types import *
 from .abstract import ShopModuleAbstract
 from ..globals import SHOP_LOGGER
+from ..types.dc_scope import ScopeManager
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -39,13 +40,15 @@ class Discount(ShopModuleAbstract, List):
                 raise errors.NotFound
             return [skel]
         elif code is not None:
+            # Get condition skel(s) with this code
             cond_skels = list(self.shop.discount_condition.get_by_code(code))
             logger.debug(f"{code = } yields <{len(cond_skels)}>{cond_skels = }")
             if not cond_skels:
                 raise errors.NotFound
-            skels = skel.all().filter("condition.dest.__key__ IN", [s["key"] for s in cond_skels]).fetch(100)
-            logger.debug(f"{code = } yields <{len(skels)}>{skels = }")
-            return skels
+            # Get discount skel(s) using these condition skel
+            discount_skels = skel.all().filter("condition.dest.__key__ IN", [s["key"] for s in cond_skels]).fetch(100)
+            logger.debug(f"{code = } yields <{len(discount_skels)}>{discount_skels = }")
+            return discount_skels
         else:
             raise InvalidStateError
 
@@ -63,46 +66,72 @@ class Discount(ShopModuleAbstract, List):
         cart_key = self.shop.cart.current_session_cart_key  # TODO: parameter?
 
         skels = self.search(code, discount_key)
-        logger.debug(f"{skels = }")
+        # logger.debug(f"{skels = }")
 
         if not skels:
             raise errors.NotFound
-        for skel in skels:
-            if (res := self.can_apply(skel, cart_key, code))[0]:
-                _, cond_skel = res
+        for discount_skel in skels:
+            logger.debug(f'{discount_skel["name"]=} // {discount_skel["description"]=}')
+            # logger.debug(f"{discount_skel = }")
+            applicable, cms = self.can_apply(discount_skel, cart_key, code)
+            if applicable:
+                logger.debug("is applicable")
                 break
-        else:
-            return False
-        logger.debug(f"Using {skel=} and {cond_skel=}")
+            else:
+                for cm in cms:
+                    logger.debug(f"{cm = }")
+                    if cm is None:
+                        logger.warning(f"[{cm=} IS NONE")
+                        continue
+                    for scope in cm.required_scopes:
+                        if not scope.is_fulfilled:
+                            logger.error(f"{scope = }")
+                            # logger.error(f"{scope = } // {scope.discount_skel=} // {scope.condition_skel=} // {scope.cart_skel=}")
+                        else:
+                            logger.debug(f"{scope = }")
 
-        if skel["discount_type"] == DiscountType.FREE_ARTICLE:
+
+        else:
+            raise errors.NotFound("No valid code found")
+            return False
+        logger.debug(f"Using {discount_skel=} and {cms=}")
+        cms = [cm for cm in cms if cm.is_fulfilled]
+        if len(domains := {cm.condition_skel["application_domain"] for cm in cms}) > 1:
+            raise NotImplementedError(f"Ambiguous application_domains: {domains=}")
+        cond_skel = cms[0].condition_skel
+        # for cm in cms:
+        #     if cm.is_fulfilled
+
+
+
+        if discount_skel["discount_type"] == DiscountType.FREE_ARTICLE:
             cart_node_skel = self.shop.cart.cart_add(
                 parent_cart_key=cart_key,
                 name="Free Article",
-                discount_key=skel["key"],
+                discount_key=discount_skel["key"],
             )
             logger.debug(f"{cart_node_skel = }")
             cart_item_skel = self.shop.cart.add_or_update_article(
-                article_key=skel["free_article"]["dest"]["key"],
+                article_key=discount_skel["free_article"]["dest"]["key"],
                 parent_cart_key=cart_node_skel["key"],
                 quantity=1,
                 quantity_mode=QuantityMode.REPLACE,
             )
             logger.debug(f"{cart_item_skel = }")
             return {  # TODO: what should be returned?
-                "discount_skel": skel,
+                "discount_skel": discount_skel,
                 "cart_node_skel": cart_node_skel,
                 "cart_item_skel": cart_item_skel,
             }
         elif cond_skel["application_domain"] == ApplicationDomain.BASKET:
-            if skel["discount_type"] in {DiscountType.PERCENTAGE, DiscountType.ABSOLUTE}:
+            if discount_skel["discount_type"] in {DiscountType.PERCENTAGE, DiscountType.ABSOLUTE}:
                 cart = self.shop.cart.cart_update(
                     cart_key=cart_key,
-                    discount_key=skel["key"]
+                    discount_key=discount_skel["key"]
                 )
                 logger.debug(f"{cart = }")
                 return {  # TODO: what should be returned?
-                    "discount_skel": skel,
+                    "discount_skel": discount_skel,
                 }
         elif cond_skel["application_domain"] == ApplicationDomain.ARTICLE:
             leaf_skels = (
@@ -118,20 +147,20 @@ class Discount(ShopModuleAbstract, List):
                 raise NotImplementedError("article is ambiguous")
             leaf_skel = leaf_skels[0]
             # Assign discount on new parent node for the leaf where the article is
-            parent_skel = self.shop.cart.add_new_parent(leaf_skel, name=f'Discount {skel["name"]}')
+            parent_skel = self.shop.cart.add_new_parent(leaf_skel, name=f'Discount {discount_skel["name"]}')
             cart = self.shop.cart.cart_update(
                 cart_key=parent_skel["key"],
-                discount_key=skel["key"]
+                discount_key=discount_skel["key"]
             )
             logger.debug(f"{cart = }")
             return {  # TODO: what should be returned?
                 "leaf_skel": leaf_skel,
                 "parent_skel": parent_skel,
-                "discount_skel": skel,
+                "discount_skel": discount_skel,
             }
-        raise errors.NotImplemented(f'{skel["discount_type"]=} is not implemented yet :(')
+        raise errors.NotImplemented(f'{discount_skel["discount_type"]=} is not implemented yet :(')
 
-        return skel
+        return discount_skel
 
     def can_apply(
         self,
@@ -139,8 +168,9 @@ class Discount(ShopModuleAbstract, List):
         cart_key: db.Key | None = None,
         code: str | None = None,
         as_automatically: bool = False,
-    ) -> tuple[bool, SkeletonInstance | None]:
-        logger.debug(f"{skel = }")
+    ) -> tuple[bool, list[ScopeManager]]:
+        logger.debug(f'{skel["name"] = } // {skel["description"] = }')
+        # logger.debug(f"{skel = }")
 
         if cart_key is None:
             cart = None
@@ -151,7 +181,7 @@ class Discount(ShopModuleAbstract, List):
 
         if not as_automatically and skel["activate_automatically"]:
             logger.info(f"is activate_automatically")
-            return False, None
+            return False, []
 
         # TODO:
         """
@@ -163,6 +193,29 @@ class Discount(ShopModuleAbstract, List):
 
         # We need the full skel with all bones (otherwise the refSkel would be to large)
         condition_skel: SkeletonInstance = skeletonByKind(skel.condition.kind)()  # noqa
+        res = []
+        for condition in skel["condition"]:
+            if not condition_skel.fromDB(condition["dest"]["key"]):
+                logger.warning(f'Broken relation {condition=} in {skel["key"]}?!')
+                res.append(None)
+                continue
+            sm = ScopeManager()(cart_skel=cart, discount_skel=skel, condition_skel=condition_skel)
+            res.append(sm)
+        if skel["condition_operator"] == ConditionOperator.ONE_OF:
+            if any(sm.is_fulfilled for sm in res):
+                logger.debug("Any condition fulfilled")
+                return True, res
+            logger.debug("NOT ANY condition fulfilled")
+        elif skel["condition_operator"] == ConditionOperator.ALL:
+            if all(sm.is_fulfilled for sm in res):
+                logger.debug("All conditions fulfilled")
+                return True, res
+            logger.debug("NOT ALL condition fulfilled")
+        else:
+            raise InvalidStateError(f'Invalid condition operator: {skel["condition_operator"]}')
+        return False, res
+
+        '''
         for condition in skel["condition"]:
             if not condition_skel.fromDB(condition["dest"]["key"]):
                 logger.warning(f'Broken relation {condition=} in {skel["key"]}?!')
@@ -237,6 +290,7 @@ class Discount(ShopModuleAbstract, List):
             return False, None
         # TODO: depending on condition_operator we have to use continue or return False
         # TODO: implement combineable check
+        '''
 
         logger.debug(f"{condition=}")
 

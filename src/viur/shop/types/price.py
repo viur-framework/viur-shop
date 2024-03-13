@@ -149,9 +149,9 @@ class Price:
             attr_name: getattr(self, attr_name)
             for attr_name, attr_value in vars(self.__class__).items()
             if isinstance(attr_value, (property, functools.cached_property))
-        } | {
-            "cart_discounts": self.cart_discounts,
-            "article_discount": self.article_discount,
+        } | { # TODO: must be JSON serializable for vi renderer
+            # "cart_discounts": self.cart_discounts,
+            # "article_discount": self.article_discount,
         }
 
         return {

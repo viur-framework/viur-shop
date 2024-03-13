@@ -29,7 +29,7 @@ class DiscountCondition(ShopModuleAbstract, List):
             "is_subcode": False,
             "orderby": "name",
         }
-        admin_info["editViews"] = [
+        admin_info["#editViews"] = [
             {
                 "module": "shop/discount_condition",
                 "title": "Sub Codes",
