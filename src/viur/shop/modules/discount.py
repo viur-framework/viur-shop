@@ -7,7 +7,7 @@ from viur.core.skeleton import SkeletonInstance, skeletonByKind
 from viur.shop.types import *
 from .abstract import ShopModuleAbstract
 from ..globals import SHOP_LOGGER
-from ..types.dc_scope import ScopeManager
+from ..types.dc_scope import ConditionValidator, DiscountValidator
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -18,6 +18,18 @@ class Discount(ShopModuleAbstract, List):
     def adminInfo(self) -> dict:
         admin_info = super().adminInfo()
         admin_info["icon"] = "percent"
+        admin_info["editViews"] = [
+            {
+                "module": "shop/discount_condition",
+                "title": "Conditions",
+                "context": "condition.dest.key",
+                "filter": {
+                    # "is_subcode": True,
+                    # "orderby": "scope_code",
+                },
+                # "columns": ["scope_code", "quantity_used"],
+            }
+        ]
         return admin_info
 
     # --- Apply logic ---------------------------------------------------------
@@ -73,36 +85,39 @@ class Discount(ShopModuleAbstract, List):
         for discount_skel in skels:
             logger.debug(f'{discount_skel["name"]=} // {discount_skel["description"]=}')
             # logger.debug(f"{discount_skel = }")
-            applicable, cms = self.can_apply(discount_skel, cart_key, code)
+            applicable, dv = self.can_apply(discount_skel, cart_key, code)
             if applicable:
                 logger.debug("is applicable")
                 break
             else:
-                for cm in cms:
-                    logger.debug(f"{cm = }")
-                    if cm is None:
-                        logger.warning(f"[{cm=} IS NONE")
-                        continue
-                    for scope in cm.required_scopes:
-                        if not scope.is_fulfilled:
-                            logger.error(f"{scope = }")
-                            # logger.error(f"{scope = } // {scope.discount_skel=} // {scope.condition_skel=} // {scope.cart_skel=}")
-                        else:
-                            logger.debug(f"{scope = }")
+                logger.error(f"{dv = }")
+                # for cm in cms:
+                #     logger.debug(f"{cm = }")
+                #     if dv is None:
+                #         logger.warning(f"[{cm=} IS NONE")
+                #         continue
+                #     for scope in cm.applicable_scopes:
+                #         if not scope.is_fulfilled:
+                #             logger.error(f"{scope = }")
+                #             # logger.error(f"{scope = } // {scope.discount_skel=} // {scope.condition_skel=} // {scope.cart_skel=}")
+                #         else:
+                #             logger.debug(f"{scope = }")
 
 
         else:
             raise errors.NotFound("No valid code found")
             return False
-        logger.debug(f"Using {discount_skel=} and {cms=}")
-        cms = [cm for cm in cms if cm.is_fulfilled]
-        if len(domains := {cm.condition_skel["application_domain"] for cm in cms}) > 1:
-            raise NotImplementedError(f"Ambiguous application_domains: {domains=}")
-        cond_skel = cms[0].condition_skel
+        logger.debug(f"Using {discount_skel=} and {dv=}")
+        # cms = [cm for cm in cms if cm.is_fulfilled]
+        # if len(domains := {cm.condition_skel["application_domain"] for cm in cms}) > 1:
+        #     raise NotImplementedError(f"Ambiguous application_domains: {domains=}")
+
+        # cond_skel = cms[0].condition_skel
         # for cm in cms:
         #     if cm.is_fulfilled
 
-
+        # application_domain = cond_skel["application_domain"]
+        application_domain = dv.application_domain
 
         if discount_skel["discount_type"] == DiscountType.FREE_ARTICLE:
             cart_node_skel = self.shop.cart.cart_add(
@@ -123,7 +138,7 @@ class Discount(ShopModuleAbstract, List):
                 "cart_node_skel": cart_node_skel,
                 "cart_item_skel": cart_item_skel,
             }
-        elif cond_skel["application_domain"] == ApplicationDomain.BASKET:
+        elif application_domain == ApplicationDomain.BASKET:
             if discount_skel["discount_type"] in {DiscountType.PERCENTAGE, DiscountType.ABSOLUTE}:
                 cart = self.shop.cart.cart_update(
                     cart_key=cart_key,
@@ -133,7 +148,7 @@ class Discount(ShopModuleAbstract, List):
                 return {  # TODO: what should be returned?
                     "discount_skel": discount_skel,
                 }
-        elif cond_skel["application_domain"] == ApplicationDomain.ARTICLE:
+        elif application_domain == ApplicationDomain.ARTICLE:
             leaf_skels = (
                 self.shop.cart.viewSkel("leaf").all()
                 .filter("parentrepo =", cart_key)
@@ -168,7 +183,7 @@ class Discount(ShopModuleAbstract, List):
         cart_key: db.Key | None = None,
         code: str | None = None,
         as_automatically: bool = False,
-    ) -> tuple[bool, list[ScopeManager]]:
+    ) -> tuple[bool, DiscountValidator]:
         logger.debug(f'{skel["name"] = } // {skel["description"] = }')
         # logger.debug(f"{skel = }")
 
@@ -191,6 +206,9 @@ class Discount(ShopModuleAbstract, List):
         register from project custom
         """
 
+        dv = DiscountValidator()(cart_skel=cart, discount_skel=skel, code=code)
+        return dv.is_fulfilled, dv
+
         # We need the full skel with all bones (otherwise the refSkel would be to large)
         condition_skel: SkeletonInstance = skeletonByKind(skel.condition.kind)()  # noqa
         res = []
@@ -199,7 +217,7 @@ class Discount(ShopModuleAbstract, List):
                 logger.warning(f'Broken relation {condition=} in {skel["key"]}?!')
                 res.append(None)
                 continue
-            sm = ScopeManager()(cart_skel=cart, discount_skel=skel, condition_skel=condition_skel)
+            sm = ConditionValidator()(cart_skel=cart, discount_skel=skel, condition_skel=condition_skel)
             res.append(sm)
         if skel["condition_operator"] == ConditionOperator.ONE_OF:
             if any(sm.is_fulfilled for sm in res):

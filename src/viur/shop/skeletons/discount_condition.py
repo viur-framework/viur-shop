@@ -1,4 +1,5 @@
 import typing as t  # noqa
+from datetime import datetime as dt
 
 from viur.core import conf
 from viur.core.bones import *
@@ -12,13 +13,38 @@ logger = SHOP_LOGGER.getChild(__name__)
 class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
     kindName = "shop_discount_condition"
 
+    interBoneValidations = [
+        # Make individual_codes_amount required if selected as CodeType.INDIVIDUAL
+        lambda skel: (
+            [ReadFromClientError(
+                ReadFromClientErrorSeverity.Invalid,
+                "individual_codes_amount must be greater than 0",
+                ["individual_codes_amount"],
+                ["individual_codes_amount"],
+            )]
+            if skel["code_type"] == CodeType.INDIVIDUAL and not skel["individual_codes_amount"]
+            else []
+        ),
+        # Make individual_codes_prefix required if selected as CodeType.INDIVIDUAL
+        lambda skel: (
+            [ReadFromClientError(
+                ReadFromClientErrorSeverity.Invalid,
+                "individual_codes_prefix must be not-empty",
+                ["individual_codes_prefix"],
+                ["individual_codes_prefix"],
+            )]
+            if skel["code_type"] == CodeType.INDIVIDUAL and not skel["individual_codes_prefix"]
+            else []
+        ),
+    ]
+
     name = StringBone(
         descr="name",
         compute=Compute(
             fn=lambda skel: str({
-                key: "..." if key == "scope_article" else value
+                key: "..." if key == "scope_article" else (value.isoformat() if isinstance(value, dt) else value)
                 for key, value in skel.items(True)
-                if value is not None and key not in dir(Skeleton)
+                if value and value != getattr(skel, key).defaultValue and key not in dir(Skeleton)
             }),
             interval=ComputeInterval(
                 method=ComputeMethod.OnWrite,
@@ -39,7 +65,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
 
     code_type = SelectBone(
         descr="code_type",
-        # required=True,
+        required=True,
         values=CodeType,
         defaultValue=CodeType.NONE,
         params={
@@ -87,6 +113,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
             "category": "1 – General",
             "visibleIf": 'code_type == "individual"'
         },
+        defaultValue=0,
     )
 
     scope_code = StringBone(
@@ -106,6 +133,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
             "category": "2 – Scope",
             "visibleIf": 'code_type == "individual"'
         },
+        unique=UniqueValue(UniqueLockMethod.SameValue, False, "Value already taken"),
     )
 
     scope_minimum_order_value = NumericBone(
@@ -140,6 +168,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
         params={
             "category": "2 – Scope",
         },
+        # TODO: multiple=True, ???
     )
 
     scope_country = SelectCountryBone(
@@ -147,6 +176,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
         params={
             "category": "2 – Scope",
         },
+        # TODO: multiple=True, ???
     )
 
     scope_minimum_quantity = NumericBone(

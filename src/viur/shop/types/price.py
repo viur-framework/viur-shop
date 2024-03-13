@@ -10,6 +10,9 @@ from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 logger = SHOP_LOGGER.getChild(__name__)
 
 
+# TODO: Use decimal package instead of floats?
+#       -> decimal mode in NumericBone?
+
 class Price:
     cart_discounts: list[SkeletonInstance] = []
     article_discount: SkeletonInstance = None
@@ -52,12 +55,12 @@ class Price:
 
     @property
     def saved(self) -> float:
-        return self.retail - self.current
+        return toolkit.round_decimal(self.retail - self.current, 2)
 
     @property
     def saved_percentage(self) -> float:
         try:
-            return self.current / self.saved
+            return toolkit.round_decimal(self.saved / self.current, 2 or 4)  # TODO
         except ZeroDivisionError:
             return 0.0
 
@@ -66,11 +69,11 @@ class Price:
     def current(self) -> float:
         if (not self.is_in_cart or not self.cart_discounts) and self.article_discount:
             # only the article_discount is applicable
-            return self.apply_discount(self.article_discount, self.retail)
+            return toolkit.round_decimal(self.apply_discount(self.article_discount, self.retail), 2)
         if self.is_in_cart and self.cart_discounts:
             # TODO: if self.article_discount:
             best_price, best_discounts = self.choose_best_discount_set()
-            return best_price
+            return toolkit.round_decimal(best_price, 2)
         return self.retail
 
     def shop_current_discount(self, skel) -> None | tuple[float, "SkeletonInstance"]:
@@ -140,7 +143,7 @@ class Price:
     @property
     def vat_value(self) -> float:
         """Calculate the vat value based on current price and vat rate"""
-        return self.vat_rate * self.current
+        return toolkit.round_decimal(self.vat_rate * self.current, 2)
 
     def to_dict(self):
         _current = self.current
@@ -149,7 +152,7 @@ class Price:
             attr_name: getattr(self, attr_name)
             for attr_name, attr_value in vars(self.__class__).items()
             if isinstance(attr_value, (property, functools.cached_property))
-        } | { # TODO: must be JSON serializable for vi renderer
+        } | {  # TODO: must be JSON serializable for vi renderer
             # "cart_discounts": self.cart_discounts,
             # "article_discount": self.article_discount,
         }

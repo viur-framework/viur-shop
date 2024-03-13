@@ -4,7 +4,7 @@ import string
 import typing as t
 
 from viur import toolkit
-from viur.core import current, db, tasks
+from viur.core import current, db, tasks, translate
 from viur.core.prototypes import List
 from viur.core.skeleton import SkeletonInstance
 from .abstract import ShopModuleAbstract
@@ -29,17 +29,27 @@ class DiscountCondition(ShopModuleAbstract, List):
             "is_subcode": False,
             "orderby": "name",
         }
-        admin_info["#editViews"] = [
+        admin_info["editViews"] = [
+            {
+                "module": "shop/discount",
+                "name": "Discounts using this condition",
+                "context": "condition.dest.key",
+                "filter": {
+                    # "is_subcode": True,
+                    # "orderby": "scope_code",
+                },
+                # "columns": ["scope_code", "quantity_used"],
+            },
             {
                 "module": "shop/discount_condition",
-                "title": "Sub Codes",
+                "name": "Sub Codes",
                 "context": "parent_code.dest.key",
                 "filter": {
                     "is_subcode": True,
                     "orderby": "scope_code",
                 },
                 "columns": ["scope_code", "quantity_used"],
-            }
+            },
         ]
         return admin_info
 
@@ -48,7 +58,7 @@ class DiscountCondition(ShopModuleAbstract, List):
     def canEdit(self, skel):
         if skel["is_subcode"]:
             return False
-        if skel["code_type"] is not None:
+        if skel["code_type"] is not None and skel["code_type"] != CodeType.NONE:
             skel.code_type.readOnly = True
         return super().canEdit(skel)
 

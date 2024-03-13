@@ -36,7 +36,7 @@ class AddressType(enum.Enum):
 
 
 class CodeType(enum.Enum):
-    NONE = None  # TODO: is this working?
+    NONE = "none"  # TODO: is this working?
     INDIVIDUAL = "individual"
     UNIVERSAL = "universal"
 
