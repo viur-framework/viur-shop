@@ -3,11 +3,11 @@ import typing as t  # noqa
 
 from viur.core import db, errors
 from viur.core.prototypes import List
-from viur.core.skeleton import SkeletonInstance, skeletonByKind
+from viur.core.skeleton import SkeletonInstance
 from viur.shop.types import *
 from .abstract import ShopModuleAbstract
 from ..globals import SHOP_LOGGER
-from ..types.dc_scope import ConditionValidator, DiscountValidator
+from ..types.dc_scope import DiscountValidator
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -91,34 +91,16 @@ class Discount(ShopModuleAbstract, List):
                 break
             else:
                 logger.error(f"{dv = }")
-                # for cm in cms:
-                #     logger.debug(f"{cm = }")
-                #     if dv is None:
-                #         logger.warning(f"[{cm=} IS NONE")
-                #         continue
-                #     for scope in cm.applicable_scopes:
-                #         if not scope.is_fulfilled:
-                #             logger.error(f"{scope = }")
-                #             # logger.error(f"{scope = } // {scope.discount_skel=} // {scope.condition_skel=} // {scope.cart_skel=}")
-                #         else:
-                #             logger.debug(f"{scope = }")
-
-
         else:
             raise errors.NotFound("No valid code found")
-            return False
+
         logger.debug(f"Using {discount_skel=}")
         logger.debug(f"Using {dv=}")
-        # cms = [cm for cm in cms if cm.is_fulfilled]
-        # if len(domains := {cm.condition_skel["application_domain"] for cm in cms}) > 1:
-        #     raise NotImplementedError(f"Ambiguous application_domains: {domains=}")
 
-        # cond_skel = cms[0].condition_skel
-        # for cm in cms:
-        #     if cm.is_fulfilled
-
-        # application_domain = cond_skel["application_domain"]
-        application_domain = dv.application_domain
+        try:
+            application_domain = dv.application_domain
+        except KeyError:
+            raise InvalidStateError("application_domain not set")
 
         if discount_skel["discount_type"] == DiscountType.FREE_ARTICLE:
             cart_node_skel = self.shop.cart.cart_add(
@@ -187,15 +169,13 @@ class Discount(ShopModuleAbstract, List):
             }
         raise errors.NotImplemented(f'{discount_skel["discount_type"]=} is not implemented yet :(')
 
-        return discount_skel
-
     def can_apply(
         self,
         skel: SkeletonInstance,
         cart_key: db.Key | None = None,
         code: str | None = None,
         as_automatically: bool = False,
-    ) -> tuple[bool, DiscountValidator]:
+    ) -> tuple[bool, DiscountValidator | None]:
         logger.debug(f'{skel["name"] = } // {skel["description"] = }')
         # logger.debug(f"{skel = }")
 
@@ -208,127 +188,14 @@ class Discount(ShopModuleAbstract, List):
 
         if not as_automatically and skel["activate_automatically"]:
             logger.info(f"is activate_automatically")
-            return False, []
-
-        # TODO:
-        """
-        class ScopeCondition:
-            def precondition(self, skel):#
-            def is_satisfied(self, skel):#
-        register from project custom
-        """
+            return False, None
 
         dv = DiscountValidator()(cart_skel=cart, discount_skel=skel, code=code)
         return dv.is_fulfilled, dv
 
-        # We need the full skel with all bones (otherwise the refSkel would be to large)
-        condition_skel: SkeletonInstance = skeletonByKind(skel.condition.kind)()  # noqa
-        res = []
-        for condition in skel["condition"]:
-            if not condition_skel.fromDB(condition["dest"]["key"]):
-                logger.warning(f'Broken relation {condition=} in {skel["key"]}?!')
-                res.append(None)
-                continue
-            sm = ConditionValidator()(cart_skel=cart, discount_skel=skel, condition_skel=condition_skel)
-            res.append(sm)
-        if skel["condition_operator"] == ConditionOperator.ONE_OF:
-            if any(sm.is_fulfilled for sm in res):
-                logger.debug("Any condition fulfilled")
-                return True, res
-            logger.debug("NOT ANY condition fulfilled")
-        elif skel["condition_operator"] == ConditionOperator.ALL:
-            if all(sm.is_fulfilled for sm in res):
-                logger.debug("All conditions fulfilled")
-                return True, res
-            logger.debug("NOT ALL condition fulfilled")
-        else:
-            raise InvalidStateError(f'Invalid condition operator: {skel["condition_operator"]}')
-        return False, res
-
-        '''
-        for condition in skel["condition"]:
-            if not condition_skel.fromDB(condition["dest"]["key"]):
-                logger.warning(f'Broken relation {condition=} in {skel["key"]}?!')
-                continue
-
-            # Check if one scope is in conflict, then we skip the entire condition
-            # Therefore we're testing the negation of the desired scope!
-            # But we only check the values that are set.
-            if (
-                cart is not None  # TODO
-                and condition_skel["scope_minimum_order_value"] is not None
-                and condition_skel["scope_minimum_order_value"] > cart["total"]
-            ):
-                logger.info(f"scope_minimum_order_value not reached")
-                continue
-
-            now = utils.utcNow()
-            if (
-                condition_skel["scope_date_start"] is not None
-                and condition_skel["scope_date_start"] > now
-            ):
-                logger.info(f"scope_date_start not reached")
-                continue
-
-            if (
-                condition_skel["scope_date_end"] is not None
-                and condition_skel["scope_date_end"] < now
-            ):
-                logger.info(f"scope_date_end not reached")
-                continue
-
-            if (condition_skel["scope_language"] is not None
-                and condition_skel["scope_language"] != current.language.get()
-            ):
-                logger.info(f"scope_language not reached")
-                continue
-
-            if (
-                cart is not None
-                and condition_skel["scope_minimum_quantity"] is not None
-                and condition_skel["scope_minimum_quantity"] > cart["total_quantity"]
-            ):
-                logger.info(f"scope_minimum_quantity not reached")
-                continue
-
-            # TODO: if not scope_combinable_other_discount and article.shop_current_discount is not None
-
-            if (
-                condition_skel["code_type"] == CodeType.UNIVERSAL
-                and condition_skel["scope_code"] != code
-            ):
-                logger.info(f'scope_code UNIVERSAL not reached ({condition_skel["scope_code"]=} != {code=})')
-                continue
-            elif (
-                condition_skel["code_type"] == CodeType.INDIVIDUAL
-            ):
-                sub = (
-                    self.shop.discount_condition.viewSkel().all()
-                    .filter("parent_code.dest.__key__ =", condition_skel["key"])
-                    .getSkel()
-                )
-                logger.debug(f"{sub = }")
-                if sub["quantity_used"] > 0:
-                    logger.info(f'code_type INDIVIDUAL not reached (sub already used)')
-                    continue
-            # TODO: implement all scopes
-            # TODO: recheck code against this condition (any condition relation could've caused the query match!)
-
-            # All checks are passed, we have a suitable condition
-            break
-        else:
-            return False, None
-        # TODO: depending on condition_operator we have to use continue or return False
-        # TODO: implement combineable check
-        '''
-
-        logger.debug(f"{condition=}")
-
-        return True, condition_skel
-
     @property
     @functools.cache
-    def current_automatically_discounts(self):
+    def current_automatically_discounts(self) -> list[SkeletonInstance]:
         query = self.viewSkel().all().filter("activate_automatically =", True)
         discounts = []
         for skel in query.fetch(100):

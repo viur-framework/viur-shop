@@ -4,7 +4,7 @@ import string
 import typing as t
 
 from viur import toolkit
-from viur.core import current, db, tasks, translate
+from viur.core import current, db, tasks
 from viur.core.prototypes import List
 from viur.core.skeleton import SkeletonInstance
 from .abstract import ShopModuleAbstract

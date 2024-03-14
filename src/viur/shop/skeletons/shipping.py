@@ -3,13 +3,12 @@ import typing as t  # noqa
 from viur.core.bones import *
 from viur.core.i18n import translate
 from viur.core.skeleton import Skeleton
-from ..globals import SHOP_LOGGER
+from ..globals import SHOP_LOGGER, SHOP_INSTANCE
 
 logger = SHOP_LOGGER.getChild(__name__)
 
 
 def get_suppliers() -> dict[str, str]:
-    from viur.shop.shop import SHOP_INSTANCE
     return {
         supplier.key: supplier.name
         for supplier in SHOP_INSTANCE.get().suppliers

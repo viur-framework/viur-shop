@@ -249,13 +249,6 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
         descr="shop_is_low_price",
     )
 
-    # @property
-    # def shop_vat_value(self):
-    #     """Calculate the vat value based on price and vat rate"""
-    #     if not (vat := self["shop_vat"]):
-    #         return 0
-    #     return (vat["dest"]["rate"] or 0) / 100 * self["price_sale"]
-
     @property
     def article_skel(self):
         return self["article"]["dest"]

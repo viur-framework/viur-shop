@@ -84,8 +84,6 @@ class ConditionValidator:
                 code=code,
             )
             self.scope_instances.append(scope)
-            # scope.validate()
-
         # logger.debug(f"{self.scope_instances = }")
         return self
 
@@ -104,13 +102,18 @@ class ConditionValidator:
         return f"<{self.__class__.__name__} with {self.is_fulfilled=} for {self.condition_skel=} using {self.applicable_scopes=}>"
         return f"<{self.__class__.__name__} with {self.is_fulfilled=} for {self.discount_skel=}, {self.condition_skel=}, {self.cart_skel=} using {self.applicable_scopes=}>"
 
+    @classmethod
+    def register(cls, scope: t.Type[DiscountConditionScope]):
+        cls.scopes.append(scope)
+        return scope
+
 
 class DiscountValidator:
 
     def __init__(self):
         super().__init__()
         self._is_fulfilled = None
-        self.condition_validator_instances :list[ConditionValidator] = []
+        self.condition_validator_instances: list[ConditionValidator] = []
         self.cart_skel = None
         self.discount_skel = None
         self.condition_skels = []
@@ -129,7 +132,7 @@ class DiscountValidator:
         # We need the full skel with all bones (otherwise the refSkel would be to large)
         condition_skel_cls: t.Type[Skeleton] = skeletonByKind(discount_skel.condition.kind)
         for condition in discount_skel["condition"]:
-            condition_skel: SkeletonInstance = condition_skel_cls()# noqa
+            condition_skel: SkeletonInstance = condition_skel_cls()  # noqa
             if not condition_skel.fromDB(condition["dest"]["key"]):
                 logger.warning(f'Broken relation {condition=} in {discount_skel["key"]}?!')
                 self.condition_skels.append(None)  # TODO
@@ -168,11 +171,11 @@ class DiscountValidator:
         return f"<{self.__class__.__name__} with {self.is_fulfilled=} for {self.discount_skel=}, {self.cart_skel=} using {self.condition_validator_instances=}>"
 
 
+@ConditionValidator.register
 class ScopeCode(DiscountConditionScope):
     def precondition(self) -> bool:
         return (
             self.condition_skel["code_type"] in {CodeType.INDIVIDUAL, CodeType.INDIVIDUAL}
-            # self.condition_skel["scope_minimum_order_value"] is not None
             # and self.cart_skel is not None
         )
 
@@ -199,9 +202,7 @@ class ScopeCode(DiscountConditionScope):
         return True
 
 
-ConditionValidator.scopes.append(ScopeCode)
-
-
+@ConditionValidator.register
 class ScopeMinimumOrderValue(DiscountConditionScope):
     def precondition(self) -> bool:
         return (
@@ -215,9 +216,7 @@ class ScopeMinimumOrderValue(DiscountConditionScope):
         )
 
 
-ConditionValidator.scopes.append(ScopeMinimumOrderValue)
-
-
+@ConditionValidator.register
 class ScopeDateStart(DiscountConditionScope):
     def precondition(self) -> bool:
         return self.condition_skel["scope_date_start"] is not None
@@ -226,9 +225,7 @@ class ScopeDateStart(DiscountConditionScope):
         return self.condition_skel["scope_date_start"] <= utils.utcNow()
 
 
-ConditionValidator.scopes.append(ScopeDateStart)
-
-
+@ConditionValidator.register
 class ScopeDateEnd(DiscountConditionScope):
     def precondition(self) -> bool:
         return self.condition_skel["scope_date_end"] is not None
@@ -237,9 +234,7 @@ class ScopeDateEnd(DiscountConditionScope):
         return self.condition_skel["scope_date_end"] >= utils.utcNow()
 
 
-ConditionValidator.scopes.append(ScopeDateEnd)
-
-
+@ConditionValidator.register
 class ScopeLanguage(DiscountConditionScope):
     def precondition(self) -> bool:
         return self.condition_skel["scope_language"] is not None
@@ -248,9 +243,7 @@ class ScopeLanguage(DiscountConditionScope):
         return self.condition_skel["scope_language"] == current.language.get()
 
 
-ConditionValidator.scopes.append(ScopeLanguage)
-
-
+@ConditionValidator.register
 class ScopeCountry(DiscountConditionScope):
     def precondition(self) -> bool:
         return (
@@ -263,9 +256,7 @@ class ScopeCountry(DiscountConditionScope):
         return self.condition_skel["scope_country"] == self.cart_skel["shipping_address"]["dest"]["country"]
 
 
-ConditionValidator.scopes.append(ScopeCountry)
-
-
+@ConditionValidator.register
 class ScopeMinimumQuantity(DiscountConditionScope):
     def precondition(self) -> bool:
         return (
@@ -279,9 +270,7 @@ class ScopeMinimumQuantity(DiscountConditionScope):
         )
 
 
-ConditionValidator.scopes.append(ScopeMinimumQuantity)
-
-
+@ConditionValidator.register
 class ScopeCustomerGroup(DiscountConditionScope):
     def precondition(self) -> bool:
         return (
@@ -307,8 +296,7 @@ class ScopeCustomerGroup(DiscountConditionScope):
         raise NotImplementedError
 
 
-ConditionValidator.scopes.append(ScopeCustomerGroup)
-
+# @ConditionValidator.register TODO
 class ScopeCombinableLowPrice(DiscountConditionScope):
     def precondition(self) -> bool:
         return (
@@ -317,12 +305,11 @@ class ScopeCombinableLowPrice(DiscountConditionScope):
         )
 
     def __call__(self) -> bool:
-        article_skel = ... # FIXME: how we get this?
+        article_skel = ...  # FIXME: how we get this?
         return not article_skel["shop_is_low_price"] or self.condition_skel["scope_combinable_low_price"]
 
 
-# ConditionValidator.scopes.append(ScopeCombinableLowPrice)
-
+@ConditionValidator.register
 class ScopeArticle(DiscountConditionScope):
     def precondition(self) -> bool:
         return (
@@ -339,6 +326,3 @@ class ScopeArticle(DiscountConditionScope):
         )
         logger.debug(f"<{len(leaf_skels)}>{leaf_skels = }")
         return len(leaf_skels) > 0
-
-
-ConditionValidator.scopes.append(ScopeArticle)

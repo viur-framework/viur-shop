@@ -38,12 +38,24 @@ class DiscountSkel(Skeleton):  # STATE: Complete (as in model)
         lambda skel: (
             [ReadFromClientError(
                 ReadFromClientErrorSeverity.Invalid,
-                "ApplicationDomains all all conditions must be basket or article, not mixed",
+                "ApplicationDomains of all conditions must be basket or article, not mixed",
                 ["condition"],
                 ["condition"],
             )]
             if len({condition["dest"]["application_domain"] for condition in skel["condition"]
                     if condition["dest"]["application_domain"] != ApplicationDomain.ALL}) > 1
+            else []
+        ),
+        # ApplicationDomain must be the same
+        lambda skel: (
+            [ReadFromClientError(
+                ReadFromClientErrorSeverity.Invalid,
+                "ApplicationDomains not set in any condition",
+                ["condition"],
+                ["condition"],
+            )]
+            if len({condition["dest"]["application_domain"] for condition in skel["condition"]
+                    if condition["dest"]["application_domain"] != ApplicationDomain.ALL}) == 0
             else []
         ),
     ]

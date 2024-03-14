@@ -4,13 +4,12 @@ from viur.core import translate
 from viur.core.bones import *
 from viur.core.skeleton import Skeleton
 from viur.shop.types import *
-from ..globals import SHOP_LOGGER
+from ..globals import SHOP_LOGGER, SHOP_INSTANCE
 
 logger = SHOP_LOGGER.getChild(__name__)
 
 
 def get_payment_providers() -> dict[str, str | translate]:
-    from viur.shop.shop import SHOP_INSTANCE
     return {
         pp.name: translate(f"shop.payment_provider.{pp.name}")
         for pp in SHOP_INSTANCE.get().payment_providers
