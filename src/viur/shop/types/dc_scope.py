@@ -1,8 +1,9 @@
 import abc
+import pprint
 import typing as t  # noqa
 
 from viur.core import current, utils
-from viur.core.skeleton import skeletonByKind
+from viur.core.skeleton import Skeleton, SkeletonInstance, skeletonByKind
 from ..globals import SENTINEL, SHOP_INSTANCE, SHOP_LOGGER
 from ..types import *
 
@@ -100,6 +101,7 @@ class ConditionValidator:
         return self._is_fulfilled
 
     def __repr__(self):
+        return f"<{self.__class__.__name__} with {self.is_fulfilled=} for {self.condition_skel=} using {self.applicable_scopes=}>"
         return f"<{self.__class__.__name__} with {self.is_fulfilled=} for {self.discount_skel=}, {self.condition_skel=}, {self.cart_skel=} using {self.applicable_scopes=}>"
 
 
@@ -108,7 +110,7 @@ class DiscountValidator:
     def __init__(self):
         super().__init__()
         self._is_fulfilled = None
-        self.condition_validator_instances = []
+        self.condition_validator_instances :list[ConditionValidator] = []
         self.cart_skel = None
         self.discount_skel = None
         self.condition_skels = []
@@ -125,8 +127,9 @@ class DiscountValidator:
         self.code = discount_skel
 
         # We need the full skel with all bones (otherwise the refSkel would be to large)
-        condition_skel: SkeletonInstance = skeletonByKind(discount_skel.condition.kind)()  # noqa
+        condition_skel_cls: t.Type[Skeleton] = skeletonByKind(discount_skel.condition.kind)
         for condition in discount_skel["condition"]:
+            condition_skel: SkeletonInstance = condition_skel_cls()# noqa
             if not condition_skel.fromDB(condition["dest"]["key"]):
                 logger.warning(f'Broken relation {condition=} in {discount_skel["key"]}?!')
                 self.condition_skels.append(None)  # TODO
@@ -143,8 +146,11 @@ class DiscountValidator:
     def is_fulfilled(self) -> bool:
         if self._is_fulfilled is None:
             if self.discount_skel["condition_operator"] == ConditionOperator.ONE_OF:
+                logger.debug("Checking for any")
                 self._is_fulfilled = any(cv.is_fulfilled for cv in self.condition_validator_instances)
             elif self.discount_skel["condition_operator"] == ConditionOperator.ALL:
+                logger.debug("Checking for all")
+                pprint.pprint(self.condition_validator_instances)
                 self._is_fulfilled = all(cv.is_fulfilled for cv in self.condition_validator_instances)
             else:
                 raise InvalidStateError(f'Invalid condition operator: {self.discount_skel["condition_operator"]}')
@@ -152,7 +158,9 @@ class DiscountValidator:
 
     @property
     def application_domain(self) -> ApplicationDomain:
-        if len(domains := {cm.condition_skel["application_domain"] for cm in self.condition_validator_instances}) > 1:
+        domains = {cm.condition_skel["application_domain"] for cm in self.condition_validator_instances}
+        domains.discard(ApplicationDomain.ALL)
+        if len(domains) > 1:
             raise NotImplementedError(f"Ambiguous application_domains: {domains=}")
         return domains.pop()
 
@@ -323,8 +331,14 @@ class ScopeArticle(DiscountConditionScope):
         )
 
     def __call__(self) -> bool:
-        article_skel = ... # FIXME: how we get this?
-        return not article_skel["shop_is_low_price"] or self.condition_skel["scope_combinable_low_price"]
+        leaf_skels = (
+            SHOP_INSTANCE.get().cart.viewSkel("leaf").all()
+            .filter("parentrepo =", self.cart_skel["key"])
+            .filter("article.dest.__key__ =", self.condition_skel["scope_article"]["dest"]["key"])
+            .fetch()
+        )
+        logger.debug(f"<{len(leaf_skels)}>{leaf_skels = }")
+        return len(leaf_skels) > 0
 
 
-# ConditionValidator.scopes.append(ScopeCombinableLowPrice)
+ConditionValidator.scopes.append(ScopeArticle)

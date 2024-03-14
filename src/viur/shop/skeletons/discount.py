@@ -34,6 +34,18 @@ class DiscountSkel(Skeleton):  # STATE: Complete (as in model)
             if skel["discount_type"] == DiscountType.ABSOLUTE and not skel["absolute"]
             else []
         ),
+        # ApplicationDomain must be the same
+        lambda skel: (
+            [ReadFromClientError(
+                ReadFromClientErrorSeverity.Invalid,
+                "ApplicationDomains all all conditions must be basket or article, not mixed",
+                ["condition"],
+                ["condition"],
+            )]
+            if len({condition["dest"]["application_domain"] for condition in skel["condition"]
+                    if condition["dest"]["application_domain"] != ApplicationDomain.ALL}) > 1
+            else []
+        ),
     ]
 
     name = StringBone(
@@ -88,7 +100,7 @@ class DiscountSkel(Skeleton):  # STATE: Complete (as in model)
         kind="shop_discount_condition",
         module="shop/discount_condition",
         multiple=True,
-        refKeys=["key", "name", "scope_code"],
+        refKeys=["key", "name", "scope_code", "application_domain"],
         consistency=RelationalConsistency.PreventDeletion,
     )
 

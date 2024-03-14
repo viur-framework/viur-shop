@@ -36,7 +36,7 @@ class AddressType(enum.Enum):
 
 
 class CodeType(enum.Enum):
-    NONE = "none"  # TODO: is this working?
+    NONE = "none"
     INDIVIDUAL = "individual"
     UNIVERSAL = "universal"
 
@@ -44,6 +44,8 @@ class CodeType(enum.Enum):
 class ApplicationDomain(enum.Enum):
     BASKET = "basket"
     ARTICLE = "article"
+    ALL = "all"
+    """not care / both(all) / None"""
 
 
 class CustomerGroup(enum.Enum):

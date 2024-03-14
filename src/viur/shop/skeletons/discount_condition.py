@@ -77,7 +77,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
         descr="application_domain",
         required=True,
         values=ApplicationDomain,
-        defaultValue=ApplicationDomain.BASKET,
+        defaultValue=ApplicationDomain.ALL,
         params={
             "category": "1 – General",
         },

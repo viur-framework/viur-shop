@@ -475,7 +475,7 @@ class Cart(ShopModuleAbstract, Tree):
         new_parent_skel = self.addSkel("node")
         new_parent_skel["parententry"] = leaf_skel["parententry"]
         new_parent_skel["parentrepo"] = leaf_skel["parentrepo"]
-        for key, value in kwargs:
+        for key, value in kwargs.items():
             new_parent_skel[key] = value  # TODO: use .setBoneValue?
         new_parent_skel.toDB()
         leaf_skel["parententry"] = new_parent_skel["key"]

@@ -1,7 +1,7 @@
 import functools
 import typing as t  # noqa
 
-from viur.core import current, db, errors, utils
+from viur.core import db, errors
 from viur.core.prototypes import List
 from viur.core.skeleton import SkeletonInstance, skeletonByKind
 from viur.shop.types import *
@@ -107,7 +107,8 @@ class Discount(ShopModuleAbstract, List):
         else:
             raise errors.NotFound("No valid code found")
             return False
-        logger.debug(f"Using {discount_skel=} and {dv=}")
+        logger.debug(f"Using {discount_skel=}")
+        logger.debug(f"Using {dv=}")
         # cms = [cm for cm in cms if cm.is_fulfilled]
         # if len(domains := {cm.condition_skel["application_domain"] for cm in cms}) > 1:
         #     raise NotImplementedError(f"Ambiguous application_domains: {domains=}")
@@ -149,28 +150,39 @@ class Discount(ShopModuleAbstract, List):
                     "discount_skel": discount_skel,
                 }
         elif application_domain == ApplicationDomain.ARTICLE:
-            leaf_skels = (
-                self.shop.cart.viewSkel("leaf").all()
-                .filter("parentrepo =", cart_key)
-                .filter("article.dest.__key__ =", cond_skel["scope_article"]["dest"]["key"])
-                .fetch()
-            )
-            logger.debug(f"<{len(leaf_skels)}>{leaf_skels = }")
-            if not leaf_skels:
-                raise errors.NotFound("expected article is missing on cart")
-            if len(leaf_skels) > 1:
-                raise NotImplementedError("article is ambiguous")
-            leaf_skel = leaf_skels[0]
-            # Assign discount on new parent node for the leaf where the article is
-            parent_skel = self.shop.cart.add_new_parent(leaf_skel, name=f'Discount {discount_skel["name"]}')
-            cart = self.shop.cart.cart_update(
-                cart_key=parent_skel["key"],
-                discount_key=discount_skel["key"]
-            )
-            logger.debug(f"{cart = }")
+            all_leafs = []
+            for cv in dv.condition_validator_instances:
+                if cv.is_fulfilled and cv.condition_skel["scope_article"] is not None:
+                    leaf_skels = (
+                        self.shop.cart.viewSkel("leaf").all()
+                        .filter("parentrepo =", cart_key)
+                        .filter("article.dest.__key__ =", cv.condition_skel["scope_article"]["dest"]["key"])
+                        .fetch()
+                    )
+                    logger.debug(f"<{len(leaf_skels)}>{leaf_skels = }")
+                    # if not leaf_skels:
+                    #     raise errors.NotFound("expected article is missing on cart")
+                    # if len(leaf_skels) > 1:
+                    #     raise NotImplementedError("article is ambiguous")
+                    for leaf_skel in leaf_skels:
+                        # Assign discount on new parent node for the leaf where the article is
+                        parent_skel = self.shop.cart.viewSkel("node")
+                        assert parent_skel.fromDB(leaf_skel["parententry"])
+                        if parent_skel["discount"] and parent_skel["discount"]["dest"]["key"] == discount_skel["key"]:
+                            logger.info("Parent has already this discount key")
+                            continue
+                        parent_skel = self.shop.cart.add_new_parent(leaf_skel, name=f'Discount {discount_skel["name"]}')
+                        cart = self.shop.cart.cart_update(
+                            cart_key=parent_skel["key"],
+                            discount_key=discount_skel["key"]
+                        )
+                        logger.debug(f"{cart = }")
+                        all_leafs.append(leaf_skels)
+            if not all_leafs:
+                raise errors.NotFound("expected article is missing on cart (or discount exist already)")
             return {  # TODO: what should be returned?
-                "leaf_skel": leaf_skel,
-                "parent_skel": parent_skel,
+                "leaf_skel": all_leafs,
+                # "parent_skel": parent_skel,
                 "discount_skel": discount_skel,
             }
         raise errors.NotImplemented(f'{discount_skel["discount_type"]=} is not implemented yet :(')
