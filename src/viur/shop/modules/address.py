@@ -2,6 +2,7 @@ import typing as t
 
 from viur.core import current, db
 from viur.core.prototypes import List
+from viur.core.prototypes.skelmodule import DEFAULT_ORDER_TYPE
 from viur.core.skeleton import SkeletonInstance
 from .abstract import ShopModuleAbstract
 from ..globals import SHOP_LOGGER
@@ -11,6 +12,12 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 class Address(ShopModuleAbstract, List):
     kindName = "shop_address"
+
+    default_order: DEFAULT_ORDER_TYPE = (  #
+        # TODO: https://github.com/viur-framework/viur-core/pull/1109
+        ("firstname", db.SortOrder.Ascending)  # ,
+        # ("lastname", db.SortOrder.Ascending),
+    )
 
     def adminInfo(self) -> dict:
         admin_info = super().adminInfo()
