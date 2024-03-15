@@ -1,5 +1,6 @@
 import typing as t  # noqa
 
+from datetime import timedelta as td
 from viur.core import conf, db
 from viur.core.bones import *
 from viur.core.prototypes.tree import TreeSkel
@@ -88,7 +89,7 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
         precision=2,
         compute=Compute(
             TotalFactory("total", lambda child: child.price_.current, True),
-            ComputeInterval(ComputeMethod.Always),
+            ComputeInterval(ComputeMethod.Lifetime, lifetime=td(minutes=1)),
         ),
     )
 
@@ -97,7 +98,7 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
         precision=2,
         compute=Compute(
             TotalFactory("vat_total", lambda child: child.price_.vat_value, True),
-            ComputeInterval(ComputeMethod.Always),
+            ComputeInterval(ComputeMethod.Lifetime, lifetime=td(minutes=1)),
         ),
     )
 
@@ -105,7 +106,9 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
         descr="Vat Rate",
         kind="shop_vat",
         module="shop/vat",
-        compute=Compute(get_vat_rate_for_node, ComputeInterval(ComputeMethod.Always)),
+        # compute=Compute(get_vat_rate_for_node, ComputeInterval(ComputeMethod.Lifetime, lifetime=td(minutes=1))),
+        # compute=Compute(get_vat_rate_for_node, ComputeInterval(ComputeMethod.Always)),
+        compute=Compute(get_vat_rate_for_node, ComputeInterval(ComputeMethod.OnWrite)),
         refKeys=["key", "name", "rate"],
         multiple=True,
     )
@@ -115,7 +118,7 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
         precision=0,
         compute=Compute(
             TotalFactory("total_quantity", lambda child: 1, True),
-            ComputeInterval(ComputeMethod.Always)
+            ComputeInterval(ComputeMethod.Lifetime, lifetime=td(minutes=1))
         ),
         defaultValue=0,
     )
@@ -273,7 +276,7 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
 
     price = RawBone(  # FIXME: JsonBone doesn't work (https://github.com/viur-framework/viur-core/issues/1092)
         descr="price",
-        compute=Compute(lambda skel: skel.price_.to_dict(), ComputeInterval(ComputeMethod.Always))
+        compute=Compute(lambda skel: skel.price_.to_dict(), ComputeInterval(ComputeMethod.Lifetime, lifetime=td(minutes=1)))
     )
     price.type = JsonBone.type
 
