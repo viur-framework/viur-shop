@@ -2,7 +2,7 @@ import functools
 import typing as t  # noqa
 
 from viur import toolkit
-from viur.core import current
+from viur.core import current, utils
 from viur.core.skeleton import SkeletonInstance
 from .enums import ConditionOperator, DiscountType
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
@@ -146,26 +146,15 @@ class Price:
         return toolkit.round_decimal(self.vat_rate * self.current, 2)
 
     def to_dict(self):
-        _current = self.current
-
+        from viur.shop.types import ExtendedCustomJsonEncoder
         return {
             attr_name: getattr(self, attr_name)
             for attr_name, attr_value in vars(self.__class__).items()
             if isinstance(attr_value, (property, functools.cached_property))
-        } | {  # TODO: must be JSON serializable for vi renderer
-            # "cart_discounts": self.cart_discounts,
-            # "article_discount": self.article_discount,
-        }
-
-        return {
-            "retail": self.retail,
-            "recommended": self.recommended,
-            "current": _current,
-            "saved": self.saved,
-            "saved_percentage": self.saved_percentage,
+        } | utils.json.loads(utils.json.dumps({  # must be JSON serializable for vi renderer
             "cart_discounts": self.cart_discounts,
             "article_discount": self.article_discount,
-        }
+        }, cls=ExtendedCustomJsonEncoder))
 
     @staticmethod
     def apply_discount(

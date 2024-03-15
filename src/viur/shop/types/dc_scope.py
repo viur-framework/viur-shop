@@ -135,6 +135,7 @@ class DiscountValidator:
             condition_skel: SkeletonInstance = condition_skel_cls()  # noqa
             if not condition_skel.fromDB(condition["dest"]["key"]):
                 logger.warning(f'Broken relation {condition=} in {discount_skel["key"]}?!')
+                raise InvalidStateError(f'Broken relation {condition=} in {discount_skel["key"]}?!')
                 self.condition_skels.append(None)  # TODO
                 self.condition_validator_instances.append(None)  # TODO
                 continue
