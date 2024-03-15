@@ -11,7 +11,7 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 def get_payment_providers() -> dict[str, str | translate]:
     return {
-        pp.name: translate(f"shop.payment_provider.{pp.name}")
+        pp.name: pp.title
         for pp in SHOP_INSTANCE.get().payment_providers
     }
 

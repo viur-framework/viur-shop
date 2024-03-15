@@ -1,4 +1,5 @@
 TRANSLATIONS = {
+    # Module names
     "viur.shop.module.address": {
         "en": "addresses",
         "de": "Adressen",
@@ -44,6 +45,11 @@ TRANSLATIONS = {
         "en": "vat",
         "de": "Steuersätze",
         "_hint": "modulename: vat",
+    },
+    # Payment Providers
+    "viur.shop.payment_provider.unzer-paypal": {
+        "_default_text": "PayPal via Unzer",
+        "_hint": "viur-shop payment provider: unzer-paypal",
     },
 }
 """Initial translations used inside the shop"""

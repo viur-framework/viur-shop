@@ -1,7 +1,7 @@
 import abc
 import typing as t
 
-from viur.core import Module
+from viur.core import Module, translate
 from viur.core.prototypes.instanced_module import InstancedModule
 from viur.core.skeleton import SkeletonInstance
 from ..types import ClientError
@@ -20,8 +20,13 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
     @property
     @abc.abstractmethod
     def name(self) -> str:
-        """Define the name of the payment provider"""
+        """Define the internal name of the payment provider"""
         ...
+
+    @property
+    def title(self) -> translate:
+        """Define the external title of the payment provider"""
+        return translate(f"viur.shop.payment_provider.{self.name}", self.name)
 
     def can_checkout(
         self,
