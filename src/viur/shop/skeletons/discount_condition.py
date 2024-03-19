@@ -230,7 +230,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
 
     parent_code = RelationalBone(
         kind="shop_discount_condition",
-        module="shop.discount_condition",
+        module="shop/discount_condition",
         consistency=RelationalConsistency.PreventDeletion,
         params={
             "category": "2 – Scope",

@@ -21,7 +21,7 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
 
     billing_address = RelationalBone(
         kind="shop_address",
-        module="shop.address",
+        module="shop/address",
         refKeys=[
             "key", "name", "customer_type", "salutation", "company_name",
             "firstname", "lastname", "street_name", "street_number",
@@ -36,7 +36,7 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
 
     cart = RelationalBone(
         kind="shop_cart_node",
-        module="shop.cart_node",
+        module="shop/cart_node",
         refKeys=["key", "name", "shipping_address"],
     )
 
