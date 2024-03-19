@@ -79,12 +79,10 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     kindName = "shop_cart_node"
 
     is_root_node = BooleanBone(
-        descr="Is root node?",
         readOnly=True,
     )
 
     total = NumericBone(
-        descr="Total",
         precision=2,
         compute=Compute(
             TotalFactory("total", lambda child: child.price_.current, True),
@@ -93,7 +91,6 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     )
 
     vat_total = NumericBone(
-        descr="Total",
         precision=2,
         compute=Compute(
             TotalFactory("vat_total", lambda child: child.price_.vat_value, True),
@@ -102,7 +99,6 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     )
 
     vat_rate = RelationalBone(
-        descr="Vat Rate",
         kind="shop_vat",
         module="shop/vat",
         compute=Compute(get_vat_rate_for_node, ComputeInterval(ComputeMethod.Always)),
@@ -111,7 +107,6 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     )
 
     total_quantity = NumericBone(
-        descr="Total quantity",
         precision=0,
         compute=Compute(
             TotalFactory("total_quantity", lambda child: 1, True),
@@ -121,7 +116,6 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     )
 
     shipping_address = RelationalBone(
-        descr="shipping_address",
         kind="shop_address",
         module="shop/shop_address",
         refKeys=[
@@ -133,28 +127,23 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     )
 
     customer_comment = TextBone(
-        descr="customer_comment",
         validHtml=None,
     )
 
     name = StringBone(
-        descr="name",
     )
 
     cart_type = SelectBone(
-        descr="cart_type",
         values=CartType,
     )
 
     shipping = RelationalBone(
-        descr="shipping",
         kind="shop_shipping",
         module="shop/shipping",
     )
     """Versand bei Warenkorb der einer Bestellung zugehört"""
 
     discount = RelationalBone(
-        descr="discount",
         kind="shop_discount",
         module="shop/discount",
         refKeys=["key", "name", "discount_type", "absolute", "percentage"],
@@ -165,7 +154,6 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     kindName = "shop_cart_leaf"
 
     article = RelationalBone(
-        descr="article",
         kind="...",  # will be set in Shop._set_kind_names()
         # FIXME: What's necessary here?
         parentKeys=["key", "parententry", "article"],
@@ -182,52 +170,41 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     )
 
     quantity = NumericBone(
-        descr="quantity",
         min=0,
         defaultValue=0,
     )
 
     project_data = JsonBone(
-        descr="Custom project data",
     )
 
     # --- Bones to store a frozen copy of the article values: -----------------
 
     shop_name = StringBone(
-        descr="shop_name",
     )
 
     shop_description = TextBone(
-        descr="shop_description",
     )
 
     shop_price_retail = NumericBone(
-        descr="Verkaufspreis",
     )
 
     shop_price_recommended = NumericBone(
-        descr="UVP",
     )
 
     shop_availability = SelectBone(
-        descr="shop_availability",
         values=ArticleAvailability,
     )
 
     shop_listed = BooleanBone(
-        descr="shop_listed",
     )
 
     shop_image = FileBone(
-        descr="Produktbild",
     )
 
     shop_art_no_or_gtin = StringBone(
-        descr="Artikelnummer",
     )
 
     shop_vat = RelationalBone(
-        descr="Steuersatz",
         kind="shop_vat",
         module="shop.vat",
         refKeys=["key", "name", "rate"],
@@ -235,18 +212,15 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     )
 
     shop_shipping = RelationalBone(
-        descr="Versandkosten",
         kind="shop_shipping_config",
         module="shop.shipping_config",
         consistency=RelationalConsistency.SetNull,
     )
 
     shop_is_weee = BooleanBone(
-        descr="Elektro",
     )
 
     shop_is_low_price = BooleanBone(
-        descr="shop_is_low_price",
     )
 
     @property
@@ -272,7 +246,6 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
         return Price.get_or_create(self)
 
     price = RawBone(  # FIXME: JsonBone doesn't work (https://github.com/viur-framework/viur-core/issues/1092)
-        descr="price",
         compute=Compute(lambda skel: skel.price_.to_dict(), ComputeInterval(ComputeMethod.Always))
     )
     price.type = JsonBone.type

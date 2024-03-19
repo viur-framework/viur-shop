@@ -13,12 +13,10 @@ class VatSkel(Skeleton):  # STATE: Complete (as in model)
     # TODO: add descr bone?!
 
     name = StringBone(
-        descr="name",
         compute=Compute(lambda skel: f'{skel["rate"]} %')
     )
 
     rate = NumericBone(
-        descr="rate",
         required=True,
         precision=2,
         min=0,

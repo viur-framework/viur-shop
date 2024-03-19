@@ -61,22 +61,18 @@ class DiscountSkel(Skeleton):  # STATE: Complete (as in model)
     ]
 
     name = StringBone(
-        descr="name",
     )
 
     description = TextBone(
-        descr="description",
         validHtml=None,
     )
 
     discount_type = SelectBone(
-        descr="discount_type",
         required=True,
         values=DiscountType,
     )
 
     absolute = NumericBone(
-        descr="absolute",
         precision=2,
         min=0,
         # TODO: UnitBone / CurrencyBone
@@ -87,7 +83,6 @@ class DiscountSkel(Skeleton):  # STATE: Complete (as in model)
     )
 
     percentage = NumericBone(
-        descr="percentage",
         precision=2,
         min=0,
         max=100,
@@ -99,7 +94,6 @@ class DiscountSkel(Skeleton):  # STATE: Complete (as in model)
     )
 
     free_article = RelationalBone(
-        descr="free_article",
         kind="...",  # will be set in Shop._set_kind_names()
         params={
             "visibleIf": 'discount_type == "free_article"',
@@ -108,7 +102,6 @@ class DiscountSkel(Skeleton):  # STATE: Complete (as in model)
     )
 
     condition = RelationalBone(
-        descr="condition",
         kind="shop_discount_condition",
         module="shop/discount_condition",
         multiple=True,
@@ -117,12 +110,10 @@ class DiscountSkel(Skeleton):  # STATE: Complete (as in model)
     )
 
     condition_operator = SelectBone(
-        descr="condition_operator",
         required=True,
         values=ConditionOperator,
         defaultValue=ConditionOperator.ALL,
     )
 
     activate_automatically = BooleanBone(
-        descr="activate_automatically",
     )

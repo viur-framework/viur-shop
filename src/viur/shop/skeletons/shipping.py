@@ -19,12 +19,10 @@ class ShippingSkel(Skeleton):  # STATE: Complete (as in model)
     kindName = "shop_shipping"
 
     name = StringBone(
-        descr="Name",
     )
     """DHL Standard, DHL Express, DPD-Shop, ..."""
 
     description = TextBone(
-        descr="description",
         validHtml=None,
     )
     """
@@ -34,26 +32,22 @@ class ShippingSkel(Skeleton):  # STATE: Complete (as in model)
     """
 
     shipping_cost = NumericBone(
-        descr="shipping_cost",
         precision=2,
         min=0,
         getEmptyValueFunc=lambda: None,
     )
 
     supplier = SelectBone(
-        descr=translate("viur-shop.supplier"),
         values=get_suppliers,
     )
 
     delivery_time_min = NumericBone(
-        descr="delivery_time_min",
         min=0,
         # TODO: UnitBone
     )
     """Tag(e)"""
 
     delivery_time_max = NumericBone(
-        descr="delivery_time_max",
         min=0,
         # TODO: UnitBone
     )

@@ -20,7 +20,6 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
     kindName = "shop_order"
 
     billing_address = RelationalBone(
-        descr="billing_address",
         kind="shop_address",
         module="shop.address",
         refKeys=[
@@ -32,12 +31,10 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
     )
 
     customer = RelationalBone(
-        descr="customer",
         kind="user",
     )
 
     cart = RelationalBone(
-        descr="cart",
         kind="shop_cart_node",
         module="shop.cart_node",
         refKeys=["key", "name", "shipping_address"],
@@ -46,7 +43,6 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
     print(f"{cart.refKeys = }")
 
     total = NumericBone(
-        descr="total",
         precision=2,
         min=0,
         # TODO: UnitBone / CurrencyBone
@@ -54,31 +50,25 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
     """Kopie der total vom gesamten Warenkorb"""
 
     order_uid = StringBone(
-        descr="order_uid",
         unique=UniqueValue(UniqueLockMethod.SameValue, False, "UID must be unique")
         # TODO: UidBone
     )
     """Bestellnummer"""
 
     payment_provider = SelectBone(
-        descr="payment_provider",
         values=get_payment_providers,
     )
 
     is_ordered = BooleanBone(
-        descr="is_ordered",
     )
 
     is_paid = BooleanBone(
-        descr="is_paid",
     )
 
     is_rts = BooleanBone(
-        descr="is_rts",
     )
 
     state = SelectBone(
-        descr="state",
         values=OrderState,
         multiple=True,
         compute=Compute(lambda skel: [
@@ -89,17 +79,14 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
     )
 
     email = EmailBone(
-        descr="email",
     )
     """Kopieren von User oder Eingabe von Nutzer bei Gast"""
 
     project_data = JsonBone(
-        descr="project_data",
     )
     """Zusätzliche Daten vom Projekt für eine Bestellung.
     Ggf. überlegen ob einzelne Bones durch Skeleton Modifizierung besser sind."""
 
     payment = JsonBone(
-        descr="payment",
         defaultValue=lambda skel, self: {},
     )

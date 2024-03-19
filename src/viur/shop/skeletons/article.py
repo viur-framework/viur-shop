@@ -84,7 +84,6 @@ class ArticleAbstractSkel:  # FIXME: (abc.ABC):
         return Price.get_or_create(self)
 
     shop_price = RawBone(  # FIXME: JsonBone doesn't work (https://github.com/viur-framework/viur-core/issues/1092)
-        descr="price",
         compute=Compute(lambda skel: skel.shop_price_.to_dict(), ComputeInterval(ComputeMethod.Always))
     )
     shop_price.type = JsonBone.type
