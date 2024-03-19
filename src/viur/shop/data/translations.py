@@ -81,7 +81,91 @@ TRANSLATIONS = {
         "en": "Preorder",
         "fr": "Bientôt disponible à nouveau",
         "de": "Vorbestellung möglich",
-        "_hint": "availabilty: preorder",
+        "_hint": "availability: preorder",
+    },
+    # Cart type
+    "wishlist":{
+        "en": "Wishlist",
+        "fr": "Favoris",
+        "de": "Merkzettel",
+        "_hint": "cart type: wishlist",
+    },
+    "basket": {
+        "en": "Basket",
+        "fr": "Panier",
+        "de": "Warenkorb",
+        "_hint": "cart type: basket",
+    },
+    # Costumer type
+    "private": {
+        "en": "Private customer",
+        "fr": "Client privé",
+        "de": "Privatkunde",
+        "_hint": "costumer type: private"
+    },
+    "business": {
+        "en": "Business customer",
+        "fr": "Clientèle commerciale",
+        "de": "Geschäftskunde",
+        "_hint": "costumer type: business"
+    },
+    # Salutation
+    "female": {
+        "en": "Mrs.",
+        "fr": "Madame",
+        "de": "Frau",
+        "_hint": "salutation type: female"
+    },
+    "male": {
+        "en": "Mr.",
+        "fr": "Monsieur",
+        "de": "Herr",
+        "_hint": "salutation type: male",
+    },
+    "other": {
+        "en": "Various",
+        "fr": "Autres",
+        "de": "Divers",
+        "_hint": "salutation type: other"
+    },
+    # Address type
+    "shipping": {
+        "en": "Shipping address",
+        "fr": "Adresse de livraison",
+        "de": "Lieferadresse",
+        "_hint": "address type: shipping",
+    },
+    "billing": {
+        "en": "Billing address",
+        "fr": "Adresse de facturation",
+        "de": "Rechnungsadresse",
+        "_hint": "address type: billing",
+    },
+    # Code type
+    "none": {
+        "en": "No code",
+        "de": "Kein Code",
+        "_hint": "code type: none",
+    },
+    "individual": {
+        "en": "Individual code",
+        "de": "Individueller Code",
+        "_hint": "code type: individual",
+    },
+    "universal": {
+        "en": "Universal code",
+        "de": "Universeller Code",
+        "_hint": "code type: universal",
+    },
+    # Application domain
+    "basket": {
+        "en": "Apply to basket",
+    },
+    "article": {
+        "en": "Apply to article",
+    },
+    "all": {
+        "en": "Apply to all articles",
     },
 }
 """Initial translations used inside the shop"""
