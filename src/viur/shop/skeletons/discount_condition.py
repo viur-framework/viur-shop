@@ -238,6 +238,3 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
         },
         readOnly=True,
     )
-
-
-print(f"{DiscountConditionSkel.scope_article.refKeys = }")
