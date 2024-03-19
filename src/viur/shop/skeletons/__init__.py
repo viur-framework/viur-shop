@@ -1,6 +1,8 @@
 from pathlib import Path
 
-from viur.core import conf
+from viur.core import conf, translate
+from viur.core.bones import BaseBone
+from viur.core.skeleton import Skeleton
 
 # Before we can import any skeleton we must allow this dir in the viur-core
 _dir = str(Path(__file__).parent)
@@ -22,3 +24,14 @@ from .shipping import ShippingSkel
 from .shipping_config import ShippingConfigSkel
 from .shipping_precondition import ShippingPreconditionRelSkel
 from .vat import VatSkel
+
+# Set translated description of the bones using a schema with the bone name
+for _key, _value in locals().copy().items():
+    if isinstance(_value, type) and issubclass(_value, Skeleton) and _value.__module__.startswith("viur.shop"):
+        for _bone_name, _bone_instance in vars(_value).items():
+            if isinstance(_bone_instance, BaseBone):
+                _bone_instance.descr = translate(
+                    f'viur.shop.skeleton.{_value.__name__.removesuffix("Skel").lower()}.{_bone_name}',
+                    _bone_name,
+                    f"bone {_bone_name}<{type(_bone_instance).__name__}> in {_value.__name__} in viur.shop"
+                )
