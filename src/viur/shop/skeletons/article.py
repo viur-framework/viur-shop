@@ -18,64 +18,64 @@ class ArticleAbstractSkel:  # FIXME: (abc.ABC):
 
     @property
     @abc.abstractmethod
-    def shop_name(self):
+    def shop_name(self) -> StringBone | TextBone:
         """Name of the article in the shop"""
         ...
 
     @property
     @abc.abstractmethod
-    def shop_description(self):
+    def shop_description(self) -> TextBone:
         ...
 
     @property
     @abc.abstractmethod
-    def shop_price_retail(self):
+    def shop_price_retail(self) -> NumericBone:
         ...
 
     @property
     @abc.abstractmethod
-    def shop_price_recommended(self):
+    def shop_price_recommended(self) -> NumericBone:
         ...
 
     @property
     @abc.abstractmethod
-    def shop_availability(self):
+    def shop_availability(self) -> SelectBone:
         ...
 
     @property
     @abc.abstractmethod
-    def shop_listed(self) -> bool:
+    def shop_listed(self) -> BooleanBone:
         ...
 
     @property
     @abc.abstractmethod
-    def shop_image(self):
+    def shop_image(self) -> FileBone:
         ...
 
     @property
     @abc.abstractmethod
-    def shop_art_no_or_gtin(self):
+    def shop_art_no_or_gtin(self) -> StringBone:
         ...
 
     @property
     @abc.abstractmethod
-    def shop_vat(self):
+    def shop_vat(self) -> RelationalBone:
         ...
 
     @property
     @abc.abstractmethod
-    def shop_shipping(self):
+    def shop_shipping(self) -> RelationalBone:
         ...
 
     @property
     @abc.abstractmethod
-    def shop_is_weee(self) -> bool:
+    def shop_is_weee(self) -> BooleanBone:
         """Waste Electrical and Electronic Equipment Directive (WEEE Directive)"""
         ...
 
     @property
     @abc.abstractmethod
-    def shop_is_low_price(self) -> bool:
+    def shop_is_low_price(self) -> BooleanBone:
         """shop_price_retail != shop_price_recommended"""
         ...
 
