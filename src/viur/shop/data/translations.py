@@ -160,12 +160,12 @@ TRANSLATIONS = {
     # Application domain
     "basket": {
         "en": "Apply to basket",
-        "de": "In den Warenkorb legen",
+        "de": "Auf den Warenkorb anwenden",
         "fr": "",
     },
     "article": {
         "en": "Apply to article",
-        "de": "Gilt für Artikel",
+        "de": "Gilt für einen Artikel",
         "fr": "",
     },
     "all": {
@@ -230,8 +230,8 @@ TRANSLATIONS = {
     },
     "viur.shop.skeleton.address.is_default": {
         "_hint": "bone is_default<BooleanBone> in AddressSkel in viur.shop",
-        "de": "Ist Standard",
-        "en": "Is default",
+        "de": "Standard Adresse",
+        "en": "Default adress",
         "fr": "",
     },
     "viur.shop.skeleton.address.lastname": {
@@ -242,7 +242,7 @@ TRANSLATIONS = {
     },
     "viur.shop.skeleton.address.salutation": {
         "_hint": "bone salutation<SelectBone> in AddressSkel in viur.shop",
-        "de": "Begrüßung",
+        "de": "Anrede",
         "en": "Salutation",
         "fr": "",
     },
@@ -254,7 +254,7 @@ TRANSLATIONS = {
     },
     "viur.shop.skeleton.address.street_number": {
         "_hint": "bone street_number<StringBone> in AddressSkel in viur.shop",
-        "de": "Strassennummer",
+        "de": "Hausnummer",
         "en": "Street number",
         "fr": "",
     },
@@ -320,7 +320,7 @@ TRANSLATIONS = {
     },
     "viur.shop.skeleton.cartitem.shop_is_weee": {
         "_hint": "bone shop_is_weee<BooleanBone> in CartItemSkel in viur.shop",
-        "de": "Shop ist weee",
+        "de": "Elektrogerät",
         "en": "Shop is weee",
         "fr": "",
     },
@@ -338,13 +338,13 @@ TRANSLATIONS = {
     },
     "viur.shop.skeleton.cartitem.shop_price_recommended": {
         "_hint": "bone shop_price_recommended<NumericBone> in CartItemSkel in viur.shop",
-        "de": "Shop Preis empfohlen",
+        "de": "Unverbindliche Preisempfehlung (UVP)",
         "en": "Shop price recommended",
         "fr": "",
     },
     "viur.shop.skeleton.cartitem.shop_price_retail": {
         "_hint": "bone shop_price_retail<NumericBone> in CartItemSkel in viur.shop",
-        "de": "Einzelhandelspreis",
+        "de": "Verkausfspreis",
         "en": "Shop price retail",
         "fr": "",
     },
@@ -380,7 +380,7 @@ TRANSLATIONS = {
     },
     "viur.shop.skeleton.cartnode.is_root_node": {
         "_hint": "bone is_root_node<BooleanBone> in CartNodeSkel in viur.shop",
-        "de": "Ist root node",
+        "de": "Warenkorbstamm",
         "en": "Is root node",
         "fr": "",
     },
@@ -398,7 +398,7 @@ TRANSLATIONS = {
     },
     "viur.shop.skeleton.cartnode.shipping_address": {
         "_hint": "bone shipping_address<RelationalBone> in CartNodeSkel in viur.shop",
-        "de": "Versand Adresse",
+        "de": "Versandadresse",
         "en": "Shipping address",
         "fr": "",
     },
@@ -464,7 +464,7 @@ TRANSLATIONS = {
     },
     "viur.shop.skeleton.discount.free_article": {
         "_hint": "bone free_article<RelationalBone> in DiscountSkel in viur.shop",
-        "de": "Gratis Artikel",
+        "de": "Gratisartikel",
         "en": "Free article",
         "fr": "",
     },
@@ -482,13 +482,13 @@ TRANSLATIONS = {
     },
     "viur.shop.skeleton.discountcondition.application_domain": {
         "_hint": "bone application_domain<SelectBone> in DiscountConditionSkel in viur.shop",
-        "de": "Application Domain",
+        "de": "Anwendungsbereich",
         "en": "Application domain",
         "fr": "",
     },
     "viur.shop.skeleton.discountcondition.code_type": {
         "_hint": "bone code_type<SelectBone> in DiscountConditionSkel in viur.shop",
-        "de": "Code Art",
+        "de": "Code-Art",
         "en": "Code type",
         "fr": "",
     },
@@ -524,7 +524,7 @@ TRANSLATIONS = {
     },
     "viur.shop.skeleton.discountcondition.parent_code": {
         "_hint": "bone parent_code<RelationalBone> in DiscountConditionSkel in viur.shop",
-        "de": "Eltern Code",
+        "de": "Eltern-Code",
         "en": "Parent code",
         "fr": "",
     },
@@ -644,7 +644,7 @@ TRANSLATIONS = {
     },
     "viur.shop.skeleton.order.is_rts": {
         "_hint": "bone is_rts<BooleanBone> in OrderSkel in viur.shop",
-        "de": "ist RTS",
+        "de": "Ist versandbereit",
         "en": "Is rts",
         "fr": "",
     },
@@ -740,7 +740,7 @@ TRANSLATIONS = {
     },
     "viur.shop.skeleton.vat.rate": {
         "_hint": "bone rate<NumericBone> in VatSkel in viur.shop",
-        "de": "Bewertung",
+        "de": "Steuersatz(%)",
         "en": "Rate",
         "fr": "",
     },
