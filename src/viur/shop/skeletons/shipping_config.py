@@ -16,7 +16,7 @@ class ShippingConfigSkel(Skeleton):  # STATE: Complete (as in model)
 
     shipping_skel = RelationalBone(
         kind="shop_shipping",
-        module="shop.shipping",
+        module="shop/shipping",
         using=ShippingPreconditionRelSkel,
         multiple=True,
     )

@@ -206,14 +206,14 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
 
     shop_vat = RelationalBone(
         kind="shop_vat",
-        module="shop.vat",
+        module="shop/vat",
         refKeys=["key", "name", "rate"],
         consistency=RelationalConsistency.PreventDeletion,
     )
 
     shop_shipping = RelationalBone(
         kind="shop_shipping_config",
-        module="shop.shipping_config",
+        module="shop/shipping_config",
         consistency=RelationalConsistency.SetNull,
     )
 

@@ -2,7 +2,7 @@ from pathlib import Path
 
 from viur.core import conf, translate
 from viur.core.bones import BaseBone
-from viur.core.skeleton import Skeleton
+from viur.core.skeleton import BaseSkeleton
 
 # Before we can import any skeleton we must allow this dir in the viur-core
 _dir = str(Path(__file__).parent)
@@ -30,7 +30,7 @@ _tr = {}
 
 # Set translated description of the bones using a schema with the bone name
 for _key, _value in locals().copy().items():
-    if isinstance(_value, type) and issubclass(_value, Skeleton) and _value.__module__.startswith("viur.shop"):
+    if isinstance(_value, type) and issubclass(_value, BaseSkeleton) and _value.__module__.startswith("viur.shop"):
         for _bone_name, _bone_instance in vars(_value).items():
             if isinstance(_bone_instance, BaseBone):
                 _bone_instance.descr = translate(

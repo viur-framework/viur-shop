@@ -344,7 +344,7 @@ TRANSLATIONS = {
     },
     "viur.shop.skeleton.cartitem.shop_price_retail": {
         "_hint": "bone shop_price_retail<NumericBone> in CartItemSkel in viur.shop",
-        "de": "Einzelhandelspreis",
+        "de": "Verkausfspreis",
         "en": "Shop price retail",
         "fr": "",
     },

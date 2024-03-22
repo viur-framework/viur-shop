@@ -85,7 +85,7 @@ class Price:
         for skel in SHOP_INSTANCE.get().discount.current_automatically_discounts:
             # TODO: if can apply (article range, lang, ...)
             price = self.apply_discount(skel, article_price)
-            if best_discount is None or price < best_discount[1]:
+            if best_discount is None or price < best_discount[0]:
                 best_discount = price, skel
         return best_discount
 

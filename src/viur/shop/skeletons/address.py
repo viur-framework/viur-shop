@@ -68,7 +68,7 @@ class AddressSkel(Skeleton):  # STATE: Complete (as in model)
 
     cloned_from = RelationalBone(
         kind="shop_address",
-        module="shop.address",
+        module="shop/address",
         readOnly=True,  # set by the system
         consistency=RelationalConsistency.Ignore,
     )
