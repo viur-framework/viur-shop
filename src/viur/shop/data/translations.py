@@ -46,7 +46,12 @@ TRANSLATIONS = {
         "de": "Steuersätze",
         "_hint": "modulename: vat",
     },
-    # Payment providers
+    # Payment providers #TODO
+    "viur.shop.payment_provider.unzer-card": {
+        "_default_text": "Card via Unzer",
+        "_hint": "viur-shop payment provider: unzer-card",
+        "de": "Kreditkarte über Unzer",
+    },
     "viur.shop.payment_provider.unzer-paypal": {
         "_default_text": "PayPal via Unzer",
         "_hint": "viur-shop payment provider: unzer-paypal",
@@ -171,8 +176,8 @@ TRANSLATIONS = {
     "all": {
         "en": "Apply to all articles",
         "de": "Gilt für alle Artikel",
-        "fr":"",
-     },
+        "fr": "",
+    },
     # Bone names
     "viur.shop.skeleton.address.address_addition": {
         "_hint": "bone address_addition<StringBone> in AddressSkel in viur.shop",

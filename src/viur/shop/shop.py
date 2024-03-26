@@ -1,10 +1,9 @@
-import logging
+import copy
 import typing as t
 
-from viur.core import conf, db
+from viur.core import conf
 from viur.core.bones import RelationalBone
 from viur.core.decorators import exposed
-from viur.core.i18n import KINDNAME
 from viur.core.module import Module
 from viur.core.modules.translation import Creator, TranslationSkel
 from viur.core.modules.user import UserSkel
@@ -139,10 +138,20 @@ class Shop(InstancedModule, Module):
         for key, tr_dict in TRANSLATIONS.items():
             # Ensure lowercase key
             key = key.lower()
-            entity = db.Query(KINDNAME).filter("tr_key =", key).getEntry()
-            if entity is not None:
+            skel = TranslationSkel().all().filter("tr_key =", key).getSkel()
+            if skel is not None:
+                old_translations = copy.deepcopy((skel["translations"], skel["default_text"], skel["hint"]))
+                for lang, value in tr_dict.items():
+                    if lang in skel.translations.languages:
+                        skel["translations"][lang] = skel["translations"].get(lang) or value
+                skel["default_text"] = skel["default_text"] or tr_dict.get("_default_text") or None
+                skel["hint"] = skel["hint"] or tr_dict.get("_hint") or None
+                if old_translations != (skel["translations"], skel["default_text"], skel["hint"]):
+                    logger.info(f"Update existing translation {key}")
+                    logger.debug(f'{old_translations} --> {skel["translations"], skel["default_text"], skel["hint"]}')
+                    skel.toDB()
                 continue
-            logging.info(f"Add missing translation {key}")
+            logger.info(f"Add missing translation {key}")
             skel = TranslationSkel()
             skel["tr_key"] = key
             skel["translations"] = tr_dict
