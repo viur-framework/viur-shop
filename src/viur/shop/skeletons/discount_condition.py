@@ -65,6 +65,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
         required=True,
         values=CodeType,
         defaultValue=CodeType.NONE,
+        translation_key_prefix=translation_key_prefix_skeleton_bonename,
         params={
             "category": "1 – General",
         },
@@ -74,6 +75,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
         required=True,
         values=ApplicationDomain,
         defaultValue=ApplicationDomain.ALL,
+        translation_key_prefix=translation_key_prefix_skeleton_bonename,
         params={
             "category": "1 – General",
         },
@@ -152,6 +154,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
 
     scope_language = SelectBone(
         values=conf.i18n.available_languages,
+        # translation_key_prefix=translation_key_prefix_skeleton_bonename,
         params={
             "category": "2 – Scope",
         },
@@ -182,6 +185,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
         required=True,
         values=CustomerGroup,
         defaultValue=CustomerGroup.ALL,
+        translation_key_prefix=translation_key_prefix_skeleton_bonename,
         params={
             "category": "2 – Scope",
         },
