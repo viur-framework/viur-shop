@@ -1,9 +1,10 @@
 import functools
 import typing as t  # noqa
 
-from viur import toolkit
 from viur.core import current, utils
 from viur.core.skeleton import SkeletonInstance
+
+from viur import toolkit
 from .enums import ConditionOperator, DiscountType
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 
@@ -29,7 +30,11 @@ class Price:
             self.is_in_cart = True
             self.cart_leaf = src_object
             self.article_skel = src_object.article_skel_full
-            self.cart_discounts = shop.cart.get_discount_for_leaf(src_object)
+            try:
+                self.cart_discounts = shop.cart.get_discount_for_leaf(src_object)
+            except Exception as exc:  # FIXME: some entities are broken?
+                logger.exception(exc)
+                self.cart_discounts = []
             self.cart_discounts = [toolkit.get_full_skel_from_ref_skel(d) for d in self.cart_discounts]
         elif isinstance(src_object, SkeletonInstance) and issubclass(src_object.skeletonCls, shop.article_skel):
             self.is_in_cart = False
@@ -55,13 +60,15 @@ class Price:
 
     @property
     def saved(self) -> float:
+        if self.retail is None or self.current is None:
+            return 0
         return toolkit.round_decimal(self.retail - self.current, 2)
 
     @property
     def saved_percentage(self) -> float:
         try:
             return toolkit.round_decimal(self.saved / self.current, 2 or 4)  # TODO
-        except ZeroDivisionError:
+        except (ZeroDivisionError, TypeError):  # One value is None
             return 0.0
 
     # @property
@@ -143,7 +150,10 @@ class Price:
     @property
     def vat_value(self) -> float:
         """Calculate the vat value based on current price and vat rate"""
-        return toolkit.round_decimal(self.vat_rate * self.current, 2)
+        try:
+            return toolkit.round_decimal(self.vat_rate * self.current, 2)
+        except TypeError:  # One value is None
+            return 0.0
 
     def to_dict(self):
         from viur.shop.types import ExtendedCustomJsonEncoder

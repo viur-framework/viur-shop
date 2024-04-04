@@ -465,7 +465,8 @@ class Cart(ShopModuleAbstract, Tree):
         discounts = []
         while (pk := skel["parententry"]):
             skel = self.viewSkel("node")
-            assert skel.fromDB(pk)
+            if not skel.fromDB(pk):
+                raise InvalidStateError(f"{pk=} doesn't exist!")
             if discount := skel["discount"]:
                 discounts.append(discount["dest"])
         logger.debug(f"{discounts = }")
