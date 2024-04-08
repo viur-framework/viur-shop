@@ -102,78 +102,78 @@ TRANSLATIONS = {
         "_hint": "cart type: basket",
     },
     # Costumer type
-    "private": {
+    "skeleton.address.customer_type.private": {
         "en": "Private customer",
         "fr": "Client privé",
         "de": "Privatkunde",
         "_hint": "costumer type: private"
     },
-    "business": {
+    "skeleton.address.customer_type.business": {
         "en": "Business customer",
         "fr": "Clientèle commerciale",
         "de": "Geschäftskunde",
         "_hint": "costumer type: business"
     },
     # Salutation
-    "female": {
+    "skeleton.address.salutation.female": {
         "en": "Mrs.",
         "fr": "Madame",
         "de": "Frau",
         "_hint": "salutation type: female"
     },
-    "male": {
+    "skeleton.address.salutation.male": {
         "en": "Mr.",
         "fr": "Monsieur",
         "de": "Herr",
         "_hint": "salutation type: male",
     },
-    "other": {
+    "skeleton.address.salutation.other": {
         "en": "Various",
         "fr": "Autres",
         "de": "Divers",
         "_hint": "salutation type: other"
     },
     # Address type
-    "shipping": {
+    "skeleton.address.address_type.shipping": {
         "en": "Shipping address",
         "fr": "Adresse de livraison",
         "de": "Lieferadresse",
         "_hint": "address type: shipping",
     },
-    "billing": {
+    "skeleton.address.address_type.billing": {
         "en": "Billing address",
         "fr": "Adresse de facturation",
         "de": "Rechnungsadresse",
         "_hint": "address type: billing",
     },
     # Code type
-    "none": {
+    "skeleton.discountcondition.code_type.none": {
         "en": "No code",
         "de": "Kein Code",
         "_hint": "code type: none",
     },
-    "individual": {
+    "skeleton.discountcondition.code_type.individual": {
         "en": "Individual code",
         "de": "Individueller Code",
         "_hint": "code type: individual",
     },
-    "universal": {
+    "skeleton.discountcondition.code_type.universal": {
         "en": "Universal code",
         "de": "Universeller Code",
         "_hint": "code type: universal",
     },
     # Application domain
-    "basket": {
+    "skeleton.discountcondition.application_domain.basket": {
         "en": "Apply to basket",
         "de": "Auf den Warenkorb anwenden",
         "fr": "",
     },
-    "article": {
+    "skeleton.discountcondition.application_domain.article": {
         "en": "Apply to article",
         "de": "Gilt für einen Artikel",
         "fr": "",
     },
-    "all": {
+    "skeleton.discountcondition.application_domain.all": {
         "en": "Apply to all articles",
         "de": "Gilt für alle Artikel",
         "fr": "",

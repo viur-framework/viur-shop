@@ -22,10 +22,12 @@ class AddressSkel(Skeleton):  # STATE: Complete (as in model)
 
     customer_type = SelectBone(
         values=CustomerType,
+        translation_key_prefix=translation_key_prefix_skeleton_bonename,
     )
 
     salutation = SelectBone(
         values=Salutation,
+        translation_key_prefix=translation_key_prefix_skeleton_bonename,
     )
 
     company_name = StringBone(
@@ -64,6 +66,7 @@ class AddressSkel(Skeleton):  # STATE: Complete (as in model)
 
     address_type = SelectBone(
         values=AddressType,
+        translation_key_prefix=translation_key_prefix_skeleton_bonename,
     )
 
     cloned_from = RelationalBone(

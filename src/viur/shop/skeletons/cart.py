@@ -135,6 +135,7 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
 
     cart_type = SelectBone(
         values=CartType,
+        translation_key_prefix=None,
     )
 
     shipping = RelationalBone(
@@ -193,6 +194,7 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
 
     shop_availability = SelectBone(
         values=ArticleAvailability,
+        translation_key_prefix=None,
     )
 
     shop_listed = BooleanBone(
