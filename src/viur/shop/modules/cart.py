@@ -57,10 +57,7 @@ class Cart(ShopModuleAbstract, Tree):
             current.session.get().markChanged()
             # Store basket at the user skel, it will be shared over multiple sessions / devices
             if user := current.user.get():
-                user_skel = conf.main_app.vi.user.editSkel()
-                user_skel.fromDB(user["key"])
-                user_skel.setBoneValue("basket", key)
-                user_skel.toDB()
+                db.RunInTransaction(self._set_basket_txn, user_key=user["key"], basket_key=key)
         return self.session["session_cart_key"]
 
     def detach_session_cart(self) -> db.Key:
@@ -68,11 +65,16 @@ class Cart(ShopModuleAbstract, Tree):
         self.session["session_cart_key"] = None
         current.session.get().markChanged()
         if user := current.user.get():
-            user_skel = conf.main_app.vi.user.editSkel()
-            user_skel.fromDB(user["key"])
-            user_skel["basket"] = None
-            user_skel.toDB()
+            db.RunInTransaction(self._set_basket_txn, user_key=user["key"], basket_key=None)
         return key
+
+    @staticmethod
+    def _set_basket_txn(user_key: db.Key, basket_key: db.Key | None) -> SkeletonInstance:
+        user_skel = conf.main_app.vi.user.editSkel()
+        user_skel.fromDB(user_key)
+        user_skel.setBoneValue("basket", basket_key)
+        user_skel.toDB()
+        return user_skel
 
     def get_available_root_nodes(self, *args, **kwargs) -> list[dict[t.Literal["name", "key"], str]]:
         root_nodes = [self.current_session_cart]
@@ -99,6 +101,9 @@ class Cart(ShopModuleAbstract, Tree):
 
         :returns: The rendered representation of the available root-nodes.
         """
+        if utils.string.is_prefix(self.render.kind, "json"):
+            # TODO: add in viur-core
+            current.request.get().response.headers["Content-Type"] = "application/json"
         return self.render.listRootNodes([
             self.render.renderSkelValues(skel)
             for skel in self.getAvailableRootNodes(*args, **kwargs)
@@ -174,6 +179,7 @@ class Cart(ShopModuleAbstract, Tree):
         self,
         article_key: db.Key,
         parent_cart_key: db.Key,
+        must_be_listed: bool = True,
     ):
         if not isinstance(article_key, db.Key):
             raise TypeError(f"article_key must be an instance of db.Key")
@@ -185,7 +191,8 @@ class Cart(ShopModuleAbstract, Tree):
         query: db.Query = skel.all()
         query.filter("parententry =", parent_cart_key)
         query.filter("article.dest.__key__ =", article_key)
-        query.filter("shop_listed =", True)
+        if must_be_listed:
+            query.filter("shop_listed =", True)
         skel = query.getSkel()
         return skel
 
@@ -205,7 +212,7 @@ class Cart(ShopModuleAbstract, Tree):
         if not self.is_valid_node(parent_cart_key):
             raise e.InvalidArgumentException("parent_cart_key", parent_cart_key)
         parent_skel = None
-        if not (skel := self.get_article(article_key, parent_cart_key)):
+        if not (skel := self.get_article(article_key, parent_cart_key, must_be_listed=False)):
             logger.info("This is an add")
             skel = self.addSkel("leaf")
             res = skel.setBoneValue("article", article_key)
@@ -217,7 +224,10 @@ class Cart(ShopModuleAbstract, Tree):
             else:
                 skel["parentrepo"] = parent_skel["parentrepo"]
             article_skel: SkeletonInstance = self.shop.article_skel()
-            assert article_skel.fromDB(article_key)
+            if not article_skel.fromDB(article_key):
+                raise errors.NotFound(f"Article with key {article_key=} does not exist!")
+            if not article_skel["shop_listed"]:
+                raise errors.UnprocessableEntity(f"Article is not listed for the shop!")
             # Copy values from the article
             for bone in skel.keys():
                 if not bone.startswith("shop_"): continue
@@ -279,7 +289,7 @@ class Cart(ShopModuleAbstract, Tree):
             raise TypeError(f"parent_cart_key must be an instance of db.Key")
         if not isinstance(new_parent_cart_key, db.Key):
             raise TypeError(f"parent_cart_key must be an instance of db.Key")
-        if not (skel := self.get_article(article_key, parent_cart_key)):
+        if not (skel := self.get_article(article_key, parent_cart_key, must_be_listed=False)):
             raise e.InvalidArgumentException(
                 "article_key",
                 descr_appendix=f"Article does not exist in cart node {parent_cart_key}."
@@ -449,6 +459,7 @@ class Cart(ShopModuleAbstract, Tree):
     ) -> None:
         # TODO: for node in tree:
         #   freeze node with values, discount, shipping (JSON dump? bone duplication?)
+        #   ensure each article still exists and shop_listed is True
         ...
 
     # -------------------------------------------------------------------------
