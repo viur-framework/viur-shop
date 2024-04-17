@@ -4,7 +4,7 @@ import viur.shop.types.exceptions as e
 from viur.core import conf, current, db, errors, exposed, utils
 from viur.core.bones import BaseBone
 from viur.core.prototypes import Tree
-from viur.core.skeleton import SkeletonInstance
+from viur.core.skeleton import SkeletonInstance, Skeleton
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.types import *
 from viur.shop.types.exceptions import InvalidStateError
@@ -12,6 +12,53 @@ from ..globals import SENTINEL, SHOP_LOGGER
 from ..skeletons.cart import CartItemSkel, CartNodeSkel
 
 logger = SHOP_LOGGER.getChild(__name__)
+
+class TreeCache:
+
+    def __init__(self, skel_cls: t.Type[Skeleton]) -> None:
+        super().__init__()
+        self.skel_cls = skel_cls
+        self.cache_key = f"{type(self).__name__}_{skel_cls.kindName}"
+
+    @property
+    def all_cache(self) -> list[SkeletonInstance]:
+        if not self.cache_key in current.request_data.get():
+            self.prepare()
+        logger.debug(f'Cached keys: {[skel["key"] for skel in current.request_data.get()[self.cache_key]]}')
+        return current.request_data.get()[self.cache_key]
+        # if not current.request_data.get().get(self.cache_key):
+        #     current.request_data.get()[self.cache_key] = []
+        # r
+
+    def prepare(self) -> None:
+        # if not current.request_data.get().get(self.cache_key):
+        #     current.request_data.get()[self.cache_key] = []
+        logger.debug(f"Prepare {self.skel_cls=}")
+        root_key = conf.main_app.vi.shop.cart.current_session_cart_key
+        query = self.skel_cls().all().filter("parentrepo =", root_key)
+        current.request_data.get()[self.cache_key] = query.fetch(100) #TODO
+        logger.debug(f"{self.skel_cls.kindName=} {root_key.kind=}")
+        if self.skel_cls.kindName == root_key.kind:
+            root_node_skel = self.skel_cls()
+            assert root_node_skel.fromDB(root_key)
+            current.request_data.get()[self.cache_key].append(root_node_skel)
+
+    def get_by_key(self, key: db.Key) -> SkeletonInstance:
+        for skel in self.all_cache:
+            if skel["key"] == key:
+                return skel
+
+    def get_children(self, key:db.Key) -> SkeletonInstance:
+        return [
+            skel
+            for skel in self.all_cache
+            if skel["parententry"] == key
+        ]
+
+
+CartNodeCache = TreeCache(CartNodeSkel)
+CartLeafCache = TreeCache(CartItemSkel)
+
 
 
 class Cart(ShopModuleAbstract, Tree):
@@ -164,7 +211,11 @@ class Cart(ShopModuleAbstract, Tree):
             return cache[parent_cart_key]
         except KeyError:
             pass
-        children = list(self.get_children(parent_cart_key))
+        try:
+            children = list(CartNodeCache.get_children(parent_cart_key))
+            children += list(CartLeafCache.get_children(parent_cart_key))
+        except Exception:
+            children = list(self.get_children(parent_cart_key))
         cache[parent_cart_key] = children
         return children
 
@@ -458,14 +509,17 @@ class Cart(ShopModuleAbstract, Tree):
         leaf_key_or_skel: db.Key | SkeletonInstance,
     ) -> list[SkeletonInstance]:
         if isinstance(leaf_key_or_skel, db.Key):
-            skel = self.viewSkel("leaf")
-            skel.fromDB(leaf_key_or_skel)
+            skel = CartLeafCache.get_by_key(leaf_key_or_skel)
+            # skel = self.viewSkel("leaf")
+            # skel.fromDB(leaf_key_or_skel)
         else:
             skel = leaf_key_or_skel
         discounts = []
         while (pk := skel["parententry"]):
-            skel = self.viewSkel("node")
-            if not skel.fromDB(pk):
+            skel = CartNodeCache.get_by_key(pk)
+            # skel = self.viewSkel("node")
+            # if not skel.fromDB(pk):
+            if not skel:
                 raise InvalidStateError(f"{pk=} doesn't exist!")
             if discount := skel["discount"]:
                 discounts.append(discount["dest"])
