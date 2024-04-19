@@ -3,14 +3,15 @@ import inspect
 import typing as t  # noqa
 
 from viur.core.bones import *
-from viur.core.skeleton import Skeleton
+from viur.core.skeleton import BaseSkeleton
 from viur.shop.types import *
+
 from ..globals import SHOP_LOGGER
 
 logger = SHOP_LOGGER.getChild(__name__)
 
 
-class ArticleAbstractSkel(Skeleton):
+class ArticleAbstractSkel(BaseSkeleton):
     """Abstract skeleton class which the project has to implement for the article skeletons
 
     All members in this abstract skeleton has to be prefixed with `shop_` to
