@@ -4,10 +4,10 @@ Welcome to ViUR Shop
 .. TODO:
  .. image:: images/viur-shop.svg
 
-On the way to becoming a <a href="https://www.viur.dev">ViUR</a> shop plugin.
+On the way to becoming a `ViUR <https://www.viur.dev>`_ shop plugin.
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: ViUR Shop
    :glob:
 

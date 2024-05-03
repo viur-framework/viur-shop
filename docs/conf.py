@@ -34,7 +34,8 @@ extensions = [
 
 autodoc_default_options = {
     'ignore-module-all': True,
-    'special-members': True
+    'special-members': True,
+    'imported-members': False,
 }
 
 autoapi_type = 'python'
