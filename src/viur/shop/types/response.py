@@ -2,6 +2,8 @@ import dataclasses
 import json
 import typing as t
 
+from viur import toolkit
+
 from viur.core import current
 from viur.core.render.json.default import CustomJsonEncoder
 from viur.core.skeleton import SkeletonInstance
@@ -15,7 +17,7 @@ class ExtendedCustomJsonEncoder(CustomJsonEncoder):
     def default(self, o: t.Any) -> t.Any:
         if isinstance(o, SkeletonInstance):
             # We're using the ViRender of the (hopefully) always existing user module
-            return SHOP_INSTANCE_VI.get().render.renderSkelValues(o)
+            return SHOP_INSTANCE_VI.get().render.renderSkelValues(toolkit.without_render_preparation(o))
         elif isinstance(o, ClientError):
             return {"ClientError": dataclasses.asdict(o)}
         return super().default(o)
