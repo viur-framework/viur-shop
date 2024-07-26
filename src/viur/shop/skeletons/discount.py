@@ -100,6 +100,7 @@ class DiscountSkel(Skeleton):  # STATE: Complete (as in model)
             "visibleIf": 'discount_type == "free_article"',
             "requiredIf": 'discount_type == "free_article"',
         },
+        consistency=RelationalConsistency.PreventDeletion,
     )
 
     condition = RelationalBone(

@@ -65,6 +65,9 @@ def get_vat_rate_for_node(skel: "CartNodeSkel", bone: RelationalBone):
         # logger.debug(f"{child = }")
         if issubclass(child.skeletonCls, CartNodeSkel):
             for rel in child["vat_rate"] or []:
+                if rel is None:
+                    logger.error(f'Relation vat_rate of {child["key"]} is broken.')
+                    continue
                 rel_keys.add(rel["dest"]["key"])
         elif issubclass(child.skeletonCls, CartItemSkel):
             if child["shop_vat"] is not None:

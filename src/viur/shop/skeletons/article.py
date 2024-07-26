@@ -1,15 +1,17 @@
 import abc
+import inspect
 import typing as t  # noqa
 
 from viur.core.bones import *
+from viur.core.skeleton import BaseSkeleton
 from viur.shop.types import *
+
 from ..globals import SHOP_LOGGER
 
 logger = SHOP_LOGGER.getChild(__name__)
 
 
-# FIXME: TypeError: metaclass conflict: the metaclass of a derived class must be a (non-strict) subclass of the metaclasses of all its bases
-class ArticleAbstractSkel:  # FIXME: (abc.ABC):
+class ArticleAbstractSkel(BaseSkeleton):
     """Abstract skeleton class which the project has to implement for the article skeletons
 
     All members in this abstract skeleton has to be prefixed with `shop_` to
@@ -87,3 +89,29 @@ class ArticleAbstractSkel:  # FIXME: (abc.ABC):
         compute=Compute(lambda skel: skel.shop_price_.to_dict(), ComputeInterval(ComputeMethod.Always))
     )
     shop_price.type = JsonBone.type
+
+    @classmethod
+    def setSystemInitialized(cls):
+        logger.debug(f"Call setSystemInitialized({cls=})")
+        # Check if all abstract methods are implemented
+        for name in dir(cls):
+            value = getattr(cls, name, None)
+            if getattr(value, "__isabstractmethod__", False):
+                raise TypeError(
+                    f"Can't initialize abstract class {cls.__name__} with abstract method {name}"
+                )
+        # Check if all abstract methods are implemented with th correct type
+        for name in dir(ArticleAbstractSkel):
+            value = getattr(ArticleAbstractSkel, name, None)
+            if getattr(value, "__isabstractmethod__", False) and isinstance(value, property):
+                annotations = inspect.get_annotations(getattr(ArticleAbstractSkel, name).fget)
+                if "return" not in annotations:
+                    raise InvalidStateError(
+                        f"Dear viur-shop Developer, please add the return type hint to the abstract property {name}!"
+                    )
+                if not isinstance(value := getattr(cls, name), annotations["return"]):
+                    raise TypeError(
+                        f'Can\'t initialize class {cls.__name__}: '
+                        f'bone {name} must be of type {annotations["return"]} not {type(value)}'
+                    )
+        super().setSystemInitialized()

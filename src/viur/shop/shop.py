@@ -1,6 +1,8 @@
 import copy
 import typing as t
 
+from viur.shop.data.translations import TRANSLATIONS
+
 from viur.core import conf
 from viur.core.bones import RelationalBone
 from viur.core.decorators import exposed
@@ -9,7 +11,6 @@ from viur.core.modules.translation import Creator, TranslationSkel
 from viur.core.modules.user import UserSkel
 from viur.core.prototypes.instanced_module import InstancedModule
 from viur.core.skeleton import MetaSkel, Skeleton, skeletonByKind
-from viur.shop.data.translations import TRANSLATIONS
 from .globals import SHOP_INSTANCE, SHOP_INSTANCE_VI, SHOP_LOGGER
 from .modules import Address, Api, Cart, Discount, DiscountCondition, Order, Shipping, ShippingConfig, Vat
 from .payment_providers import PaymentProviderAbstract
@@ -144,12 +145,15 @@ class Shop(InstancedModule, Module):
                 for lang, value in tr_dict.items():
                     if lang in skel.translations.languages:
                         skel["translations"][lang] = skel["translations"].get(lang) or value
-                skel["default_text"] = skel["default_text"] or tr_dict.get("_default_text") or None
-                skel["hint"] = skel["hint"] or tr_dict.get("_hint") or None
+                skel["default_text"] = skel["default_text"] or tr_dict.get("_default_text") or ""
+                skel["hint"] = skel["hint"] or tr_dict.get("_hint") or ""
                 if old_translations != (skel["translations"], skel["default_text"], skel["hint"]):
                     logger.info(f"Update existing translation {key}")
                     logger.debug(f'{old_translations} --> {skel["translations"], skel["default_text"], skel["hint"]}')
-                    skel.toDB()
+                    try:
+                        skel.toDB()
+                    except Exception as exc:
+                        logger.exception(f"Failed to write updated translation {skel=} :: {exc}")
                 continue
             logger.info(f"Add missing translation {key}")
             skel = TranslationSkel()
@@ -158,7 +162,10 @@ class Shop(InstancedModule, Module):
             skel["default_text"] = tr_dict.get("_default_text") or None
             skel["hint"] = tr_dict.get("_hint") or None
             skel["creator"] = Creator.VIUR
-            skel.toDB()
+            try:
+                skel.toDB()
+            except Exception as exc:
+                logger.exception(f"Failed to write added translation {skel=} :: {exc}")
 
 
 Shop.html = True

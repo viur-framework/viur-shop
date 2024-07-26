@@ -94,7 +94,8 @@ class Api(ShopModuleAbstract):
         parent_cart_key: str | db.Key,
     ):
         """Remove an article from the cart"""
-        return self.article_update(article_key, 0, parent_cart_key)
+        return self.article_update(
+            article_key=article_key, quantity=0, parent_cart_key=parent_cart_key)
 
     @exposed
     @force_post

@@ -18,5 +18,6 @@ class ShippingConfigSkel(Skeleton):  # STATE: Complete (as in model)
         kind="shop_shipping",
         module="shop/shipping",
         using=ShippingPreconditionRelSkel,
+        consistency=RelationalConsistency.PreventDeletion,
         multiple=True,
     )
