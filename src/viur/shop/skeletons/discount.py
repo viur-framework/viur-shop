@@ -9,7 +9,7 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 
 class DiscountSkel(Skeleton):  # STATE: Complete (as in model)
-    kindName = "shop_discount"
+    kindName = "{{viur_shop_modulename}}_discount"
 
     interBoneValidations = [
         # Make percentage required if selected as discount_type
@@ -104,8 +104,8 @@ class DiscountSkel(Skeleton):  # STATE: Complete (as in model)
     )
 
     condition = RelationalBone(
-        kind="shop_discount_condition",
-        module="shop/discount_condition",
+        kind="{{viur_shop_modulename}}_discount_condition",
+        module="{{viur_shop_modulename}}/discount_condition",
         multiple=True,
         refKeys=["key", "name", "scope_code", "application_domain"],
         consistency=RelationalConsistency.PreventDeletion,
