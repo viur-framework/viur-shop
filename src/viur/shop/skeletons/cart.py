@@ -81,6 +81,10 @@ def get_vat_rate_for_node(skel: "CartNodeSkel", bone: RelationalBone):
 class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     kindName = "shop_cart_node"
 
+    subSkels = {
+        "discount": ["key", "discount", "parententry"],  # for modules.cart.get_discount_for_leaf
+    }
+
     is_root_node = BooleanBone(
         readOnly=True,
     )
@@ -229,17 +233,19 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     )
 
     @property
-    def article_skel(self):
+    def article_skel(self) -> SkeletonInstance:
         return self["article"]["dest"]
 
     @property
-    def article_skel_full(self):
+    def article_skel_full(self) -> SkeletonInstance:
+        # TODO: Cache this property
+        # logger.debug(f'Reading article_skel_full {self.article_skel["key"]=}')
         skel = SHOP_INSTANCE.get().article_skel()
         assert skel.fromDB(self.article_skel["key"])
         return skel
 
     @property
-    def parent_skel(self):
+    def parent_skel(self) -> SkeletonInstance:
         if not (pk := self["parententry"]):
             return None
         skel = SHOP_INSTANCE.get().cart.viewSkel("node")
