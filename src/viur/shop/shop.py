@@ -16,7 +16,7 @@ from .payment_providers import PaymentProviderAbstract
 from .services.hooks import HOOK_SERVICE
 from .skeletons.discount import DiscountSkel
 from .skeletons.discount_condition import DiscountConditionSkel
-from .types import Supplier
+from .types import Supplier, exceptions
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -102,6 +102,11 @@ class Shop(InstancedModule, Module):
 
         At this point we are and must be before setSystemInitialized.
         """
+        from viur.core.skeleton import getSystemInitialized, MetaBaseSkel
+        if getSystemInitialized():
+            raise exceptions.InvalidStateError(
+                "The system cannot be initialized before the viur-shop is not prepared!"
+            )
         from viur.shop import CartItemSkel  # import must stay here to avoid circular imports
         CartItemSkel.article.kind = self.article_skel.kindName
         DiscountConditionSkel.scope_article.kind = self.article_skel.kindName
@@ -109,21 +114,19 @@ class Shop(InstancedModule, Module):
         DiscountSkel.free_article.kind = self.article_skel.kindName
         DiscountSkel.free_article.module = self.article_skel.kindName
 
-        from viur.core.skeleton import MetaBaseSkel
-
         # logger.debug(f"BEFORE {MetaBaseSkel._skelCache.keys() = }")
         # logger.debug(f"BEFORE {MetaBaseSkel._skelCache = }")
 
         # Replace {{viur_shop_modulename}} with real modulename in viur-shop Skeletons and bones
-        for name, cls in list(MetaBaseSkel._skelCache.items()):
-            if not name.startswith("{{viur_shop_modulename}}_"):
+        for kindname, skel_cls in list(MetaBaseSkel._skelCache.items()):
+            if not kindname.startswith("{{viur_shop_modulename}}_"):
                 continue
 
-            cls.kindName = name.replace("{{viur_shop_modulename}}", self.moduleName)
-            MetaBaseSkel._skelCache.pop(name)
-            MetaBaseSkel._skelCache[cls.kindName] = cls
+            skel_cls.kindName = kindname.replace("{{viur_shop_modulename}}", self.moduleName)
+            MetaBaseSkel._skelCache.pop(kindname)
+            MetaBaseSkel._skelCache[skel_cls.kindName] = skel_cls
 
-            for _bone_name, _bone_instance in vars(cls).items():
+            for _bone_name, _bone_instance in vars(skel_cls).items():
                 if isinstance(_bone_instance, RelationalBone):
                     # logger.debug(f"{_bone_name=} | {_bone_instance=}")
                     if _bone_instance.kind.startswith("{{viur_shop_modulename}}_"):
