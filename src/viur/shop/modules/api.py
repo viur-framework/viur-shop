@@ -211,7 +211,7 @@ class Api(ShopModuleAbstract):
         ...
 
     @exposed
-    def cart_list_current_user(
+    def basket_list(
         self
     ):
         return self.cart_list(cart_key=self.shop.cart.current_session_cart_key)
