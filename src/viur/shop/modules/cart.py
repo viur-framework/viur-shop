@@ -4,7 +4,8 @@ import viur.shop.types.exceptions as e
 from viur.core import conf, current, db, errors, exposed, utils
 from viur.core.bones import BaseBone
 from viur.core.prototypes import Tree
-from viur.core.skeleton import SkeletonInstance
+from viur.core.prototypes.tree import SkelType
+from viur.core.skeleton import Skeleton, SkeletonInstance
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.types import *
 from viur.shop.types.exceptions import InvalidStateError
@@ -22,6 +23,23 @@ class Cart(ShopModuleAbstract, Tree):
         admin_info = super().adminInfo()
         admin_info["icon"] = "cart3"
         return admin_info
+
+    # --- ViUR ----------------------------------------------------------------
+
+    def baseSkel(
+        self,
+        skelType: SkelType,
+        sub_skel: str | list[str] | None = None,
+        *args, **kwargs
+    ) -> SkeletonInstance:
+        """Extend default baseSkel() by sub_skel parameter"""
+        cls: t.Type[Skeleton] = self._resolveSkelCls(skelType, *args, **kwargs)
+        if sub_skel is None:
+            return cls()  # noqa
+        if isinstance(sub_skel, list):
+            return cls.subSkel(*sub_skel)
+        else:
+            return cls.subSkel(sub_skel)
 
     # --- Session -------------------------------------------------------------
 
@@ -475,7 +493,7 @@ class Cart(ShopModuleAbstract, Tree):
             skel = leaf_key_or_skel
         discounts = []
         while (pk := skel["parententry"]):
-            skel = self.viewSkel("node")
+            skel = self.viewSkel("node", sub_skel="discount")
             if not skel.fromDB(pk):
                 raise InvalidStateError(f"{pk=} doesn't exist!")
             if discount := skel["discount"]:
