@@ -1,6 +1,51 @@
 [build-system]
 requires = [
     "setuptools>=65",
-    "wheel"
+#    "wheel"
 ]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "viur-shop"
+dynamic = ["version"]
+dependencies = [
+    "viur-toolkit>=0.1.0.dev4"
+]
+requires-python = ">=3.10"
+authors = [
+    { name = "Sven Eberth", email = "se@mausbrand.de" },
+]
+maintainers = [
+    { name = "Sven Eberth", email = "se@mausbrand.de" },
+]
+description = "ViUR shop-plugin"
+readme = "README.md"
+license = { file = "LICENSE" }
+keywords = ["viur", "plugin", "backend", "shop"]
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[tool.setuptools.dynamic]
+version = { attr = "viur.shop.version.__version__" }
+
+[project.optional-dependencies]
+unzer = [
+    "unzer~=1.0.0.dev4",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.urls]
+Documentation = "https://viur-shop.readthedocs.io"
+Repository = "https://github.com/viur-framework/viur-shop.git"
+"Bug Tracker" = "https://github.com/viur-framework/viur-shop/issues"
+#TODO: Changelog = "https://github.com/viur-framework/viur-shop/blob/main/CHANGELOG.md"
