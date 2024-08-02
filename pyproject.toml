@@ -48,4 +48,4 @@ where = ["src"]
 Documentation = "https://viur-shop.readthedocs.io"
 Repository = "https://github.com/viur-framework/viur-shop.git"
 "Bug Tracker" = "https://github.com/viur-framework/viur-shop/issues"
-Changelog = "https://github.com/viur-framework/viur-shop/blob/main/CHANGELOG.md"
+#TODO: Changelog = "https://github.com/viur-framework/viur-shop/blob/main/CHANGELOG.md"
