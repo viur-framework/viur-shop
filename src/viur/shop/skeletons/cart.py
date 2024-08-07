@@ -59,6 +59,8 @@ class TotalFactory:
                 ):
                     if discount["dest"]["discount_type"] == DiscountType.ABSOLUTE:
                         total -= discount["dest"]["absolute"]
+                    if discount["dest"]["discount_type"] == DiscountType.PERCENTAGE:
+                        total -= total * discount["dest"]["percentage"] / 100
 
         return round(
             total,

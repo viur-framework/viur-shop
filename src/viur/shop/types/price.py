@@ -129,7 +129,7 @@ class Price:
         for permutation in all_permutations:
             price = self.retail  # start always from the retail price
             for discount in permutation:
-                #only add if App
+                # only add if ApplicationDomain.ARTICLE
                 if any(
                     [condition["dest"]["application_domain"] == ApplicationDomain.ARTICLE
                      for condition in discount["condition"]]
