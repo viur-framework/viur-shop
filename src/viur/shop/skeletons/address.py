@@ -10,7 +10,7 @@ logger = SHOP_LOGGER.getChild(__name__)
 # TODO: should these bones required or will this be handled in a editSkel?
 
 class AddressSkel(Skeleton):  # STATE: Complete (as in model)
-    kindName = "shop_address"
+    kindName = "{{viur_shop_modulename}}_address"
 
     name = StringBone(
         descr="Name",
@@ -82,8 +82,8 @@ class AddressSkel(Skeleton):  # STATE: Complete (as in model)
     )
 
     cloned_from = RelationalBone(
-        kind="shop_address",
-        module="shop/address",
+        kind="{{viur_shop_modulename}}_address",
+        module="{{viur_shop_modulename}}/address",
         readOnly=True,  # set by the system
         consistency=RelationalConsistency.Ignore,
     )

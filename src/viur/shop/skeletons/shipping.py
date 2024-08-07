@@ -16,7 +16,7 @@ def get_suppliers() -> dict[str, str]:
 
 
 class ShippingSkel(Skeleton):  # STATE: Complete (as in model)
-    kindName = "shop_shipping"
+    kindName = "{{viur_shop_modulename}}_shipping"
 
     name = StringBone(
     )

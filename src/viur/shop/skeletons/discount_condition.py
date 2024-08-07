@@ -11,7 +11,7 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 
 class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
-    kindName = "shop_discount_condition"
+    kindName = "{{viur_shop_modulename}}_discount_condition"
 
     interBoneValidations = [
         # Make individual_codes_amount required if selected as CodeType.INDIVIDUAL
@@ -232,8 +232,8 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
     )
 
     parent_code = RelationalBone(
-        kind="shop_discount_condition",
-        module="shop/discount_condition",
+        kind="{{viur_shop_modulename}}_discount_condition",
+        module="{{viur_shop_modulename}}/discount_condition",
         consistency=RelationalConsistency.PreventDeletion,
         params={
             "category": "2 – Scope",

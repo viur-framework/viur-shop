@@ -8,7 +8,7 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 
 class Vat(ShopModuleAbstract, List):
-    kindName = "shop_vat"
+    kindName = "{{viur_shop_modulename}}_vat"
 
     default_order = ("rate", db.SortOrder.Ascending)
 

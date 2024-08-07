@@ -79,7 +79,7 @@ def get_vat_rate_for_node(skel: "CartNodeSkel", bone: RelationalBone):
 
 
 class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
-    kindName = "shop_cart_node"
+    kindName = "{{viur_shop_modulename}}_cart_node"
 
     subSkels = {
         "discount": ["key", "discount", "parententry"],  # for modules.cart.get_discount_for_leaf
@@ -106,8 +106,8 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     )
 
     vat_rate = RelationalBone(
-        kind="shop_vat",
-        module="shop/vat",
+        kind="{{viur_shop_modulename}}_vat",
+        module="{{viur_shop_modulename}}/vat",
         compute=Compute(get_vat_rate_for_node, ComputeInterval(ComputeMethod.Always)),
         refKeys=["key", "name", "rate"],
         multiple=True,
@@ -123,8 +123,8 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     )
 
     shipping_address = RelationalBone(
-        kind="shop_address",
-        module="shop/shop_address",
+        kind="{{viur_shop_modulename}}_address",
+        module="{{viur_shop_modulename}}/shop_address",
         refKeys=[
             "key", "name", "customer_type", "salutation", "company_name",
             "firstname", "lastname", "street_name", "street_number",
@@ -146,20 +146,20 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     )
 
     shipping = RelationalBone(
-        kind="shop_shipping",
-        module="shop/shipping",
+        kind="{{viur_shop_modulename}}_shipping",
+        module="{{viur_shop_modulename}}/shipping",
     )
     """Versand bei Warenkorb der einer Bestellung zugehört"""
 
     discount = RelationalBone(
-        kind="shop_discount",
-        module="shop/discount",
+        kind="{{viur_shop_modulename}}_discount",
+        module="{{viur_shop_modulename}}/discount",
         refKeys=["key", "name", "discount_type", "absolute", "percentage"],
     )
 
 
 class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
-    kindName = "shop_cart_leaf"
+    kindName = "{{viur_shop_modulename}}_cart_leaf"
 
     article = RelationalBone(
         kind="...",  # will be set in Shop._set_kind_names()
@@ -214,15 +214,15 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     )
 
     shop_vat = RelationalBone(
-        kind="shop_vat",
-        module="shop/vat",
+        kind="{{viur_shop_modulename}}_vat",
+        module="{{viur_shop_modulename}}/vat",
         refKeys=["key", "name", "rate"],
         consistency=RelationalConsistency.PreventDeletion,
     )
 
     shop_shipping = RelationalBone(
-        kind="shop_shipping_config",
-        module="shop/shipping_config",
+        kind="{{viur_shop_modulename}}_shipping_config",
+        module="{{viur_shop_modulename}}/shipping_config",
         consistency=RelationalConsistency.SetNull,
     )
 

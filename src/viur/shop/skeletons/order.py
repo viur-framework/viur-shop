@@ -17,11 +17,11 @@ def get_payment_providers() -> dict[str, str | translate]:
 
 
 class OrderSkel(Skeleton):  # STATE: Complete (as in model)
-    kindName = "shop_order"
+    kindName = "{{viur_shop_modulename}}_order"
 
     billing_address = RelationalBone(
-        kind="shop_address",
-        module="shop/address",
+        kind="{{viur_shop_modulename}}_address",
+        module="{{viur_shop_modulename}}/address",
         consistency=RelationalConsistency.PreventDeletion,
         refKeys=[
             "key", "name", "customer_type", "salutation", "company_name",
@@ -36,8 +36,8 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
     )
 
     cart = RelationalBone(
-        kind="shop_cart_node",
-        module="shop/cart_node",
+        kind="{{viur_shop_modulename}}_cart_node",
+        module="{{viur_shop_modulename}}/cart_node",
         consistency=RelationalConsistency.PreventDeletion,
         refKeys=["key", "name", "shipping_address"],
     )

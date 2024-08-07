@@ -31,6 +31,10 @@ class ShopModuleAbstract(Module):
             moduleName = self.__class__.__name__.lower()
         if modulePath is None:
             modulePath = f"{shop.modulePath}/{moduleName.lower()}"
+        try:
+            self.kindName = self.kindName.replace("{{viur_shop_modulename}}", shop.moduleName)
+        except AttributeError:
+            pass
         super().__init__(moduleName, modulePath, *args, **kwargs)
         self.shop: "Shop" = shop
 

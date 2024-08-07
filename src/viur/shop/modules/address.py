@@ -12,7 +12,7 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 
 class Address(ShopModuleAbstract, List):
-    kindName = "shop_address"
+    kindName = "{{viur_shop_modulename}}_address"
 
     default_order: DEFAULT_ORDER_TYPE = (  #
         # TODO: https://github.com/viur-framework/viur-core/pull/1109
