@@ -51,7 +51,7 @@ class TotalFactory:
                     if self.multiply_quantity:
                         value *= child["quantity"]
                     total += value
-        if bone.name in ["vat_total", "total"]:
+        if bone.name in ["total_discount_price"]: #todo Discount price with vat ?
             if discount := skel["discount"]:
                 if any(
                     [condition["dest"]["application_domain"] == ApplicationDomain.BASKET
@@ -104,6 +104,14 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
         precision=2,
         compute=Compute(
             TotalFactory("total", lambda child: child.price_.current, True),
+            ComputeInterval(ComputeMethod.Always),
+        ),
+    )
+
+    total_discount_price = NumericBone(
+        precision=2,
+        compute=Compute(
+            TotalFactory("total_discount_price", lambda child: child.price_.current, True),
             ComputeInterval(ComputeMethod.Always),
         ),
     )
