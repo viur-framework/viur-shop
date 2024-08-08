@@ -6,7 +6,7 @@ from viur.core import current, utils
 from viur.core.skeleton import SkeletonInstance
 
 from viur import toolkit
-from .enums import ConditionOperator, DiscountType
+from .enums import ConditionOperator, DiscountType, ApplicationDomain
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 
 logger = SHOP_LOGGER.getChild(__name__)
@@ -124,13 +124,17 @@ class Price:
                 logger.info(f"Not suitable for combinables")
                 continue
         all_permutations.append(combinables)
-
         best_price = self.retail
         best_discounts = None
         for permutation in all_permutations:
             price = self.retail  # start always from the retail price
             for discount in permutation:
-                price = self.apply_discount(discount, price)
+                # only add if ApplicationDomain.ARTICLE
+                if any(
+                    [condition["dest"]["application_domain"] == ApplicationDomain.ARTICLE
+                     for condition in discount["condition"]]
+                ):
+                    price = self.apply_discount(discount, price)
             if price < best_price:  # Is this discount better?
                 best_price = price
                 best_discounts = permutation

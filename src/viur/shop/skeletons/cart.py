@@ -51,6 +51,17 @@ class TotalFactory:
                     if self.multiply_quantity:
                         value *= child["quantity"]
                     total += value
+        if bone.name in ["total_discount_price"]:  # todo Discount price with vat ?
+            if discount := skel["discount"]:
+                if any(
+                    [condition["dest"]["application_domain"] == ApplicationDomain.BASKET
+                     for condition in discount["dest"]["condition"]]
+                ):
+                    if discount["dest"]["discount_type"] == DiscountType.ABSOLUTE:
+                        total -= discount["dest"]["absolute"]
+                    if discount["dest"]["discount_type"] == DiscountType.PERCENTAGE:
+                        total -= total * discount["dest"]["percentage"] / 100
+
         return round(
             total,
             self.precision if self.precision is not None else bone.precision
@@ -93,6 +104,14 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
         precision=2,
         compute=Compute(
             TotalFactory("total", lambda child: child.price_.current, True),
+            ComputeInterval(ComputeMethod.Always),
+        ),
+    )
+
+    total_discount_price = NumericBone(
+        precision=2,
+        compute=Compute(
+            TotalFactory("total_discount_price", lambda child: child.price_.current, True),
             ComputeInterval(ComputeMethod.Always),
         ),
     )
@@ -154,7 +173,14 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     discount = RelationalBone(
         kind="shop_discount",
         module="shop/discount",
-        refKeys=["key", "name", "discount_type", "absolute", "percentage"],
+        refKeys=[
+            "key",
+            "name",
+            "discount_type",
+            "absolute",
+            "percentage",
+            "condition"
+        ],
     )
 
 
