@@ -51,7 +51,7 @@ class TotalFactory:
                     if self.multiply_quantity:
                         value *= child["quantity"]
                     total += value
-        if bone.name in ["total_discount_price"]: #todo Discount price with vat ?
+        if bone.name in ["total_discount_price"]:  # todo Discount price with vat ?
             if discount := skel["discount"]:
                 if any(
                     [condition["dest"]["application_domain"] == ApplicationDomain.BASKET
