@@ -1,4 +1,4 @@
-from viur.core import db
+from viur.core import db,errors
 from viur.core.prototypes import List
 
 from .abstract import ShopModuleAbstract
@@ -16,3 +16,8 @@ class Vat(ShopModuleAbstract, List):
         admin_info = super().adminInfo()
         admin_info["icon"] = "cash-stack"
         return admin_info
+
+    def get_vat_by_value(self, vat_percent: float) -> db.Key:
+        if not(skel := self.viewSkel().all().mergeExternalFilter({"rate": vat_percent}).getSkel()):
+            raise errors.NotFound("Vat not found")
+        return skel
