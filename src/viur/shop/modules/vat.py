@@ -1,4 +1,4 @@
-from viur.core import db,errors
+from viur.core import db, errors
 from viur.core.prototypes import List
 
 from .abstract import ShopModuleAbstract
