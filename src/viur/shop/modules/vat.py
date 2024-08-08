@@ -18,6 +18,6 @@ class Vat(ShopModuleAbstract, List):
         return admin_info
 
     def get_vat_by_value(self, vat_percent: float) -> db.Key:
-        if not(skel := self.viewSkel().all().mergeExternalFilter({"rate": vat_percent}).getSkel()):
+        if not (skel := self.viewSkel().all().mergeExternalFilter({"rate": vat_percent}).getSkel()):
             raise errors.NotFound("Vat not found")
         return skel
