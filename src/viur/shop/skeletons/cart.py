@@ -28,9 +28,9 @@ class TotalFactory:
 
     def _get_children(self, parent_cart_key: db.Key) -> list[SkeletonInstance]:
         if self.use_cache:
-            return conf.main_app.shop.cart.get_children_from_cache(parent_cart_key)
+            return SHOP_INSTANCE.get().cart.get_children_from_cache(parent_cart_key)
         else:
-            return conf.main_app.shop.cart.get_children(parent_cart_key)
+            return SHOP_INSTANCE.get().cart.get_children(parent_cart_key)
 
     def __call__(self, skel: "CartNodeSkel", bone: NumericBone):
         children = self._get_children(skel["key"])
@@ -58,7 +58,7 @@ class TotalFactory:
 
 
 def get_vat_rate_for_node(skel: "CartNodeSkel", bone: RelationalBone):
-    children = conf.main_app.shop.cart.get_children_from_cache(skel["key"])
+    children = SHOP_INSTANCE.get().cart.get_children_from_cache(skel["key"])
     rel_keys = set()
     # logger.debug(f"{skel = }")
     for child in children:
