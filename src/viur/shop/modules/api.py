@@ -3,11 +3,11 @@ import typing as t  # noqa
 from google.protobuf.message import DecodeError
 
 import viur.shop.types.exceptions as e
-from viur.core import conf, db, errors, exposed, force_post
+from viur.core import db, errors, exposed, force_post
 from viur.core.render.json.default import DefaultRender as JsonRenderer
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.types import *
-from ..globals import SENTINEL, SHOP_LOGGER
+from ..globals import SENTINEL, SHOP_INSTANCE_VI, SHOP_LOGGER
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -20,7 +20,7 @@ class Api(ShopModuleAbstract):
 
     @property
     def json_renderer(self) -> JsonRenderer:
-        return conf.main_app.vi.shop.render
+        return SHOP_INSTANCE_VI.get().render
 
     @exposed
     def article_view(

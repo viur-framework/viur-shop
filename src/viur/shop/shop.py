@@ -1,8 +1,6 @@
 import copy
 import typing as t
 
-from viur.shop.data.translations import TRANSLATIONS
-
 from viur.core import conf
 from viur.core.bones import RelationalBone
 from viur.core.decorators import exposed
@@ -11,13 +9,14 @@ from viur.core.modules.translation import Creator, TranslationSkel
 from viur.core.modules.user import UserSkel
 from viur.core.prototypes.instanced_module import InstancedModule
 from viur.core.skeleton import MetaSkel, Skeleton, skeletonByKind
+from viur.shop.data.translations import TRANSLATIONS
 from .globals import SHOP_INSTANCE, SHOP_INSTANCE_VI, SHOP_LOGGER
 from .modules import Address, Api, Cart, Discount, DiscountCondition, Order, Shipping, ShippingConfig, Vat
 from .payment_providers import PaymentProviderAbstract
 from .services.hooks import HOOK_SERVICE
 from .skeletons.discount import DiscountSkel
 from .skeletons.discount_condition import DiscountConditionSkel
-from .types import Supplier
+from .types import Supplier, exceptions
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -103,12 +102,42 @@ class Shop(InstancedModule, Module):
 
         At this point we are and must be before setSystemInitialized.
         """
+        from viur.core.skeleton import getSystemInitialized, MetaBaseSkel
+        if getSystemInitialized():
+            raise exceptions.InvalidStateError(
+                "The system cannot be initialized before the viur-shop is not prepared!"
+            )
         from viur.shop import CartItemSkel  # import must stay here to avoid circular imports
         CartItemSkel.article.kind = self.article_skel.kindName
         DiscountConditionSkel.scope_article.kind = self.article_skel.kindName
         DiscountConditionSkel.scope_article.module = self.article_skel.kindName
         DiscountSkel.free_article.kind = self.article_skel.kindName
         DiscountSkel.free_article.module = self.article_skel.kindName
+
+        # logger.debug(f"BEFORE {MetaBaseSkel._skelCache.keys() = }")
+        # logger.debug(f"BEFORE {MetaBaseSkel._skelCache = }")
+
+        # Replace {{viur_shop_modulename}} with real modulename in viur-shop Skeletons and bones
+        for kindname, skel_cls in list(MetaBaseSkel._skelCache.items()):
+            if not kindname.startswith("{{viur_shop_modulename}}_"):
+                continue
+
+            skel_cls.kindName = kindname.replace("{{viur_shop_modulename}}", self.moduleName)
+            MetaBaseSkel._skelCache.pop(kindname)
+            MetaBaseSkel._skelCache[skel_cls.kindName] = skel_cls
+
+            for _bone_name, _bone_instance in vars(skel_cls).items():
+                if isinstance(_bone_instance, RelationalBone):
+                    # logger.debug(f"{_bone_name=} | {_bone_instance=}")
+                    if _bone_instance.kind.startswith("{{viur_shop_modulename}}_"):
+                        _bone_instance.kind = _bone_instance.kind.replace(
+                            "{{viur_shop_modulename}}", self.moduleName)
+                    if _bone_instance.module.startswith("{{viur_shop_modulename}}/"):
+                        _bone_instance.module = _bone_instance.module.replace(
+                            "{{viur_shop_modulename}}", self.moduleName)
+
+        # logger.debug(f"AFTER {MetaBaseSkel._skelCache.keys() = }")
+        # logger.debug(f"AFTER {MetaBaseSkel._skelCache = }")
 
     def _extend_user_skeleton(self):
         """Extend the UserSkel of the project
@@ -119,13 +148,13 @@ class Shop(InstancedModule, Module):
         # Add bone(s) needed by the shop
         skel_cls.wishlist = RelationalBone(
             descr="wishlist",
-            kind="shop_cart_node",
+            kind=f"{self.moduleName}_cart_node",
             module=f"{self.moduleName}/cart",
             multiple=True,
         )
         skel_cls.basket = RelationalBone(
             descr="basket",
-            kind="shop_cart_node",
+            kind=f"{self.moduleName}_cart_node",
             module=f"{self.moduleName}/cart",
         )
         # rebuild bonemap

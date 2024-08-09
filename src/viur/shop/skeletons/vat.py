@@ -8,7 +8,7 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 
 class VatSkel(Skeleton):  # STATE: Complete (as in model)
-    kindName = "shop_vat"
+    kindName = "{{viur_shop_modulename}}_vat"
 
     # TODO: add descr bone?!
 

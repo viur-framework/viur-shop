@@ -9,14 +9,14 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 
 class ShippingConfigSkel(Skeleton):  # STATE: Complete (as in model)
-    kindName = "shop_shipping_config"
+    kindName = "{{viur_shop_modulename}}_shipping_config"
 
     name = StringBone(
     )
 
     shipping_skel = RelationalBone(
-        kind="shop_shipping",
-        module="shop/shipping",
+        kind="{{viur_shop_modulename}}_shipping",
+        module="{{viur_shop_modulename}}/shipping",
         using=ShippingPreconditionRelSkel,
         consistency=RelationalConsistency.PreventDeletion,
         multiple=True,
