@@ -131,8 +131,8 @@ class Price:
             for discount in permutation:
                 # only add if ApplicationDomain.ARTICLE
                 if any(
-                    [condition["dest"]["application_domain"] == ApplicationDomain.ARTICLE
-                     for condition in discount["condition"]]
+                    condition["dest"]["application_domain"] == ApplicationDomain.ARTICLE
+                    for condition in discount["condition"]
                 ):
                     price = self.apply_discount(discount, price)
             if price < best_price:  # Is this discount better?

@@ -54,8 +54,8 @@ class TotalFactory:
         if bone.name in ["total_discount_price"]:  # todo Discount price with vat ?
             if discount := skel["discount"]:
                 if any(
-                    [condition["dest"]["application_domain"] == ApplicationDomain.BASKET
-                     for condition in discount["dest"]["condition"]]
+                    condition["dest"]["application_domain"] == ApplicationDomain.BASKET
+                    for condition in discount["dest"]["condition"]
                 ):
                     if discount["dest"]["discount_type"] == DiscountType.ABSOLUTE:
                         total -= discount["dest"]["absolute"]
