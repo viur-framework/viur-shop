@@ -51,22 +51,26 @@ class TotalFactory:
                     if self.multiply_quantity:
                         value *= child["quantity"]
                     total += value
-        if bone.name in ["total_discount_price"]:  # todo Discount price with vat ?
-            if discount := skel["discount"]:
-                if any(
-                    condition["dest"]["application_domain"] == ApplicationDomain.BASKET
-                    for condition in discount["dest"]["condition"]
-                ):
-                    if discount["dest"]["discount_type"] == DiscountType.ABSOLUTE:
-                        total -= discount["dest"]["absolute"]
-                    if discount["dest"]["discount_type"] == DiscountType.PERCENTAGE:
-                        total -= total * discount["dest"]["percentage"] / 100
 
         return round(
             total,
             self.precision if self.precision is not None else bone.precision
         )
 
+
+class DiscountFactory(TotalFactory):
+    def __call__(self, skel: "CartNodeSkel", bone: NumericBone):
+        total = super().__call__(skel, bone)
+        if discount := skel["discount"]:
+            if any(
+                condition["dest"]["application_domain"] == ApplicationDomain.BASKET
+                for condition in discount["dest"]["condition"]
+            ):
+                total = Price.apply_discount(discount["dest"], total)
+        return round(
+            total,
+            self.precision if self.precision is not None else bone.precision
+        )
 
 def get_vat_rate_for_node(skel: "CartNodeSkel", bone: RelationalBone):
     children = conf.main_app.shop.cart.get_children_from_cache(skel["key"])
@@ -111,7 +115,7 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     total_discount_price = NumericBone(
         precision=2,
         compute=Compute(
-            TotalFactory("total_discount_price", lambda child: child.price_.current, True),
+            DiscountFactory("total_discount_price", lambda child: child.price_.current, True),
             ComputeInterval(ComputeMethod.Always),
         ),
     )
