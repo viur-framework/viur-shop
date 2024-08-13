@@ -3,11 +3,11 @@ import typing as t  # noqa
 from google.protobuf.message import DecodeError
 
 import viur.shop.types.exceptions as e
-from viur.core import conf, db, errors, exposed, force_post
+from viur.core import db, errors, exposed, force_post
 from viur.core.render.json.default import DefaultRender as JsonRenderer
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.types import *
-from ..globals import SENTINEL, SHOP_LOGGER
+from ..globals import SENTINEL, SHOP_INSTANCE_VI, SHOP_LOGGER
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -20,7 +20,7 @@ class Api(ShopModuleAbstract):
 
     @property
     def json_renderer(self) -> JsonRenderer:
-        return conf.main_app.vi.shop.render
+        return SHOP_INSTANCE_VI.get().render
 
     @exposed
     def article_view(
@@ -130,6 +130,19 @@ class Api(ShopModuleAbstract):
         shipping_key: str | db.Key = None,
         discount_key: str | db.Key = None,
     ):
+        """
+        Add a new cart node
+
+        :param parent_cart_key: Key of the parent cart
+        :param cart_type: Type of the cart node, see :class:`CartType`
+        :param name: Optional. Name of the cart node
+        :param customer_comment: Optional. Comment to this node, by customer.
+        :param shipping_address_key: Optional. Key of the address
+        :param shipping_key: Optional. Key of the shipping
+        :param discount_key: Optional. Key of the discount
+
+        Returns: The created cart node skel
+        """
         parent_cart_key = self._normalize_external_key(
             parent_cart_key, "parent_cart_key")
         shipping_address_key = self._normalize_external_key(
@@ -166,6 +179,19 @@ class Api(ShopModuleAbstract):
         shipping_key: str | db.Key = None,
         discount_key: str | db.Key = None,  # TODO: use sentinel?
     ):
+        """
+        Update an existing cart node
+
+        :param cart_key: Key of the cart node to be updated
+        :param cart_type: Type of the cart node, see :class:`CartType`
+        :param name: Optional. Name of the cart node
+        :param customer_comment: Optional. Comment to this node, by customer.
+        :param shipping_address_key: Optional. Key of the address
+        :param shipping_key: Optional. Key of the shipping
+        :param discount_key: Optional. Key of the discount
+
+        Returns: The updated cart node skel
+        """
         cart_key = self._normalize_external_key(
             cart_key, "parent_cart_key")
         shipping_address_key = self._normalize_external_key(
@@ -191,7 +217,12 @@ class Api(ShopModuleAbstract):
         *,
         cart_key: str | db.Key,
     ):
-        """Remove itself and all children"""
+        """
+        Remove a cart node.
+
+        Removes itself and all children
+        :param cart_key: Key of the cart node to be removed
+        """
         cart_key = self._normalize_external_key(cart_key, "cart_key")
         return JsonResponse(self.shop.cart.cart_remove(cart_key))
 
@@ -228,7 +259,7 @@ class Api(ShopModuleAbstract):
         be returned.
         Otherwise (without a key), the root nodes will be returned.
 
-        cart_key: list direct children (nodes and leafs) of this parent node
+        :param cart_key: list direct children (nodes and leafs) of this parent node
         """
         # no key: list root node
         if cart_key is None:

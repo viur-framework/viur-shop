@@ -20,7 +20,7 @@ SUFFIX_LENGTH = 6
 
 
 class DiscountCondition(ShopModuleAbstract, List):
-    kindName = "shop_discount_condition"
+    kindName = "{{viur_shop_modulename}}_discount_condition"
 
     def adminInfo(self) -> dict:
         admin_info = super().adminInfo()
