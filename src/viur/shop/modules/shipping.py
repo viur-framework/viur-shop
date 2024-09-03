@@ -3,13 +3,13 @@ import itertools
 import typing as t
 
 from viur import toolkit
+from viur.core import db, errors
 from viur.core.prototypes import List
 from viur.core.skeleton import RefSkel, SkeletonInstance
-from .abstract import ShopModuleAbstract
 from viur.shop.skeletons import CartNodeSkel, ShippingSkel
-from viur.shop.types import  SkeletonInstance_T
+from viur.shop.types import SkeletonInstance_T
+from .abstract import ShopModuleAbstract
 from ..globals import SHOP_LOGGER
-from viur.core import db, errors
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -27,13 +27,14 @@ class Shipping(ShopModuleAbstract, List):
         article_skel: SkeletonInstance
     ) -> SkeletonInstance | None | t.Literal[False]:
         """
-        Chooses alwass the cheapest, applicable shipping for an article
+        Chooses always the cheapest, applicable shipping for an article
 
         Ignores the supplier
 
         # TODO(discuss): List all options?
         """
-        logger.debug(f'choose_shipping_skel_for_article({article_skel["key"]=} | {article_skel["shop_shipping_config"]=} | )')
+        logger.debug(f'choose_shipping_skel_for_article({article_skel["key"]=}'
+                     f' | {article_skel["shop_shipping_config"]=})')
 
         if not article_skel["shop_shipping_config"]:
             logger.debug(f'{article_skel["key"]} has no shop_shipping set.')  # TODO: fallback??
@@ -46,7 +47,7 @@ class Shipping(ShopModuleAbstract, List):
         for shipping in shipping_config_skel["shipping"]:
             logger.debug(f"{shipping=}")
             is_applicable, reason = self.shop.shipping_config.is_applicable(
-                shipping["dest"], shipping["rel"], article_skel, None)
+                shipping["dest"], shipping["rel"], article_skel=article_skel)
             logger.debug(f"{shipping=} --> {is_applicable=} | {reason=}")
             if is_applicable:
                 applicable_shippings.append(shipping)
@@ -70,7 +71,7 @@ class Shipping(ShopModuleAbstract, List):
         if not cart_skel.fromDB(cart_key):
             raise errors.NotFound
 
-        all_shipping_configs : list[RefSkel] = []
+        all_shipping_configs: list[RefSkel] = []
 
         queue = collections.deque([cart_key])
         while queue:
@@ -106,11 +107,11 @@ class Shipping(ShopModuleAbstract, List):
             for shipping_config_skel in shipping_config_skels
         )
 
-        applicable_shippings : list[SkeletonInstance_T[ShippingSkel]] = []
+        applicable_shippings: list[SkeletonInstance_T[ShippingSkel]] = []
         for shipping in all_shipping:
             logger.debug(f"{shipping=}")
             is_applicable, reason = self.shop.shipping_config.is_applicable(
-                shipping["dest"], shipping["rel"], None, cart_skel)
+                shipping["dest"], shipping["rel"], cart_skel=cart_skel)
             logger.debug(f"{shipping=} --> {is_applicable=} | {reason=}")
             if is_applicable:
                 applicable_shippings.append(shipping)
@@ -120,8 +121,5 @@ class Shipping(ShopModuleAbstract, List):
             logger.error("No suitable shipping found")  # TODO: fallback??
             return []
 
+        # TODO(discuss): cheapest of each supplier?
         return applicable_shippings
-
-        cheapest_shipping = min(applicable_shippings, key=lambda shipping: shipping["dest"]["shipping_cost"] or 0)
-        logger.debug(f"{cheapest_shipping=}")
-        return cheapest_shipping

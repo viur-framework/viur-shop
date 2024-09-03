@@ -6,12 +6,9 @@ import viur.shop.types.exceptions as e
 from viur.core import db, errors, exposed, force_post
 from viur.core.render.json.default import DefaultRender as JsonRenderer
 from viur.shop.modules.abstract import ShopModuleAbstract
-from viur.shop.types import *
 from viur.shop.skeletons import ShippingSkel
+from viur.shop.types import *
 from ..globals import SENTINEL, SHOP_INSTANCE_VI, SHOP_LOGGER
-
-# if t.TYPE_CHECKING:
-#     from .. import ShippingSkel
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -390,7 +387,7 @@ class Api(ShopModuleAbstract):
         cart_key = self._normalize_external_key(cart_key, "cart_key")
         return JsonResponse(self.shop.shipping.get_shipping_skels_for_cart(cart_key))
 
-        # --- Internal helpers  ----------------------------------------------------
+    # --- Internal helpers  ----------------------------------------------------
 
     def _normalize_external_key(
         self,
