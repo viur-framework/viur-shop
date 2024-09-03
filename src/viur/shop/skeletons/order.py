@@ -4,7 +4,7 @@ from viur.core import translate
 from viur.core.bones import *
 from viur.core.skeleton import Skeleton
 from viur.shop.types import *
-from ..globals import SHOP_LOGGER, SHOP_INSTANCE
+from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 
 logger = SHOP_LOGGER.getChild(__name__)
 

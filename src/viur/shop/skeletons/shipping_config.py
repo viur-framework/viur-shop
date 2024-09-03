@@ -1,10 +1,10 @@
 import typing as t  # noqa
 
+from viur.core import db
 from viur.core.bones import *
 from viur.core.skeleton import Skeleton, SkeletonInstance
 from .shipping_precondition import ShippingPreconditionRelSkel
 from ..globals import SHOP_LOGGER
-from viur.core import db
 
 logger = SHOP_LOGGER.getChild(__name__)
 

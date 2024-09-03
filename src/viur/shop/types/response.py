@@ -3,7 +3,6 @@ import json
 import typing as t
 
 from viur import toolkit
-
 from viur.core import current
 from viur.core.render.json.default import CustomJsonEncoder
 from viur.core.skeleton import SkeletonInstance
@@ -24,6 +23,7 @@ class ExtendedCustomJsonEncoder(CustomJsonEncoder):
 
 
 T = t.TypeVar("T")
+
 
 class JsonResponse(t.Generic[T]):
     __slots__ = ("json_data", "status_code", "content_type", "json_sort", "json_indent")
@@ -55,7 +55,7 @@ class JsonResponse(t.Generic[T]):
         )
 
 
-def make_json_dumpable(value): # TODO: better solution
+def make_json_dumpable(value):  # TODO: better solution
     return json.loads(json.dumps(
         value,
         cls=ExtendedCustomJsonEncoder,

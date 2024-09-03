@@ -1,6 +1,6 @@
 import typing as t  # noqa
 
-from viur.core import conf, db
+from viur.core import db
 from viur.core.bones import *
 from viur.core.prototypes.tree import TreeSkel
 from viur.core.skeleton import SkeletonInstance
@@ -13,8 +13,8 @@ logger = SHOP_LOGGER.getChild(__name__)
 class TotalFactory:
     def __init__(
         self,
-        bone_node: str | t.Callable[["SkeletonInstance"], float | int],
-        bone_leaf: str | t.Callable[["SkeletonInstance"], float | int],
+        bone_node: str | t.Callable[[SkeletonInstance], float | int],
+        bone_leaf: str | t.Callable[[SkeletonInstance], float | int],
         multiply_quantity: bool = True,
         precision: int | None = None,
         use_cache: bool = True,
@@ -71,6 +71,7 @@ class DiscountFactory(TotalFactory):
             total,
             self.precision if self.precision is not None else bone.precision
         )
+
 
 def get_vat_rate_for_node(skel: "CartNodeSkel", bone: RelationalBone):
     children = SHOP_INSTANCE.get().cart.get_children_from_cache(skel["key"])
@@ -293,8 +294,9 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     price.type = JsonBone.type
 
     shipping = RawBone(  # FIXME: JsonBone doesn't work (https://github.com/viur-framework/viur-core/issues/1092)
-        compute=Compute(lambda skel: SHOP_INSTANCE.get().shipping.choose_shipping_skel_for_article(skel.article_skel_full),
-                        ComputeInterval(ComputeMethod.Always)),
+        compute=Compute(
+            lambda skel: SHOP_INSTANCE.get().shipping.choose_shipping_skel_for_article(skel.article_skel_full),
+            ComputeInterval(ComputeMethod.Always)),
     )
     shipping.type = JsonBone.type
 

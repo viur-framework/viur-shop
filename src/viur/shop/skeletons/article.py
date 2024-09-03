@@ -5,9 +5,7 @@ import typing as t  # noqa
 from viur.core.bones import *
 from viur.core.skeleton import BaseSkeleton
 from viur.shop.types import *
-
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
-from viur.core import utils
 from ..types.response import make_json_dumpable
 
 logger = SHOP_LOGGER.getChild(__name__)
@@ -96,8 +94,9 @@ class ArticleAbstractSkel(BaseSkeleton):
     shop_price.type = JsonBone.type
 
     shop_shipping = RawBone(  # FIXME: JsonBone doesn't work (https://github.com/viur-framework/viur-core/issues/1092)
-        compute=Compute(lambda skel: make_json_dumpable(SHOP_INSTANCE.get().shipping.choose_shipping_skel_for_article(skel)),
-                        ComputeInterval(ComputeMethod.Always)),
+        compute=Compute(
+            lambda skel: make_json_dumpable(SHOP_INSTANCE.get().shipping.choose_shipping_skel_for_article(skel)),
+            ComputeInterval(ComputeMethod.Always)),
     )
     shop_shipping.type = JsonBone.type
     """Calculated, cheapest shipping for this article"""
