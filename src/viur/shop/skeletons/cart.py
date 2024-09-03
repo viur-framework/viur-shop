@@ -286,10 +286,9 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     def price_(self) -> Price:
         return Price.get_or_create(self)
 
-    price = RawBone(  # FIXME: JsonBone doesn't work (https://github.com/viur-framework/viur-core/issues/1092)
-        compute=Compute(lambda skel: skel.price_.to_dict(), ComputeInterval(ComputeMethod.Always))
+    price = JsonBone(  # FIXME: JsonBone doesn't work (https://github.com/viur-framework/viur-core/issues/1092)
+        compute=Compute(lambda skel: skel.price_.to_dict(), ComputeInterval(ComputeMethod.Always), raw=False),
     )
-    price.type = JsonBone.type
 
     @classmethod
     def toDB(cls, skelValues: SkeletonInstance, update_relations: bool = True, **kwargs) -> db.Key:
