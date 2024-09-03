@@ -200,7 +200,7 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
             "shop_price_retail", "shop_price_recommended",
             "shop_availability", "shop_listed",
             "shop_image", "shop_art_no_or_gtin",
-            "shop_vat", "shop_shipping",
+            "shop_vat", "shop_shipping_config",
             "shop_is_weee", "shop_is_low_price",
             "shop_price_current",
         ],
@@ -250,7 +250,8 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
         consistency=RelationalConsistency.PreventDeletion,
     )
 
-    shop_shipping = RelationalBone(
+    # TODO: shop_shipping_config or shop_shipping_config ?
+    shop_shipping_config = RelationalBone(
         kind="{{viur_shop_modulename}}_shipping_config",
         module="{{viur_shop_modulename}}/shipping_config",
         consistency=RelationalConsistency.SetNull,

@@ -23,12 +23,14 @@ class ExtendedCustomJsonEncoder(CustomJsonEncoder):
         return super().default(o)
 
 
-class JsonResponse:
+T = t.TypeVar("T")
+
+class JsonResponse(t.Generic[T]):
     __slots__ = ("json_data", "status_code", "content_type", "json_sort", "json_indent")
 
     def __init__(
         self,
-        json_data: t.Any,
+        json_data: T,
         *,
         status_code: int = 200,
         content_type: str = "application/json",

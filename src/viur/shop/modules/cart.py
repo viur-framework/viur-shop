@@ -164,13 +164,13 @@ class Cart(ShopModuleAbstract, Tree):
     def get_children(
         self,
         parent_cart_key: db.Key,
-        **kwargs
+        **filters: t.Any,
     ) -> t.Iterator[SkeletonInstance]:
         if not isinstance(parent_cart_key, db.Key):
             raise TypeError(f"parent_cart_key must be an instance of db.Key")
         for skel_type in ("node", "leaf"):
             skel = self.viewSkel(skel_type)
-            query = skel.all().mergeExternalFilter(kwargs)
+            query = skel.all().mergeExternalFilter(filters)
             query = query.order(("sortindex", db.SortOrder.Ascending))
             # TODO: query = self.listFilter(query)
             if query is None:

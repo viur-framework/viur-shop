@@ -7,7 +7,11 @@ from viur.core import db, errors, exposed, force_post
 from viur.core.render.json.default import DefaultRender as JsonRenderer
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.types import *
+from viur.shop.skeletons import ShippingSkel
 from ..globals import SENTINEL, SHOP_INSTANCE_VI, SHOP_LOGGER
+
+# if t.TYPE_CHECKING:
+#     from .. import ShippingSkel
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -375,13 +379,18 @@ class Api(ShopModuleAbstract):
     def shipping_list(
         self,
         cart_key: str | db.Key,
-    ):
+    ) -> JsonResponse[list[SkeletonInstance_T[ShippingSkel]]]:
         """
-        Listet verfügbar Versandoptionen für einen (Unter)Warenkorb auf
-        """
-        ...
+        Lists available shipping options for a (sub)cart
 
-    # --- Internal helpers  ----------------------------------------------------
+        :param cart_key: Key of the parent cart
+
+        :returns: list of :class:`ShippingSkel` `SkeletonInstance`s
+        """
+        cart_key = self._normalize_external_key(cart_key, "cart_key")
+        return JsonResponse(self.shop.shipping.get_shipping_skels_for_cart(cart_key))
+
+        # --- Internal helpers  ----------------------------------------------------
 
     def _normalize_external_key(
         self,

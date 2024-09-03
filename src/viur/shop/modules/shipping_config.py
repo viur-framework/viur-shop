@@ -22,7 +22,7 @@ class ShippingConfig(ShopModuleAbstract, List):
         article_skel: SkeletonInstance,  # ArticleSkel
         cart_skel: SkeletonInstance | None = None,  # CartNodeSkel
     ) -> tuple[bool, str]:
-        logger.debug(f'is_applicable({dest=}, {rel=}, {article_skel["key"]=!r}, {cart_skel=})')
+        logger.debug(f'is_applicable({dest=}, {rel=}, {article_skel and article_skel["key"]=!r}, {cart_skel=})')
 
         if rel["minimum_order_value"]:
             if cart_skel is None:
