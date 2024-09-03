@@ -51,3 +51,10 @@ class JsonResponse:
             indent=self.json_indent,
             cls=ExtendedCustomJsonEncoder,
         )
+
+
+def make_json_dumpable(value): # TODO: better solution
+    return json.loads(json.dumps(
+        value,
+        cls=ExtendedCustomJsonEncoder,
+    ))

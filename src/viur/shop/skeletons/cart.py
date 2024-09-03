@@ -291,6 +291,12 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     )
     price.type = JsonBone.type
 
+    shipping = RawBone(  # FIXME: JsonBone doesn't work (https://github.com/viur-framework/viur-core/issues/1092)
+        compute=Compute(lambda skel: SHOP_INSTANCE.get().shipping.choose_shipping_skel_for_article(skel.article_skel_full),
+                        ComputeInterval(ComputeMethod.Always)),
+    )
+    shipping.type = JsonBone.type
+
     @classmethod
     def toDB(cls, skelValues: SkeletonInstance, update_relations: bool = True, **kwargs) -> db.Key:
         return super().toDB(skelValues, update_relations, **kwargs)

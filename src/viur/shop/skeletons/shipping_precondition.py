@@ -10,7 +10,7 @@ logger = SHOP_LOGGER.getChild(__name__)
 class ShippingPreconditionRelSkel(RelSkel):  # STATE: Complete (as in model)
     minimum_order_value = NumericBone(
         precision=2,
-        min=2,
+        min=0,
     )
 
     country = SelectCountryBone(
