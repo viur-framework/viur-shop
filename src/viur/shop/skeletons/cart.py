@@ -51,11 +51,26 @@ class TotalFactory:
                     if self.multiply_quantity:
                         value *= child["quantity"]
                     total += value
+
         return round(
             total,
             self.precision if self.precision is not None else bone.precision
         )
 
+
+class DiscountFactory(TotalFactory):
+    def __call__(self, skel: "CartNodeSkel", bone: NumericBone):
+        total = super().__call__(skel, bone)
+        if discount := skel["discount"]:
+            if any(
+                condition["dest"]["application_domain"] == ApplicationDomain.BASKET
+                for condition in discount["dest"]["condition"]
+            ):
+                total = Price.apply_discount(discount["dest"], total)
+        return round(
+            total,
+            self.precision if self.precision is not None else bone.precision
+        )
 
 def get_vat_rate_for_node(skel: "CartNodeSkel", bone: RelationalBone):
     children = SHOP_INSTANCE.get().cart.get_children_from_cache(skel["key"])
@@ -93,6 +108,14 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
         precision=2,
         compute=Compute(
             TotalFactory("total", lambda child: child.price_.current, True),
+            ComputeInterval(ComputeMethod.Always),
+        ),
+    )
+
+    total_discount_price = NumericBone(
+        precision=2,
+        compute=Compute(
+            DiscountFactory("total_discount_price", lambda child: child.price_.current, True),
             ComputeInterval(ComputeMethod.Always),
         ),
     )
@@ -154,7 +177,14 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     discount = RelationalBone(
         kind="{{viur_shop_modulename}}_discount",
         module="{{viur_shop_modulename}}/discount",
-        refKeys=["key", "name", "discount_type", "absolute", "percentage"],
+        refKeys=[
+            "key",
+            "name",
+            "discount_type",
+            "absolute",
+            "percentage",
+            "condition"
+        ],
     )
 
 
