@@ -82,8 +82,6 @@ class Shipping(ShopModuleAbstract, List):
                 if issubclass(child.skeletonCls, CartNodeSkel):
                     logger.debug(f"{child=}")
                     queue.append(child["key"])
-                    ...
-                    # TODO: we ignore currently the sub card
                 else:
                     logger.debug(f"{child=} | {child.article_skel=}")
                     logger.debug(f'{child.article_skel["shop_shipping_config"]=}')

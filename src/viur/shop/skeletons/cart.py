@@ -251,7 +251,6 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
         consistency=RelationalConsistency.PreventDeletion,
     )
 
-    # TODO: shop_shipping_config or shop_shipping_config ?
     shop_shipping_config = RelationalBone(
         kind="{{viur_shop_modulename}}_shipping_config",
         module="{{viur_shop_modulename}}/shipping_config",
