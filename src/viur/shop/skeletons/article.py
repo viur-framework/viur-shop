@@ -99,7 +99,7 @@ class ArticleAbstractSkel(BaseSkeleton):
                 raise TypeError(
                     f"Can't initialize abstract class {cls.__name__} with abstract method {name}"
                 )
-        # Check if all abstract methods are implemented with th correct type
+        # Check if all abstract methods are implemented with the correct type
         for name in dir(ArticleAbstractSkel):
             value = getattr(ArticleAbstractSkel, name, None)
             if getattr(value, "__isabstractmethod__", False) and isinstance(value, property):
