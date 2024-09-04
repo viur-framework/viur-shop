@@ -8,8 +8,9 @@ from viur.core.module import Module
 from viur.core.modules.translation import Creator, TranslationSkel
 from viur.core.modules.user import UserSkel
 from viur.core.prototypes.instanced_module import InstancedModule
-from viur.core.skeleton import MetaSkel, Skeleton, skeletonByKind
+from viur.core.skeleton import MetaSkel, skeletonByKind
 from viur.shop.data.translations import TRANSLATIONS
+from viur.shop.skeletons.article import ArticleAbstractSkel
 from .globals import SHOP_INSTANCE, SHOP_INSTANCE_VI, SHOP_LOGGER
 from .modules import Address, Api, Cart, Discount, DiscountCondition, Order, Shipping, ShippingConfig, Vat
 from .payment_providers import PaymentProviderAbstract
@@ -34,7 +35,7 @@ class Shop(InstancedModule, Module):
         self,
         *,
         name: str,
-        article_skel: t.Type[Skeleton],
+        article_skel: t.Type[ArticleAbstractSkel],
         payment_providers: list[PaymentProviderAbstract],
         suppliers: list[Supplier],
         admin_info_module_group: str | None = "viur-shop",
@@ -45,7 +46,7 @@ class Shop(InstancedModule, Module):
 
         # Store arguments
         self.name: str = name
-        self.article_skel: t.Type[Skeleton] = article_skel
+        self.article_skel: t.Type[ArticleAbstractSkel] = article_skel
         self.payment_providers: list[PaymentProviderAbstract] = payment_providers
         self.suppliers: list[Supplier] = suppliers
         self.admin_info_module_group: str | None = admin_info_module_group
@@ -55,7 +56,7 @@ class Shop(InstancedModule, Module):
         # logger.debug(f"{vars(self) = }")
         self._add_translations()
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, **kwargs) -> t.Self:
         logger.debug(f"Shop.__call__({args=}, {kwargs=})")
         self: Shop = super().__call__(*args, **kwargs)  # noqa
         is_default_renderer = self.modulePath == f"/{self.moduleName}"
@@ -63,6 +64,7 @@ class Shop(InstancedModule, Module):
         # Modify some objects dynamically
         self._set_kind_names()
         self._extend_user_skeleton()
+        self._extend_ref_keys()
 
         # Add sub modules
         self.address = Address(shop=self)
@@ -97,7 +99,7 @@ class Shop(InstancedModule, Module):
             SHOP_INSTANCE_VI.set(self)
         return self
 
-    def _set_kind_names(self):
+    def _set_kind_names(self) -> None:
         """Set kindname of bones where the kind name can be dynamically
 
         At this point we are and must be before setSystemInitialized.
@@ -139,7 +141,7 @@ class Shop(InstancedModule, Module):
         # logger.debug(f"AFTER {MetaBaseSkel._skelCache.keys() = }")
         # logger.debug(f"AFTER {MetaBaseSkel._skelCache = }")
 
-    def _extend_user_skeleton(self):
+    def _extend_user_skeleton(self) -> None:
         """Extend the UserSkel of the project
 
         At this point we are and must be before setSystemInitialized.
@@ -160,7 +162,15 @@ class Shop(InstancedModule, Module):
         # rebuild bonemap
         skel_cls.__boneMap__ = MetaSkel.generate_bonemap(skel_cls)
 
-    def _add_translations(self):
+    def _extend_ref_keys(self) -> None:
+        """Extend the refKeys of the implemented ArticleAbstractSkel
+
+        At this point we are and must be before setSystemInitialized.
+        """
+        self.article_skel.shop_shipping_config.refKeys |= {"name", "shipping"}
+        self.article_skel.shop_vat.refKeys |= {"name", "rate"}
+
+    def _add_translations(self) -> None:
         """Setup translations required for the viur-shop"""
         if not conf.i18n.add_missing_translations:
             return

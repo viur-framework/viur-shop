@@ -65,6 +65,11 @@ class Shipping(ShopModuleAbstract, List):
         self,
         cart_key: db.Key
     ) -> list[SkeletonInstance_T[ShippingSkel]]:
+        """Get all configured and applicable shippings of all items in the cart
+
+        :param cart_key: Key of the parent cart node, can be a sub-cart too
+        :return: A list of :class:`SkeletonInstance`s for the :class:`ShippingSkel`.
+        """
         logger.debug(f'get_shipping_skels_for_cart({cart_key=!r})')
 
         cart_skel = self.shop.cart.viewSkel("node")
@@ -72,49 +77,39 @@ class Shipping(ShopModuleAbstract, List):
             raise errors.NotFound
 
         all_shipping_configs: list[RefSkel] = []
-
-        queue = collections.deque([cart_key])
-        while queue:
-            parent_cart_key = queue.pop()
-            logger.debug(f"{parent_cart_key=} | {queue=}")
-
-            for child in self.shop.cart.get_children(parent_cart_key):
+        # Walk down the entire cart tree and collect leafs in
+        # `all_shipping_configs` and add nodes to the `node_queue`.
+        node_queue = collections.deque([cart_key])
+        while node_queue:
+            for child in self.shop.cart.get_children(node_queue.pop()):
                 if issubclass(child.skeletonCls, CartNodeSkel):
-                    logger.debug(f"{child=}")
-                    queue.append(child["key"])
-                else:
-                    logger.debug(f"{child=} | {child.article_skel=}")
-                    logger.debug(f'{child.article_skel["shop_shipping_config"]=}')
-                    if child.article_skel["shop_shipping_config"] is not None:
-                        all_shipping_configs.append(child.article_skel["shop_shipping_config"]["dest"])
+                    node_queue.append(child["key"])
+                elif child.article_skel["shop_shipping_config"] is not None:
+                    all_shipping_configs.append(child.article_skel["shop_shipping_config"]["dest"])
 
         logger.debug(f"(before de-duplication) <{len(all_shipping_configs)}>{all_shipping_configs=}")
         # eliminate duplicates
-        all_shipping_configs = ({sc["key"]: sc for sc in all_shipping_configs}).values()
+        all_shipping_configs = list(({sc["key"]: sc for sc in all_shipping_configs}).values())
         logger.debug(f"(after de-duplication) <{len(all_shipping_configs)}>{all_shipping_configs=}")
 
         if not all_shipping_configs:
             logger.debug(f'{cart_key=!r}\'s articles have no shop_shipping_config set.')  # TODO: fallback??
             return []
 
-        shipping_config_skels = list(map(toolkit.get_full_skel_from_ref_skel, all_shipping_configs))
-        logger.debug(f"{shipping_config_skels=}")
-
         all_shipping = itertools.chain.from_iterable(
             shipping_config_skel["shipping"] or []
-            for shipping_config_skel in shipping_config_skels
+            for shipping_config_skel in all_shipping_configs
         )
 
         applicable_shippings: list[SkeletonInstance_T[ShippingSkel]] = []
         for shipping in all_shipping:
-            logger.debug(f"{shipping=}")
             is_applicable, reason = self.shop.shipping_config.is_applicable(
                 shipping["dest"], shipping["rel"], cart_skel=cart_skel)
             logger.debug(f"{shipping=} --> {is_applicable=} | {reason=}")
             if is_applicable:
                 applicable_shippings.append(shipping)
 
-        logger.debug(f"{applicable_shippings=}")
+        logger.debug(f"<{len(applicable_shippings)}>{applicable_shippings=}")
         if not applicable_shippings:
             logger.error("No suitable shipping found")  # TODO: fallback??
             return []
