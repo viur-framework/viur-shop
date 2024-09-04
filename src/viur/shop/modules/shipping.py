@@ -62,6 +62,8 @@ class Shipping(ShopModuleAbstract, List):
     ) -> list[SkeletonInstance_T[ShippingSkel]]:
         """Get all configured and applicable shippings of all items in the cart
 
+        # TODO: how do we handle free shipping discounts?
+
         :param cart_key: Key of the parent cart node, can be a sub-cart too
         :return: A list of :class:`SkeletonInstance`s for the :class:`ShippingSkel`.
         """
