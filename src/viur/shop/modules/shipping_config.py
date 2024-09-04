@@ -27,6 +27,12 @@ class ShippingConfig(ShopModuleAbstract, List):
         article_skel: SkeletonInstance_T[ArticleSkel] | None = None,  # ArticleSkel
         cart_skel: SkeletonInstance_T[CartNodeSkel] | None = None,  # CartNodeSkel
     ) -> tuple[bool, str]:
+        """
+        Check if a shipping configuration is applicable in the current context.
+
+        Provide eiter `article_skel` for single article context
+        xor `cart_skel` for cart context.
+        """
         logger.debug(f'is_applicable({dest=}, {rel=}, {article_skel and article_skel["key"]=!r}, {cart_skel=})')
 
         if not ((article_skel is None) ^ (cart_skel is None)):
