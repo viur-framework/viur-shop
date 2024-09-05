@@ -1,6 +1,7 @@
 from .abstract import PaymentProviderAbstract
 from .amazon_pay import AmazonPay
 from .paypal_plus import PayPalPlus
+from .prepayment import PrePayment
 
 try:
     import unzer

@@ -33,6 +33,10 @@ class AmazonPay(PaymentProviderAbstract):
         self.sandbox = sandbox
         self.language = language
 
+    @property
+    def image_path(self) -> str:
+        return "" #todo
+
     def checkout(
         self,
         order_skel: SkeletonInstance,

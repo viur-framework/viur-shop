@@ -9,9 +9,14 @@ from ..globals import SHOP_LOGGER, SHOP_INSTANCE
 logger = SHOP_LOGGER.getChild(__name__)
 
 
-def get_payment_providers() -> dict[str, str | translate]:
+def get_payment_providers() -> dict[str, dict[str, t.Any]]:
     return {
-        pp.name: pp.title
+        pp.name: {
+            "title": pp.title,
+            "descr": pp.description,
+            "image_path": pp.image_path,
+        }
+
         for pp in SHOP_INSTANCE.get().payment_providers
     }
 

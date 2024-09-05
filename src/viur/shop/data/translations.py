@@ -56,6 +56,15 @@ TRANSLATIONS = {
         "_default_text": "PayPal via Unzer",
         "_hint": "viur-shop payment provider: unzer-paypal",
     },
+    "viur.shop.payment_provider.prepayment": {
+        "_default_text": "Perpayment",
+        "_hint": "viur-shop Perpayment",
+        "de": "Vorkasse",
+    },
+    "viur.shop.payment_provider.prepayment.descr": {
+        "_default_text": "Payment in advance",
+        "de": "Bezahlen über Vorkasse",
+    },
     # Enums
     # Availability
     "instock": {

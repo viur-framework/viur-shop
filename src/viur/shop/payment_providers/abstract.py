@@ -28,6 +28,17 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
         """Define the external title of the payment provider"""
         return translate(f"viur.shop.payment_provider.{self.name}", self.name)
 
+    @property
+    def description(self) -> translate:
+        """Define the description of the payment provider"""
+        return translate(f"viur.shop.payment_provider.{self.name}.descr", self.name)
+
+    @property
+    @abc.abstractmethod
+    def image_path(self) -> str:
+        """Returns a path to an image for the payment provider"""
+        ...
+
     def can_checkout(
         self,
         order_skel: SkeletonInstance,
