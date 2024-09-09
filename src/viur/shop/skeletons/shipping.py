@@ -1,9 +1,9 @@
+import functools
 import typing as t  # noqa
 
 from viur.core.bones import *
-from viur.core.i18n import translate
 from viur.core.skeleton import Skeleton
-from ..globals import SHOP_LOGGER, SHOP_INSTANCE
+from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -13,6 +13,18 @@ def get_suppliers() -> dict[str, str]:
         supplier.key: supplier.name
         for supplier in SHOP_INSTANCE.get().suppliers
     }
+
+
+def is_empty(self: NumericBone, value: t.Any):
+    """0 is not empty function"""
+    # logger.debug(f"{self.getEmptyValue()=} | {value=}")
+    if isinstance(value, str) and not value:
+        return True
+    try:
+        value = self._convert_to_numeric(value)
+    except (ValueError, TypeError):
+        return True
+    return value is None
 
 
 class ShippingSkel(Skeleton):  # STATE: Complete (as in model)
@@ -34,8 +46,11 @@ class ShippingSkel(Skeleton):  # STATE: Complete (as in model)
     shipping_cost = NumericBone(
         precision=2,
         min=0,
-        getEmptyValueFunc=lambda: None,
+        defaultValue=0,
+        # getEmptyValueFunc=lambda: None,
+        isEmptyFunc=is_empty,
     )
+    shipping_cost.isEmpty = functools.partial(is_empty, shipping_cost)  # Re-Assign with instance reference
 
     supplier = SelectBone(
         values=get_suppliers,
@@ -52,3 +67,9 @@ class ShippingSkel(Skeleton):  # STATE: Complete (as in model)
         # TODO: UnitBone
     )
     """Tag(e)"""
+
+    delivery_time_range = StringBone(
+        compute=Compute(lambda skel: (str(skel["delivery_time_min"])
+                                      if skel["delivery_time_min"] == skel["delivery_time_max"]
+                                      else f'{skel["delivery_time_min"]} - {skel["delivery_time_max"]}')),
+    )

@@ -1,6 +1,11 @@
+from __future__ import annotations
+
 import typing as t
 
 from viur.core import errors
+
+if t.TYPE_CHECKING:
+    from viur.shop.services import Hook
 
 _sentinel = object()
 
@@ -11,6 +16,12 @@ class ViURShopException(Exception):
 
 class InvalidStateError(ViURShopException):
     ...
+
+
+class DispatchError(ViURShopException):
+    def __init__(self, msg: t.Any, hook: Hook, *args: t.Any) -> None:
+        super().__init__(msg, *args)
+        self.hook: hook = hook
 
 
 class ViURShopHttpException(errors.HTTPException):
