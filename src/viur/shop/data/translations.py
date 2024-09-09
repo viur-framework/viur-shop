@@ -362,6 +362,11 @@ TRANSLATIONS = {
         "en": "Shop price retail",
         "fr": "",
     },
+    "viur.shop.skeleton.cartitem.shop_shipping_config": {
+        "_hint": "bone shop_shipping<RelationalBone> in CartItemSkel in viur.shop",
+        "de": "Versand Konfiguration",
+        "en": "Shop shipping configuration",
+    },
     "viur.shop.skeleton.cartitem.shop_shipping": {
         "_hint": "bone shop_shipping<RelationalBone> in CartItemSkel in viur.shop",
         "de": "Versand",
@@ -740,11 +745,10 @@ TRANSLATIONS = {
         "en": "Name",
         "fr": "Nom",
     },
-    "viur.shop.skeleton.shippingconfig.shipping_skel": {
+    "viur.shop.skeleton.shippingconfig.shipping": {
         "_hint": "bone shipping_skel<RelationalBone> in ShippingConfigSkel in viur.shop",
-        "de": "Versand skel",
-        "en": "Shipping skel",
-        "fr": "",
+        "de": "Versand",
+        "en": "Shipping",
     },
     "viur.shop.skeleton.vat.name": {
         "_hint": "bone name<StringBone> in VatSkel in viur.shop",

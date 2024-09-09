@@ -1,5 +1,4 @@
 import abc
-import pprint
 import typing as t  # noqa
 
 from viur.core import current, utils
