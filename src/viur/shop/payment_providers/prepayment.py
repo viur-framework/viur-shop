@@ -9,9 +9,7 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 class PrePayment(PaymentProviderAbstract):
     name = "prepayment"
-    @property
-    def image_path(self):
-        return "src/prepayment.png"
+
     def checkout(
         self,
         order_skel: SkeletonInstance,
