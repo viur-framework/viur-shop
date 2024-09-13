@@ -23,7 +23,7 @@ class ShippingConfig(ShopModuleAbstract, List):
         dest: RefSkel,
         rel: RelSkel,
         *,
-        article_skel: SkeletonInstance_T[ArticleAbstractSkel] | None = None,  # ArticleSkel
+        article_skel: SkeletonInstance_T[ArticleAbstractSkel] | None = None,  # ArticleAbstractSkel
         cart_skel: SkeletonInstance_T[CartNodeSkel] | None = None,  # CartNodeSkel
     ) -> tuple[bool, str]:
         """
