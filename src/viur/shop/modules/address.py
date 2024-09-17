@@ -11,6 +11,7 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 
 class Address(ShopModuleAbstract, List):
+    moduleName = "address"
     kindName = "{{viur_shop_modulename}}_address"
 
     default_order: DEFAULT_ORDER_TYPE = (  #
