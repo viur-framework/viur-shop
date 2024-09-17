@@ -39,7 +39,18 @@ class Shop(InstancedModule, Module):
         payment_providers: list[PaymentProviderAbstract],
         suppliers: list[Supplier],
         admin_info_module_group: str | None = "viur-shop",
-        **kwargs,
+        # classes
+        address_cls: t.Type[Address] = Address,
+        api_cls: t.Type[Api] = Api,
+        cart_cls: t.Type[Cart] = Cart,
+        discount_cls: t.Type[Discount] = Discount,
+        discount_condition_cls: t.Type[DiscountCondition] = DiscountCondition,
+        order_cls: t.Type[Order] = Order,
+        shipping_cls: t.Type[Shipping] = Shipping,
+        shipping_config_cls: t.Type[ShippingConfig] = ShippingConfig,
+        vat_cls: t.Type[Vat] = Vat,
+        #
+        **kwargs: t.Any,
     ):
         super().__init__()
         self.hooks = HOOK_SERVICE
@@ -50,6 +61,15 @@ class Shop(InstancedModule, Module):
         self.payment_providers: list[PaymentProviderAbstract] = payment_providers
         self.suppliers: list[Supplier] = suppliers
         self.admin_info_module_group: str | None = admin_info_module_group
+        self.address_cls = address_cls
+        self.api_cls = api_cls
+        self.cart_cls = cart_cls
+        self.discount_cls = discount_cls
+        self.discount_condition_cls = discount_condition_cls
+        self.order_cls = order_cls
+        self.shipping_cls = shipping_cls
+        self.shipping_config_cls = shipping_config_cls
+        self.vat_cls = vat_cls
         self.additional_settings: dict[str, t.Any] = dict(kwargs)
 
         # Debug only
@@ -67,15 +87,15 @@ class Shop(InstancedModule, Module):
         self._extend_ref_keys()
 
         # Add sub modules
-        self.address = Address(shop=self)
-        self.api = Api(shop=self)
-        self.cart = Cart(shop=self)
-        self.discount = Discount(shop=self)
-        self.discount_condition = DiscountCondition(moduleName="discount_condition", shop=self)
-        self.order = Order(shop=self)
-        self.shipping = Shipping(shop=self)
-        self.shipping_config = ShippingConfig(moduleName="shipping_config", shop=self)
-        self.vat = Vat(shop=self)
+        self.address = self.address_cls(shop=self)
+        self.api = self.api_cls(shop=self)
+        self.cart = self.cart_cls(shop=self)
+        self.discount = self.discount_cls(shop=self)
+        self.discount_condition = self.discount_condition_cls(moduleName="discount_condition", shop=self)
+        self.order = self.order_cls(shop=self)
+        self.shipping = self.shipping_cls(shop=self)
+        self.shipping_config = self.shipping_config_cls(moduleName="shipping_config", shop=self)
+        self.vat = self.vat_cls(shop=self)
 
         # Make payment_providers routable as sub modules
         for idx, pp in enumerate(self.payment_providers):
