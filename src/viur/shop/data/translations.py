@@ -57,7 +57,7 @@ TRANSLATIONS = {
         "_hint": "viur-shop payment provider: unzer-paypal",
     },
     "viur.shop.payment_provider.prepayment": {
-        "_default_text": "Perpayment",
+        "_default_text": "Prepayment",
         "_hint": "viur-shop Perpayment",
         "de": "Vorkasse",
     },
