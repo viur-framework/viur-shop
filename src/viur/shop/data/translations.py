@@ -58,7 +58,7 @@ TRANSLATIONS = {
     },
     "viur.shop.payment_provider.prepayment": {
         "_default_text": "Prepayment",
-        "_hint": "viur-shop Perpayment",
+        "_hint": "viur-shop Prepayment",
         "de": "Vorkasse",
     },
     "viur.shop.payment_provider.prepayment.descr": {
