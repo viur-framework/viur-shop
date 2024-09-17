@@ -1,7 +1,6 @@
-from skeletons.order import ArticleSkel
 from viur.core.prototypes import List
 from viur.core.skeleton import RefSkel, RelSkel
-from viur.shop.skeletons import CartNodeSkel
+from viur.shop.skeletons import CartNodeSkel, ArticleAbstractSkel
 from viur.shop.types import SkeletonInstance_T
 from .abstract import ShopModuleAbstract
 from ..globals import SHOP_LOGGER
@@ -24,7 +23,7 @@ class ShippingConfig(ShopModuleAbstract, List):
         dest: RefSkel,
         rel: RelSkel,
         *,
-        article_skel: SkeletonInstance_T[ArticleSkel] | None = None,  # ArticleSkel
+        article_skel: SkeletonInstance_T[ArticleAbstractSkel] | None = None,  # ArticleAbstractSkel
         cart_skel: SkeletonInstance_T[CartNodeSkel] | None = None,  # CartNodeSkel
     ) -> tuple[bool, str]:
         """
