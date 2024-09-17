@@ -17,6 +17,10 @@ logger = SHOP_LOGGER.getChild(__name__)
 class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
     shop: "Shop" = None
 
+    def __init__(self, *, image_path: str | None = None):
+        super().__init__()
+        self.image_path = image_path
+
     @property
     @abc.abstractmethod
     def name(self) -> str:
@@ -32,11 +36,6 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
     def description(self) -> translate:
         """Define the description of the payment provider"""
         return translate(f"viur.shop.payment_provider.{self.name}.descr", self.name)
-
-    @property
-    def image_path(self) -> str | None:
-        """Returns a path to an image for the payment provider"""
-        return None
 
     def can_checkout(
         self,
