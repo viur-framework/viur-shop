@@ -34,9 +34,9 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
         return translate(f"viur.shop.payment_provider.{self.name}.descr", self.name)
 
     @property
-    def image_path(self) -> str:
+    def image_path(self) -> str | None:
         """Returns a path to an image for the payment provider"""
-        return ""
+        return None
 
     def can_checkout(
         self,
