@@ -19,6 +19,7 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 
 class Order(ShopModuleAbstract, List):
+    moduleName = "order"
     kindName = "{{viur_shop_modulename}}_order"
 
     def adminInfo(self) -> dict:

@@ -16,6 +16,7 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 
 class Cart(ShopModuleAbstract, Tree):
+    moduleName = "cart"
     nodeSkelCls = CartNodeSkel
     leafSkelCls = CartItemSkel
 

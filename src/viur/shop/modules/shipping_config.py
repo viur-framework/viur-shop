@@ -11,6 +11,7 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 
 class ShippingConfig(ShopModuleAbstract, List):
+    moduleName = "shipping_config"
     kindName = "{{viur_shop_modulename}}_shipping_config"
 
     def adminInfo(self) -> dict:

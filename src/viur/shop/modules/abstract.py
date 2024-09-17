@@ -10,6 +10,13 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 
 class ShopModuleAbstract(Module):
+    """Abstract Class for all viur-shop sub/nested modules.
+
+    The implementations should set `moduleName` as class variable,
+    so the final module name for routing it not affected by the name
+    of custom classes.
+    """
+
 
     def adminInfo(self) -> dict:
         return {
@@ -24,11 +31,11 @@ class ShopModuleAbstract(Module):
         shop: "Shop" = None,
         *args, **kwargs
     ):
-        # logger.debug(f"{self.__class__.__name__}<ShopModuleAbstract>.__init__()")
+        logger.debug(f"{self.__class__.__name__}<ShopModuleAbstract>.__init__()")
         if shop is None:
             raise ValueError("Missing shop argument!")
         if moduleName is None:
-            moduleName = self.__class__.__name__.lower()
+            moduleName = getattr(self, "moduleName", self.__class__.__name__.lower())
         if modulePath is None:
             modulePath = f"{shop.modulePath}/{moduleName.lower()}"
         try:
