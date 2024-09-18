@@ -148,7 +148,7 @@ class Shop(InstancedModule, Module):
             MetaBaseSkel._skelCache.pop(kindname)
             MetaBaseSkel._skelCache[skel_cls.kindName] = skel_cls
 
-            for _bone_name, _bone_instance in vars(skel_cls).items():
+            for _bone_name, _bone_instance in skel_cls.__boneMap__.items():
                 if isinstance(_bone_instance, RelationalBone):
                     # logger.debug(f"{_bone_name=} | {_bone_instance=}")
                     if _bone_instance.kind.startswith("{{viur_shop_modulename}}_"):
