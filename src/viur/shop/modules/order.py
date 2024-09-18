@@ -306,7 +306,7 @@ class Order(ShopModuleAbstract, List):
     # --- Internal helpers  ----------------------------------------------------
     def get_payment_provider_by_name(
         self,
-        payment_provider_name: str,
+        payment_provider_name: str,pa
     ) -> PaymentProviderAbstract:
         for pp in self.shop.payment_providers:
             if payment_provider_name == pp.name:

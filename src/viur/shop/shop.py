@@ -136,8 +136,8 @@ class Shop(InstancedModule, Module):
         DiscountSkel.free_article.kind = self.article_skel.kindName
         DiscountSkel.free_article.module = self.article_skel.kindName
 
-        # logger.debug(f"BEFORE {MetaBaseSkel._skelCache.keys() = }")
-        # logger.debug(f"BEFORE {MetaBaseSkel._skelCache = }")
+        logger.debug(f"BEFORE {MetaBaseSkel._skelCache.keys() = }")
+        logger.debug(f"BEFORE {MetaBaseSkel._skelCache = }")
 
         # Replace {{viur_shop_modulename}} with real modulename in viur-shop Skeletons and bones
         for kindname, skel_cls in list(MetaBaseSkel._skelCache.items()):
@@ -148,9 +148,13 @@ class Shop(InstancedModule, Module):
             MetaBaseSkel._skelCache.pop(kindname)
             MetaBaseSkel._skelCache[skel_cls.kindName] = skel_cls
 
-            for _bone_name, _bone_instance in vars(skel_cls).items():
+            logger.debug(f"{vars(skel_cls)=}")
+            logger.debug(f"{dir(skel_cls)=}")
+
+            for _bone_name, _bone_instance in skel_cls.__boneMap__.items():
+                logger.debug(f"{_bone_name=} | {_bone_instance=}")
                 if isinstance(_bone_instance, RelationalBone):
-                    # logger.debug(f"{_bone_name=} | {_bone_instance=}")
+                    logger.debug(f"{_bone_name=} | {_bone_instance=}")
                     if _bone_instance.kind.startswith("{{viur_shop_modulename}}_"):
                         _bone_instance.kind = _bone_instance.kind.replace(
                             "{{viur_shop_modulename}}", self.moduleName)
@@ -158,8 +162,8 @@ class Shop(InstancedModule, Module):
                         _bone_instance.module = _bone_instance.module.replace(
                             "{{viur_shop_modulename}}", self.moduleName)
 
-        # logger.debug(f"AFTER {MetaBaseSkel._skelCache.keys() = }")
-        # logger.debug(f"AFTER {MetaBaseSkel._skelCache = }")
+        logger.debug(f"AFTER {MetaBaseSkel._skelCache.keys() = }")
+        logger.debug(f"AFTER {MetaBaseSkel._skelCache = }")
 
     def _extend_user_skeleton(self) -> None:
         """Extend the UserSkel of the project
