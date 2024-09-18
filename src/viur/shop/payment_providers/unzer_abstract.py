@@ -25,8 +25,9 @@ class UnzerAbstract(PaymentProviderAbstract):
         public_key: str,
         sandbox: bool = False,
         language: str = "en",
-    ):
-        super().__init__()
+        **kwargs: t.Any,
+    ) -> None:
+        super().__init__(**kwargs)
         self.private_key = private_key
         self.public_key = public_key
         self.sandbox = sandbox
