@@ -23,8 +23,9 @@ class AmazonPay(PaymentProviderAbstract):
         currency_code: str = "EUR",
         sandbox: bool = False,
         language: str = "en",
-    ):
-        super().__init__()
+        **kwargs: t.Any,
+    ) -> None:
+        super().__init__(**kwargs)
         self.mws_access_key = mws_access_key
         self.mws_secret_key = mws_secret_key
         self.merchant_id = merchant_id
