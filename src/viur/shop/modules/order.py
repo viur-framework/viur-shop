@@ -9,7 +9,7 @@ from .abstract import ShopModuleAbstract
 from ..globals import SENTINEL, SHOP_LOGGER
 from ..payment_providers import PaymentProviderAbstract
 from ..services import EVENT_SERVICE, Event, HOOK_SERVICE, Hook
-from ..skeletons.order import get_payment_providers
+from ..skeletons.order import get_payment_providers_list
 from ..types import exceptions as e
 
 if t.TYPE_CHECKING:
@@ -29,7 +29,7 @@ class Order(ShopModuleAbstract, List):
 
     @exposed
     def payment_providers_list(self):
-        return JsonResponse(get_payment_providers())
+        return JsonResponse(get_payment_providers_list())
 
     def order_add(
         self,

@@ -9,7 +9,14 @@ from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 logger = SHOP_LOGGER.getChild(__name__)
 
 
-def get_payment_providers() -> dict[str, dict[str, t.Any]]:
+def get_payment_providers() -> dict[str, str | translate]:
+    return {
+        pp.name: pp.title
+        for pp in SHOP_INSTANCE.get().payment_providers
+    }
+
+
+def get_payment_providers_list() -> dict[str, dict[str, t.Any]]:
     return {
         pp.name: {
             "title": pp.title,
@@ -19,7 +26,6 @@ def get_payment_providers() -> dict[str, dict[str, t.Any]]:
 
         for pp in SHOP_INSTANCE.get().payment_providers
     }
-
 
 class OrderSkel(Skeleton):  # STATE: Complete (as in model)
     kindName = "{{viur_shop_modulename}}_order"
