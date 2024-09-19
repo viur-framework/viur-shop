@@ -1,3 +1,4 @@
+import pprint
 import typing as t  # noqa
 
 import viur.shop.types.exceptions as e
@@ -510,5 +511,6 @@ class Cart(ShopModuleAbstract, Tree):
             new_parent_skel[key] = value  # TODO: use .setBoneValue?
         new_parent_skel.toDB()
         leaf_skel["parententry"] = new_parent_skel["key"]
+        logger.debug(leaf_skel)
         leaf_skel.toDB()
         return new_parent_skel

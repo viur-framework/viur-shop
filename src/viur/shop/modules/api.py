@@ -363,14 +363,15 @@ class Api(ShopModuleAbstract):
         return JsonResponse(self.shop.discount.apply(code, discount_key))
 
     @exposed
-    @force_post
+    #@force_post
     def discount_remove(
         self,
         *,
-
         discount_key: str | db.Key,
     ):
-        ...
+        logger.error(f"key {discount_key}")
+        discount_key = self._normalize_external_key(discount_key, "discount_key", True)
+        return JsonResponse(self.shop.discount.remove(discount_key))
 
     @exposed
     def shipping_list(
