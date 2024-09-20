@@ -133,6 +133,7 @@ class Discount(ShopModuleAbstract, List):
                     "discount_skel": discount_skel,
                 }
         elif application_domain == ApplicationDomain.ARTICLE:
+            # TODO Not working yet wait for  https://github.com/viur-framework/viur-core/pull/1262
             all_leafs = []
             for cv in dv.condition_validator_instances:
                 logger.error(cv)
@@ -253,8 +254,10 @@ class Discount(ShopModuleAbstract, List):
                     "discount_skel": discount_skel,
                 }
         elif application_domain == ApplicationDomain.ARTICLE:
+            # TODO Not working yet wait for  https://github.com/viur-framework/viur-core/pull/1262
             return
             all_leafs = []
+
             for cv in dv.condition_validator_instances:
                 if cv.is_fulfilled and cv.condition_skel["scope_article"] is not None:
                     leaf_skels = (
