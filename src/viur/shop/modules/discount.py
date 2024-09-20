@@ -247,7 +247,6 @@ class Discount(ShopModuleAbstract, List):
                     cart_key=cart_key,
                     discount_key=None
                 )
-                logger.debug(f"{cart = }")
                 return {  # TODO: what should be returned?
                     "discount_skel": discount_skel,
                 }
@@ -264,7 +263,7 @@ class Discount(ShopModuleAbstract, List):
                         .filter("article.dest.__key__ =", cv.condition_skel["scope_article"]["dest"]["key"])
                         .fetch()
                     )
-                    logger.debug(f"<{len(leaf_skels)}>{leaf_skels = }")
+                    logger.debug(f"<{len(leaf_skels)}>{leaf_skels=}")
                     # if not leaf_skels:
                     #     raise errors.NotFound("expected article is missing on cart")
                     # if len(leaf_skels) > 1:
@@ -281,7 +280,7 @@ class Discount(ShopModuleAbstract, List):
                             cart_key=parent_skel["key"],
                             discount_key=discount_skel["key"]
                         )
-                        logger.debug(f"{cart = }")
+                        logger.debug(f"{cart=}")
                         all_leafs.append(leaf_skels)
             if not all_leafs:
                 raise errors.NotFound("expected article is missing on cart (or discount exist already)")
