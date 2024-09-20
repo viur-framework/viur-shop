@@ -230,10 +230,8 @@ class Discount(ShopModuleAbstract, List):
             raise InvalidStateError("application_domain not set")
 
         if discount_skel["discount_type"] == DiscountType.FREE_ARTICLE:
-            # todo discount is not in cart ??
             for cart_skel in self.shop.cart.get_children(parent_cart_key=cart_key):
                 if cart_skel["discount"] and cart_skel["discount"]["dest"]["key"] == discount_skel["key"]:
-                    logger.error(f"{cart_skel = }")
                     break
             else:
                 raise errors.NotFound
