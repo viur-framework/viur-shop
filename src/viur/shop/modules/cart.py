@@ -500,7 +500,6 @@ class Cart(ShopModuleAbstract, Tree):
                 raise InvalidStateError(f"{pk=} doesn't exist!")
             if discount := skel["discount"]:
                 discounts.append(discount["dest"])
-        logger.debug(f"{discounts = }")
         return discounts
 
     def add_new_parent(self, leaf_skel, **kwargs):
@@ -511,6 +510,5 @@ class Cart(ShopModuleAbstract, Tree):
             new_parent_skel[key] = value  # TODO: use .setBoneValue?
         new_parent_skel.toDB()
         leaf_skel["parententry"] = new_parent_skel["key"]
-        logger.debug(leaf_skel)
         leaf_skel.toDB()
         return new_parent_skel

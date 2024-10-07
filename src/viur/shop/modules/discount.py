@@ -243,7 +243,7 @@ class Discount(ShopModuleAbstract, List):
                 "discount_skel": discount_skel}
         elif application_domain == ApplicationDomain.BASKET:
             if discount_skel["discount_type"] in {DiscountType.PERCENTAGE, DiscountType.ABSOLUTE}:
-                cart = self.shop.cart.cart_update(
+                self.shop.cart.cart_update(
                     cart_key=cart_key,
                     discount_key=None
                 )
@@ -251,8 +251,10 @@ class Discount(ShopModuleAbstract, List):
                     "discount_skel": discount_skel,
                 }
         elif application_domain == ApplicationDomain.ARTICLE:
-            # TODO Not working yet wait for  https://github.com/viur-framework/viur-core/pull/1262
-            return
+
+            applicable, dv = self.can_apply(discount_skel, cart_key)
+
+
             all_leafs = []
 
             for cv in dv.condition_validator_instances:
@@ -263,24 +265,18 @@ class Discount(ShopModuleAbstract, List):
                         .filter("article.dest.__key__ =", cv.condition_skel["scope_article"]["dest"]["key"])
                         .fetch()
                     )
+
                     logger.debug(f"<{len(leaf_skels)}>{leaf_skels=}")
-                    # if not leaf_skels:
-                    #     raise errors.NotFound("expected article is missing on cart")
-                    # if len(leaf_skels) > 1:
-                    #     raise NotImplementedError("article is ambiguous")
+
                     for leaf_skel in leaf_skels:
                         # Assign discount on new parent node for the leaf where the article is
                         parent_skel = self.shop.cart.viewSkel("node")
                         assert parent_skel.fromDB(leaf_skel["parententry"])
-                        if parent_skel["discount"] and parent_skel["discount"]["dest"]["key"] == discount_skel["key"]:
-                            logger.info("Parent has already this discount key")
-                            continue
-                        parent_skel = self.shop.cart.add_new_parent(leaf_skel, name=f'Discount {discount_skel["name"]}')
                         cart = self.shop.cart.cart_update(
                             cart_key=parent_skel["key"],
-                            discount_key=discount_skel["key"]
+                            discount_key=None
                         )
-                        logger.debug(f"{cart=}")
+
                         all_leafs.append(leaf_skels)
             if not all_leafs:
                 raise errors.NotFound("expected article is missing on cart (or discount exist already)")
