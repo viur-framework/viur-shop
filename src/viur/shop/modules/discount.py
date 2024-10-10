@@ -272,7 +272,7 @@ class Discount(ShopModuleAbstract, List):
                         # Assign discount on new parent node for the leaf where the article is
                         parent_skel = self.shop.cart.viewSkel("node")
                         assert parent_skel.fromDB(leaf_skel["parententry"])
-                        cart = self.shop.cart.cart_update(
+                        self.shop.cart.cart_update(
                             cart_key=parent_skel["key"],
                             discount_key=None
                         )
