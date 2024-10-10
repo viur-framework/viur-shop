@@ -295,7 +295,9 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
 
     shipping = RawBone(  # FIXME: JsonBone doesn't work (https://github.com/viur-framework/viur-core/issues/1092)
         compute=Compute(
-            lambda skel: make_json_dumpable(SHOP_INSTANCE.get().shipping.choose_shipping_skel_for_article(skel.article_skel_full)),
+            lambda skel: make_json_dumpable(
+                SHOP_INSTANCE.get().shipping.choose_shipping_skel_for_article(skel.article_skel_full)
+            ),
             ComputeInterval(ComputeMethod.Always)),
     )
     shipping.type = JsonBone.type
