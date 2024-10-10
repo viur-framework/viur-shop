@@ -1,3 +1,4 @@
+import pprint
 import typing as t  # noqa
 
 import viur.shop.types.exceptions as e
@@ -499,7 +500,6 @@ class Cart(ShopModuleAbstract, Tree):
                 raise InvalidStateError(f"{pk=} doesn't exist!")
             if discount := skel["discount"]:
                 discounts.append(discount["dest"])
-        logger.debug(f"{discounts = }")
         return discounts
 
     def add_new_parent(self, leaf_skel, **kwargs):

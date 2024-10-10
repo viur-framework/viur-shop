@@ -5,6 +5,7 @@ from viur.core import db, errors
 from viur.core.prototypes import List
 from viur.core.skeleton import SkeletonInstance
 from viur.shop.types import *
+from viur.shop.skeletons.discount_condition import DiscountConditionSkel
 from .abstract import ShopModuleAbstract
 from ..globals import SHOP_LOGGER
 from ..types.dc_scope import DiscountValidator
@@ -207,3 +208,83 @@ class Discount(ShopModuleAbstract, List):
             discounts.append(skel)
         logger.debug(f'current {discounts=}')
         return discounts
+
+    def remove(
+        self,
+        discount_key: db.Key | None = None,
+    ) -> t.Any:
+
+        if not isinstance(discount_key, db.Key):
+            raise TypeError(f"discount_key must be an instance of db.Key")
+        cart_key = self.shop.cart.current_session_cart_key  # TODO: parameter?
+
+        discount_skel = self.viewSkel()
+
+        if not discount_skel.fromDB(discount_key):
+            raise errors.NotFound
+        try:
+            # Todo what we do when we have more than more condition
+            application_domain = discount_skel["condition"][0]["dest"]["application_domain"]
+        except KeyError:
+            raise InvalidStateError("application_domain not set")
+
+        if discount_skel["discount_type"] == DiscountType.FREE_ARTICLE:
+            for cart_skel in self.shop.cart.get_children(parent_cart_key=cart_key):
+                if cart_skel["discount"] and cart_skel["discount"]["dest"]["key"] == discount_skel["key"]:
+                    break
+            else:
+                raise errors.NotFound
+            self.shop.cart.cart_remove(
+                cart_key=cart_skel["key"]
+            )
+
+            return {  # TODO: what should be returned?
+                "discount_skel": discount_skel}
+
+        elif application_domain == ApplicationDomain.BASKET:
+            self.shop.cart.cart_update(
+                cart_key=cart_key,
+                discount_key=None
+            )
+            return {  # TODO: what should be returned?
+                "discount_skel": discount_skel,
+            }
+
+        elif application_domain == ApplicationDomain.ARTICLE:
+            condition_skel = DiscountConditionSkel()
+            if not condition_skel.fromDB(discount_skel["condition"][0]["dest"]["key"]):
+                raise errors.NotFound("Discount condition skel does not exist")
+            leaf_skels = (
+                self.shop.cart.viewSkel("leaf").all()
+                .filter("parentrepo =", cart_key)
+                .filter("article.dest.__key__ =", condition_skel["scope_article"]["dest"]["key"])
+                .fetch()
+            )
+
+            logger.debug(f"<{len(leaf_skels)}>{leaf_skels=}")
+            all_leafs = []
+            for leaf_skel in leaf_skels:
+                # Assign discount on new parent node for the leaf where the article is
+                parent_skel = self.shop.cart.viewSkel("node")
+                assert parent_skel.fromDB(leaf_skel["parententry"])
+                self.shop.cart.cart_update(
+                    cart_key=parent_skel["key"],
+                    discount_key=None
+                )
+                self.shop.cart.cart_remove(parent_skel["key"])
+                # Readd the Article to the cart again
+                self.shop.cart.add_or_update_article(
+                    article_key=condition_skel["scope_article"]["dest"]["key"],
+                    parent_cart_key=cart_key,
+                    quantity=parent_skel["total_quantity"],
+                    quantity_mode=QuantityMode.REPLACE
+                )
+                all_leafs.append(leaf_skels)
+            if not all_leafs:
+                raise errors.NotFound("expected article is missing on cart (or discount exist already)")
+            return {  # TODO: what should be returned?
+                "leaf_skel": all_leafs,
+                "discount_skel": discount_skel,
+            }
+
+        raise errors.NotImplemented(f'{discount_skel["discount_type"]=} is not implemented yet :(')

@@ -92,7 +92,6 @@ class ArticleAbstractSkel(BaseSkeleton):
         compute=Compute(lambda skel: skel.shop_price_.to_dict(), ComputeInterval(ComputeMethod.Always))
     )
     shop_price.type = JsonBone.type
-
     shop_shipping = RawBone(  # FIXME: JsonBone doesn't work (https://github.com/viur-framework/viur-core/issues/1092)
         compute=Compute(
             lambda skel: make_json_dumpable(SHOP_INSTANCE.get().shipping.choose_shipping_skel_for_article(skel)),
