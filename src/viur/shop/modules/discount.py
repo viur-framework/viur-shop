@@ -136,7 +136,6 @@ class Discount(ShopModuleAbstract, List):
         elif application_domain == ApplicationDomain.ARTICLE:
             all_leafs = []
             for cv in dv.condition_validator_instances:
-                logger.error(cv)
                 if cv.is_fulfilled and cv.condition_skel["scope_article"] is not None:
                     leaf_skels = (
                         self.shop.cart.viewSkel("leaf").all()
