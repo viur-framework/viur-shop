@@ -250,39 +250,24 @@ class Discount(ShopModuleAbstract, List):
             }
 
         elif application_domain == ApplicationDomain.ARTICLE:
-            condition_skel = DiscountConditionSkel()
-            if not condition_skel.fromDB(discount_skel["condition"][0]["dest"]["key"]):
-                raise errors.NotFound("Discount condition skel does not exist")
-            leaf_skels = (
-                self.shop.cart.viewSkel("leaf").all()
+            node_skels = (
+                self.shop.cart.viewSkel("node").all()
                 .filter("parentrepo =", cart_key)
-                .filter("article.dest.__key__ =", condition_skel["scope_article"]["dest"]["key"])
-                .fetch()
+                .filter("discount.dest.__key__ =", discount_key)
+                .fetch(100)
             )
 
-            logger.debug(f"<{len(leaf_skels)}>{leaf_skels=}")
-            all_leafs = []
-            for leaf_skel in leaf_skels:
-                # Assign discount on new parent node for the leaf where the article is
-                parent_skel = self.shop.cart.viewSkel("node")
-                assert parent_skel.fromDB(leaf_skel["parententry"])
+            logger.debug(f"<{len(node_skels)}>{node_skels=}")
+            for node_skel in node_skels:
+                # TODO: remove node, if no custom name, shipping, etc. is set? remove_parent flag?
                 self.shop.cart.cart_update(
-                    cart_key=parent_skel["key"],
-                    discount_key=None
+                    cart_key=node_skel["key"],
+                    discount_key=None,
                 )
-                self.shop.cart.cart_remove(parent_skel["key"])
-                # Readd the Article to the cart again
-                self.shop.cart.add_or_update_article(
-                    article_key=condition_skel["scope_article"]["dest"]["key"],
-                    parent_cart_key=cart_key,
-                    quantity=parent_skel["total_quantity"],
-                    quantity_mode=QuantityMode.REPLACE
-                )
-                all_leafs.append(leaf_skels)
-            if not all_leafs:
-                raise errors.NotFound("expected article is missing on cart (or discount exist already)")
+            if not node_skels:
+                raise errors.NotFound("Discount not used by any cart")
             return {  # TODO: what should be returned?
-                "leaf_skel": all_leafs,
+                "node_skels": node_skels,
                 "discount_skel": discount_skel,
             }
 
