@@ -211,9 +211,8 @@ class Discount(ShopModuleAbstract, List):
 
     def remove(
         self,
-        discount_key: db.Key | None = None,
+        discount_key: db.Key,
     ) -> t.Any:
-
         if not isinstance(discount_key, db.Key):
             raise TypeError(f"discount_key must be an instance of db.Key")
         cart_key = self.shop.cart.current_session_cart_key  # TODO: parameter?
