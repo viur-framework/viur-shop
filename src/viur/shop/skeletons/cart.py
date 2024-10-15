@@ -6,6 +6,7 @@ from viur.core.prototypes.tree import TreeSkel
 from viur.core.skeleton import SkeletonInstance
 from viur.shop.types import *
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
+from ..types.response import make_json_dumpable
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -294,10 +295,13 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
 
     shipping = RawBone(  # FIXME: JsonBone doesn't work (https://github.com/viur-framework/viur-core/issues/1092)
         compute=Compute(
-            lambda skel: SHOP_INSTANCE.get().shipping.choose_shipping_skel_for_article(skel.article_skel_full),
+            lambda skel: make_json_dumpable(
+                SHOP_INSTANCE.get().shipping.choose_shipping_skel_for_article(skel.article_skel_full)
+            ),
             ComputeInterval(ComputeMethod.Always)),
     )
     shipping.type = JsonBone.type
+
 
     @classmethod
     def toDB(cls, skelValues: SkeletonInstance, update_relations: bool = True, **kwargs) -> db.Key:

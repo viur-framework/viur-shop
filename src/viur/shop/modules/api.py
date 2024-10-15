@@ -367,10 +367,10 @@ class Api(ShopModuleAbstract):
     def discount_remove(
         self,
         *,
-
         discount_key: str | db.Key,
     ):
-        ...
+        discount_key = self._normalize_external_key(discount_key, "discount_key")
+        return JsonResponse(self.shop.discount.remove(discount_key))
 
     @exposed
     def shipping_list(
