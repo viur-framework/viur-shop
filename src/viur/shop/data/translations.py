@@ -758,9 +758,88 @@ TRANSLATIONS = {
     },
     "viur.shop.skeleton.vat.rate": {
         "_hint": "bone rate<NumericBone> in VatSkel in viur.shop",
-        "de": "Steuersatz(%)",
+        "de": "Steuersatz (%)",
         "en": "Rate",
         "fr": "Taux d'imposition",
     },
+    "viur.shop.stepper.next": {
+        "_hint": "button that brings the customer to the next step",
+        "de": "Nächster Schritt",
+        "en": "Next",
+    },
+    "viur.shop.stepper.previous": {
+        "_hint": "button that brings the customer to the previous step",
+        "de": "Zurück",
+        "en": "Previous",
+    },
+    "viur.shop.cart_leaf.quantity": {
+        "_hint": "label of quantity",
+        "de": "Anzahl",
+        "en": "quantity",
+        "fr": "Quantité"
+    },
+    "viur.shop.cart_leaf.unit_price": {
+        "_hint": "label of unit price",
+        "de": "Stückpreis",
+        "en": "unit price",
+        "fr": "Prix par pièce"
+    },
+    "viur.shop.cart_leaf.price": {
+        "_hint": "label of price",
+        "de": "Gesamtpreis",
+        "en": "total price",
+        "fr": "Montant total"
+    },
+    "viur.shop.cart_view.delete_item.hint": {
+        "_hint": "hint of delete message dialog",
+        "de": "Möchten Sie diesen Artikel wirklich aus dem Warenkorb entfernen?",
+        "en": "Do you really want to remove the item from your cart?",
+        "fr": "Désirez-vous vraiment supprimer cet article du panier?"
+    },
+    "viur.shop.cart_view.delete_item.cancel": {
+        "_hint": "cancel deleting an item from the cart",
+        "de": "Abbrechen",
+        "en": "Cancel"
+    },
+    "viur.shop.cart_view.delete_item.proceed": {
+        "_hint": "proceed deleting an item from the cart",
+        "de": "Artikel entfernen",
+        "en": "Proceed"
+    },
+    "viur.shop.summary.headline": {
+        "_hint": "headline of summary",
+        "de": "Zusammenfassung",
+        "en": "Summary"
+    },
+    "viur.shop.summary.subtotal": {
+        "_hint": "label of subtotal",
+        "de": "Zwischensumme",
+        "en": "subtotal",
+        "fr": "Sous-total"
+    },
+    "viur.shop.summary.discount": {
+        "_hint": "label of discount",
+        "de": "Sie sparen im Aktionszeitraum",
+        "en": "discount",
+        "fr": "Vous économisez sur votre achat"
+    },
+    "viur.shop.summary.shipping_cost": {
+        "_hint": "label of shipping cost",
+        "de": "Verpackung und Versand",
+        "en": "Shipping cost",
+        "fr": "Emballage et envoi"
+    },
+    "viur.shop.summary.total": {
+        "_hint": "label of total",
+        "de": "Gesamtbetrag",
+        "en": "total",
+        "fr": "Montant total"
+    },
+    "viur.shop.summary.checkout": {
+        "_hint": "label of checkout button",
+        "de": "Zur Kasse gehen",
+        "en": "Proceed to checkout",
+        "fr": "Acheter cet article"
+    }
 }
 """Initial translations used inside the shop"""
