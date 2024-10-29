@@ -189,6 +189,9 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
         ],
     )
 
+    project_data = JsonBone(
+    )
+
 
 class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     kindName = "{{viur_shop_modulename}}_cart_leaf"
