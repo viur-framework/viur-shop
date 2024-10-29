@@ -790,18 +790,18 @@ TRANSLATIONS = {
         "en": "total price",
         "fr": "Montant total"
     },
-    "viur.shop.cart_view.delete_item.hint": {
+    "viur.shop.cart.delete_item.hint": {
         "_hint": "hint of delete message dialog",
         "de": "Möchten Sie diesen Artikel wirklich aus dem Warenkorb entfernen?",
         "en": "Do you really want to remove the item from your cart?",
         "fr": "Désirez-vous vraiment supprimer cet article du panier?"
     },
-    "viur.shop.cart_view.delete_item.cancel": {
+    "viur.shop.cart.delete_item.cancel": {
         "_hint": "cancel deleting an item from the cart",
         "de": "Abbrechen",
         "en": "Cancel"
     },
-    "viur.shop.cart_view.delete_item.proceed": {
+    "viur.shop.cart.delete_item.proceed": {
         "_hint": "proceed deleting an item from the cart",
         "de": "Artikel entfernen",
         "en": "Proceed"
@@ -840,6 +840,30 @@ TRANSLATIONS = {
         "de": "Zur Kasse gehen",
         "en": "Proceed to checkout",
         "fr": "Acheter cet article"
-    }
+    },
+    "viur.shop.discount.headline": {
+        "_hint": "headline of discount section",
+        "de": "Rabattcode",
+        "en": "discount code",
+        "fr": "Code promo"
+    },
+    "viur.shop.discount.placeholder": {
+        "_hint": "placeholder of discount input",
+        "de": "Dein Code",
+        "en": "Your code",
+        "fr": "Votre code"
+    },
+    "viur.shop.discount.button": {
+        "_hint": "placeholder of discount input",
+        "de": "Einlösen",
+        "en": "Redeem",
+        "fr": "Valider"
+    },
+    "viur.shop.discount.none": {
+        "_hint": "",
+        "de": "Einlösen",
+        "en": "Redeem",
+        "fr": "Valider"
+    },
 }
 """Initial translations used inside the shop"""
