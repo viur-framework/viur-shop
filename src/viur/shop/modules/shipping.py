@@ -113,19 +113,24 @@ class Shipping(ShopModuleAbstract, List):
         # TODO(discuss): cheapest of each supplier?
         return applicable_shippings
 
-    def set_shipping_for_cart(
+    def set_shipping_to_cart(
         self,
         cart_key: t.Optional[db.Key] = None,
         shipping_key: t.Optional[db.Key] = None
     ) -> None:
         """
+        Set shipping to a Cart.
+        If no Cart key is provided the current session cart will be used.
+        If no Shipping key is provided the cheapest shipping will be used.
 
+        :param cart_key: Key of the cart.
+        :param shipping_key: Key of the shipping.
         """
         if not cart_key:
             cart_key = self.shop.cart.current_session_cart_key
         applicable_shippings = self.get_shipping_skels_for_cart(cart_key)
         if not applicable_shippings:
-            logger.error("No suitable shipping to set to cart")
+            errors.NotFound("No applicable Shipping found for this cart")
         cart_skel = self.shop.cart.viewSkel("node")
         if not cart_skel.fromDB(cart_key):
             raise errors.NotFound
@@ -141,4 +146,4 @@ class Shipping(ShopModuleAbstract, List):
                         cart_key, shipping_key=shipping_key
                     )
             else:
-                raise errors.NotFound("No shipping found")
+                raise errors.NotFound("Provided Shipping key not found")
