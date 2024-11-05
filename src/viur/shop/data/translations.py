@@ -790,6 +790,12 @@ TRANSLATIONS = {
         "en": "total price",
         "fr": "Montant total"
     },
+    "viur.shop.cart_leaf.delete": {
+        "_hint": "label of delete button",
+        "de": "Aus dem Warenkorb löschen",
+        "en": "Remove from cart",
+        "fr": "Retirer du panier"
+    },
     "viur.shop.cart.delete_item.hint": {
         "_hint": "hint of delete message dialog",
         "de": "Möchten Sie diesen Artikel wirklich aus dem Warenkorb entfernen?",
@@ -864,6 +870,12 @@ TRANSLATIONS = {
         "de": "Einlösen",
         "en": "Redeem",
         "fr": "Valider"
+    },
+    "viur.shop.userdata.shipping_to_billaddress": {
+        "_hint": "",
+        "de": "Lieferung zur&nbsp;<strong>Rechnungsadresse</strong>",
+        "en": "Ship to billing address",
+        "fr": "Livraison à&nbsp;<strong>l'adresse de facturation</strong>"
     },
 }
 """Initial translations used inside the shop"""
