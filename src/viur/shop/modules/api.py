@@ -375,7 +375,22 @@ class Api(ShopModuleAbstract):
     @exposed
     def shipping_list(
         self,
-        cart_key: str | db.Key,
+        cart_key: t.Optional[str | db.Key],
+    ) -> JsonResponse[list[SkeletonInstance_T[ShippingSkel]]]:
+        """
+        Lists shipping options for a (sub)cart
+
+        :param cart_key: Key of the parent cart
+
+        :returns: list of :class:`ShippingSkel` `SkeletonInstance`s
+        """
+        cart_key = self._normalize_external_key(cart_key, "cart_key", True)
+        return JsonResponse(self.shop.shipping.get_shipping_skels_for_cart(cart_key))
+
+    @exposed
+    def shipping_available_list(
+        self,
+        cart_key: t.Optional[str | db.Key],
     ) -> JsonResponse[list[SkeletonInstance_T[ShippingSkel]]]:
         """
         Lists available shipping options for a (sub)cart
@@ -384,8 +399,8 @@ class Api(ShopModuleAbstract):
 
         :returns: list of :class:`ShippingSkel` `SkeletonInstance`s
         """
-        cart_key = self._normalize_external_key(cart_key, "cart_key")
-        return JsonResponse(self.shop.shipping.get_shipping_skels_for_cart(cart_key))
+        cart_key = self._normalize_external_key(cart_key, "cart_key", True)
+        return JsonResponse(self.shop.shipping.get_available_shipping_skels_for_cart(cart_key))
 
     # --- Internal helpers  ----------------------------------------------------
 
