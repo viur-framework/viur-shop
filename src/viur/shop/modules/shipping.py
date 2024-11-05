@@ -112,3 +112,33 @@ class Shipping(ShopModuleAbstract, List):
 
         # TODO(discuss): cheapest of each supplier?
         return applicable_shippings
+
+    def set_shipping_for_cart(
+        self,
+        cart_key: t.Optional[db.Key] = None,
+        shipping_key: t.Optional[db.Key] = None
+    ) -> None:
+        """
+
+        """
+        if not cart_key:
+            cart_key = self.shop.cart.current_session_cart_key
+        applicable_shippings = self.get_shipping_skels_for_cart(cart_key)
+        if not applicable_shippings:
+            logger.error("No suitable shipping to set to cart")
+        cart_skel = self.shop.cart.viewSkel("node")
+        if not cart_skel.fromDB(cart_key):
+            raise errors.NotFound
+        if shipping_key is None:  # set shipping to the cheapest available
+            cheapest_shipping = min(applicable_shippings, key=lambda shipping: shipping["dest"]["shipping_cost"] or 0)
+            return self.shop.cart.cart_update(
+                cart_key, shipping_key=cheapest_shipping["dest"]["key"]
+            )
+        else:
+            for shipping in applicable_shippings:
+                if shipping["dest"]["key"] == shipping_key:
+                    return self.shop.cart.cart_update(
+                        cart_key, shipping_key=shipping_key
+                    )
+            else:
+                raise errors.NotFound("No shipping found")

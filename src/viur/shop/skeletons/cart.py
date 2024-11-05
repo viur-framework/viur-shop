@@ -173,6 +173,9 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     shipping = RelationalBone(
         kind="{{viur_shop_modulename}}_shipping",
         module="{{viur_shop_modulename}}/shipping",
+        refKeys=[
+            "shipping_cost" #Todo what keys we need ?
+        ]
     )
     """Versand bei Warenkorb der einer Bestellung zugehört"""
 

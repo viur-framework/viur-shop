@@ -387,6 +387,25 @@ class Api(ShopModuleAbstract):
         cart_key = self._normalize_external_key(cart_key, "cart_key")
         return JsonResponse(self.shop.shipping.get_shipping_skels_for_cart(cart_key))
 
+    @exposed
+    @force_post
+    def shipping_set(
+        self,
+        cart_key: str | db.Key = None,
+        shipping_key: str | None = None,
+    ) -> JsonResponse[list[SkeletonInstance_T[ShippingSkel]]]:
+        """
+        Lists available shipping options for a (sub)cart
+
+        :param cart_key: Key of the parent cart
+        :param shipping_key: Key of SHipping
+
+        :returns: CartSkel
+        """
+        cart_key = self._normalize_external_key(cart_key, "cart_key", can_be_None=True)
+        shipping_key = self._normalize_external_key(shipping_key, "shipping_key", can_be_None=True)
+        return JsonResponse(self.shop.shipping.set_shipping_for_cart(cart_key, shipping_key))
+
     # --- Internal helpers  ----------------------------------------------------
 
     def _normalize_external_key(
