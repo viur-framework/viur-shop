@@ -10,7 +10,7 @@ from .abstract import ShopModuleAbstract
 from ..globals import SENTINEL, SHOP_LOGGER
 from ..payment_providers import PaymentProviderAbstract
 from ..services import EVENT_SERVICE, Event, HOOK_SERVICE, Hook
-from ..skeletons.order import get_payment_providers_list
+from ..skeletons.order import OrderSkel, get_payment_providers, get_payment_providers_list
 from ..types import exceptions as e
 
 if t.TYPE_CHECKING:
@@ -56,34 +56,20 @@ class Order(ShopModuleAbstract, List):
         assert cart_skel.fromDB(cart_key)
         skel.setBoneValue("cart", cart_key)
         skel["total"] = cart_skel["total"]
-        if payment_provider is not SENTINEL:
-            skel["payment_provider"] = payment_provider  # TODO: validate
-        if billing_address_key is not SENTINEL:
-            if billing_address_key is None:
-                skel["billing_address"] = None
-            else:
-                skel.setBoneValue("billing_address", billing_address_key)
-                if skel["billing_address"]["dest"]["address_type"] != AddressType.BILLING:
-                    raise e.InvalidArgumentException(
-                        "shipping_address",
-                        descr_appendix="Address is not of type billing."
-                    )
         if user := current.user.get():
-            # us current user as default value
+            # use current user as default value
             skel["email"] = user["name"]
             skel.setBoneValue("customer", user["key"])
-        if email is not SENTINEL:
-            skel["email"] = email
-        if customer_key is not SENTINEL:
-            skel.setBoneValue("customer", customer_key)  # TODO: validate (must be self of an admin)
-        # TODO(discussion): Do we really want to set this by the frontend?
-        #  Or what are the pre conditions?
-        if state_ordered is not SENTINEL:
-            skel["state_ordered"] = state_ordered
-        if state_paid is not SENTINEL:
-            skel["state_paid"] = state_paid
-        if state_rts is not SENTINEL:
-            skel["state_rts"] = state_rts
+        skel = self._order_set_values(
+            skel,
+            payment_provider=payment_provider,
+            billing_address_key=billing_address_key,
+            email=email,
+            customer_key=customer_key,
+            state_ordered=state_ordered,
+            state_paid=state_paid,
+            state_rts=state_rts,
+        )
         skel.toDB()
         if cart_key == self.shop.cart.current_session_cart_key:
             # This is now an order basket and should no longer be modified
@@ -110,9 +96,35 @@ class Order(ShopModuleAbstract, List):
         skel = self.editSkel()
         if not skel.fromDB(order_key):
             raise core_errors.NotFound
-        # TODO: refactor duplicate code!
+        skel = self._order_set_values(
+            skel,
+            payment_provider=payment_provider,
+            billing_address_key=billing_address_key,
+            email=email,
+            customer_key=customer_key,
+            state_ordered=state_ordered,
+            state_paid=state_paid,
+            state_rts=state_rts,
+        )
+        skel.toDB()
+        return skel
+
+    def _order_set_values(
+        self,
+        skel: SkeletonInstance_T[OrderSkel],
+        *,
+        payment_provider: str = SENTINEL,
+        billing_address_key: db.Key = SENTINEL,
+        email: str = SENTINEL,
+        customer_key: db.Key = SENTINEL,
+        state_ordered: bool = SENTINEL,
+        state_paid: bool = SENTINEL,
+        state_rts: bool = SENTINEL,
+    ) -> SkeletonInstance_T[OrderSkel]:
         if payment_provider is not SENTINEL:
-            skel["payment_provider"] = payment_provider  # TODO: validate
+            if payment_provider is not None and payment_provider not in get_payment_providers():
+                raise e.InvalidArgumentException("payment_provider")
+            skel["payment_provider"] = payment_provider
         if billing_address_key is not SENTINEL:
             if billing_address_key is None:
                 skel["billing_address"] = None
@@ -130,7 +142,10 @@ class Order(ShopModuleAbstract, List):
         if email is not SENTINEL:
             skel["email"] = email
         if customer_key is not SENTINEL:
-            skel.setBoneValue("customer", customer_key)  # TODO: validate (must be self of an admin)
+            if not self.customer_is_valid(skel, customer_key):
+                raise e.InvalidArgumentException("customer_key")
+            skel.setBoneValue("customer", customer_key)
+
         # TODO(discussion): Do we really want to set this by the frontend?
         #  Or what are the pre conditions?
         if state_ordered is not SENTINEL:
@@ -139,8 +154,23 @@ class Order(ShopModuleAbstract, List):
             skel["state_paid"] = state_paid
         if state_rts is not SENTINEL:
             skel["state_rts"] = state_rts
-        skel.toDB()
+
         return skel
+
+    def customer_is_valid(
+        self,
+        order_skel: SkeletonInstance_T[OrderSkel],
+        customer_key: db.Key,
+    ) -> bool:
+        """Checks if the given customer is a valid customer for this skel.
+
+        The customer must be the same user or an root user.
+        """
+        if not (user := current.user.get()):
+            return False
+        if user["key"] == customer_key:  # customer == current user
+            return True
+        return toolkit.user_has_access("root")  # other user
 
     @exposed
     @force_post
@@ -180,7 +210,7 @@ class Order(ShopModuleAbstract, List):
             errors.append(ClientError("cart is missing"))
         if not order_skel["payment_provider"]:
             errors.append(ClientError("missing payment_provider"))
-        if pp_errors := self.get_payment_provider_by_name(order_skel["payment_provider"]).can_checkout(order_skel):
+        elif pp_errors := self.get_payment_provider_by_name(order_skel["payment_provider"]).can_checkout(order_skel):
             errors.extend(pp_errors)
 
         # TODO: ...
@@ -327,6 +357,7 @@ class Order(ShopModuleAbstract, List):
         return order_skel
 
     # --- Internal helpers  ----------------------------------------------------
+
     def get_payment_provider_by_name(
         self,
         payment_provider_name: str,
