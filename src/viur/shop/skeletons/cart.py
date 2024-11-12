@@ -35,6 +35,7 @@ class TotalFactory:
 
     def __call__(self, skel: "CartNodeSkel", bone: NumericBone):
         children = self._get_children(skel["key"])
+        logger.error(f"we get {len(children)}  on {self.bone_node} {children[0]["quantity"]}")
         total = 0
         for child in children:
             # logger.debug(f"{child = }")

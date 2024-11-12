@@ -78,6 +78,7 @@ class Shipping(ShopModuleAbstract, List):
         node_queue = collections.deque([cart_key])
         while node_queue:
             for child in self.shop.cart.get_children(node_queue.pop()):
+                logger.debug(f" child in shipping {child}")
                 if issubclass(child.skeletonCls, CartNodeSkel):
                     node_queue.append(child["key"])
                 elif child.article_skel["shop_shipping_config"] is not None:

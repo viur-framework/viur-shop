@@ -193,6 +193,9 @@ class Cart(ShopModuleAbstract, Tree):
         cache[parent_cart_key] = children
         return children
 
+    def clear_children_cache(self) -> None:
+        current.request_data.get()["shop_cache_cart_children"] = {}
+
     # --- (internal) API methods ----------------------------------------------
 
     def get_article(
@@ -293,13 +296,15 @@ class Cart(ShopModuleAbstract, Tree):
                 "quantity",
                 descr_appendix=f'Quantity of free article cannot be greater than 1! (reached {skel["quantity"]})'
             )
+        key = skel.toDB()
+        self.clear_children_cache()
         # TODO: Validate quantity with hook (stock availability)
         if parent_skel["shipping_status"] == "cheapest":
             parent_skel = self._cart_set_values(
                 skel=parent_skel
             )
             parent_skel.toDB()
-        key = skel.toDB()
+
         return skel
 
     def move_article(
@@ -456,6 +461,7 @@ class Cart(ShopModuleAbstract, Tree):
         else:
             if skel["shipping_status"] == "cheapest":
                 applicable_shippings = self.shop.shipping.get_shipping_skels_for_cart(skel["key"])
+                logger.error(f"cart {skel=}")
                 if applicable_shippings:
                     cheapest_shipping = min(applicable_shippings,
                                             key=lambda shipping: shipping["dest"]["shipping_cost"] or 0)
