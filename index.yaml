@@ -32,3 +32,8 @@ indexes:
   - name: customer.dest.__key__
   - name: firstname
   - name: lastname
+
+- kind: shop_address
+  properties:
+  - name: firstname
+  - name: lastname

@@ -14,10 +14,9 @@ class Address(ShopModuleAbstract, List):
     moduleName = "address"
     kindName = "{{viur_shop_modulename}}_address"
 
-    default_order: DEFAULT_ORDER_TYPE = (  #
-        # TODO: https://github.com/viur-framework/viur-core/pull/1109
-        ("firstname", db.SortOrder.Ascending)  # ,
-        # ("lastname", db.SortOrder.Ascending),
+    default_order: DEFAULT_ORDER_TYPE = (
+        ("firstname", db.SortOrder.Ascending),
+        ("lastname", db.SortOrder.Ascending),
     )
 
     def adminInfo(self) -> dict:
