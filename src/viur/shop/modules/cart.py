@@ -294,8 +294,8 @@ class Cart(ShopModuleAbstract, Tree):
                 descr_appendix=f'Quantity of free article cannot be greater than 1! (reached {skel["quantity"]})'
             )
         # TODO: Validate quantity with hook (stock availability)
-        if parent_skel["shipping_status"]=="cheapest":
-            parent_skel=self._cart_set_values(
+        if parent_skel["shipping_status"] == "cheapest":
+            parent_skel = self._cart_set_values(
                 skel=parent_skel
             )
             parent_skel.toDB()
