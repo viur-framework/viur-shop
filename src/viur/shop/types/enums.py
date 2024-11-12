@@ -103,4 +103,13 @@ class QuantityMode(enum.Enum):
     """Subtract the provided quantity from the current value"""
 
 
+class ShippingStatus(enum.Enum):
+    USER = "user"
+    """Shipping selected by a user"""
+
+    CHEAPEST = "cheapest"
+    """Cheapest shipping selected"""
+
+
+
 QuantityModeType = t.Literal["replace", "increase", "decrease"]
