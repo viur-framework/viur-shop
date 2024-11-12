@@ -11,6 +11,7 @@ class Event(enum.IntEnum):
     ORDER_STARTED = enum.auto()
     ORDER_ORDERED = enum.auto()
     ORDER_PAID = enum.auto()
+    ORDER_RTS = enum.auto()
 
 
 class EventService:

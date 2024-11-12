@@ -2,6 +2,7 @@ import logging
 import time
 import typing as t  # noqa
 
+from viur import toolkit
 from viur.core import current, db, errors as core_errors, exposed, force_post
 from viur.core.prototypes import List
 from viur.shop.types import *
@@ -123,7 +124,7 @@ class Order(ShopModuleAbstract, List):
                         descr_appendix="Address is not of type billing."
                     )
         if user := current.user.get():
-            # us current user as default value
+            # use current user as default value
             skel["email"] = user["name"]
             skel.setBoneValue("customer", user["key"])
         if email is not SENTINEL:
@@ -225,15 +226,24 @@ class Order(ShopModuleAbstract, List):
 
         return order_skel
 
-    def assign_uid(
+    def _default_assign_uid(
         self,
         order_skel: "SkeletonInstance",
     ) -> "SkeletonInstance":
-        order_skel["order_uid"] = "".join(
-            f"-{c}" if i % 4 == 0 else c
-            for i, c in enumerate(str(time.time()).replace(".", ""))
-        ).strip("-")
-        # TODO: customize by hook, claim in transaction, ...
+        """Default order assign id method.
+
+        Called as default/fallback for :attr:`Hook.ORDER_ASSIGN_UID`.
+        """
+        order_skel = toolkit.set_status(
+            key=order_skel["key"],
+            skel=order_skel,
+            values={
+                "order_uid": "".join(
+                    f"-{c}" if i % 4 == 0 else c
+                    for i, c in enumerate(str(time.time()).replace(".", ""))
+                ).strip("-"),
+            },
+        )
         return order_skel
 
     @exposed
@@ -256,15 +266,10 @@ class Order(ShopModuleAbstract, List):
             }, status_code=400)
             raise e.InvalidStateError(", ".join(error_))
 
-        order_skel = HOOK_SERVICE.dispatch(Hook.ORDER_ASSIGN_UID, self.assign_uid)(order_skel)
-        # order_skel["is_ordered"] = True
-        # TODO: call hooks
+        order_skel = HOOK_SERVICE.dispatch(Hook.ORDER_ASSIGN_UID, self._default_assign_uid)(order_skel)
         # TODO: charge order if it should directly be charged
         pp_res = self.get_payment_provider_by_name(order_skel["payment_provider"]).checkout(order_skel)
-        # TODO: write in transaction
-        # order_skel.toDB()
         order_skel = self.set_ordered(order_skel, pp_res)
-        # EVENT_SERVICE.call(Event.ORDER_ORDERED, order_skel=order_skel, payment=pp_res)
         return JsonResponse({
             "skel": order_skel,
             "payment": pp_res,
@@ -292,15 +297,33 @@ class Order(ShopModuleAbstract, List):
         return errors
 
     def set_ordered(self, order_skel: "SkeletonInstance", payment: t.Any) -> "SkeletonInstance":
-        order_skel["is_ordered"] = True  # TODO: transaction
-        order_skel.toDB()
+        """Set an order to the state _ordered_"""
+        order_skel = toolkit.set_status(
+            key=order_skel["key"],
+            skel=order_skel,
+            values={"is_ordered": True},
+        )
         EVENT_SERVICE.call(Event.ORDER_ORDERED, order_skel=order_skel, payment=payment)
         return order_skel
 
     def set_paid(self, order_skel: "SkeletonInstance") -> "SkeletonInstance":
-        order_skel["is_paid"] = True  # TODO: transaction
-        order_skel.toDB()
+        """Set an order to the state _paid_"""
+        order_skel = toolkit.set_status(
+            key=order_skel["key"],
+            skel=order_skel,
+            values={"is_paid": True},
+        )
         EVENT_SERVICE.call(Event.ORDER_PAID, order_skel=order_skel)
+        return order_skel
+
+    def set_rts(self, order_skel: "SkeletonInstance") -> "SkeletonInstance":
+        """Set an order to the state _Ready to ship_"""
+        order_skel = toolkit.set_status(
+            key=order_skel["key"],
+            skel=order_skel,
+            values={"is_rts": True},
+        )
+        EVENT_SERVICE.call(Event.ORDER_RTS, order_skel=order_skel)
         return order_skel
 
     # --- Internal helpers  ----------------------------------------------------
