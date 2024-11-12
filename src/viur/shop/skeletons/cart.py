@@ -35,7 +35,6 @@ class TotalFactory:
 
     def __call__(self, skel: "CartNodeSkel", bone: NumericBone):
         children = self._get_children(skel["key"])
-        logger.error(f"we get {len(children)}  on {self.bone_node} {children[0]["quantity"]}")
         total = 0
         for child in children:
             # logger.debug(f"{child = }")
@@ -175,18 +174,12 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
         kind="{{viur_shop_modulename}}_shipping",
         module="{{viur_shop_modulename}}/shipping",
         refKeys=[
-            "key",
-            "name",
             "shipping_cost"
         ]
     )
     shipping_status = SelectBone(
-        values={
-            "user": "Selected by a user",
-            "cheapest": "Cheapest Shipping is computed"
-        },
-        defaultValue="cheapest"
-
+        values=ShippingStatus,
+        defaultValue=ShippingStatus.CHEAPEST
     )
     """Versand bei Warenkorb der einer Bestellung zugehört"""
 

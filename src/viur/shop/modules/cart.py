@@ -299,7 +299,7 @@ class Cart(ShopModuleAbstract, Tree):
         key = skel.toDB()
         self.clear_children_cache()
         # TODO: Validate quantity with hook (stock availability)
-        if parent_skel["shipping_status"] == "cheapest":
+        if parent_skel["shipping_status"] == ShippingStatus.CHEAPEST:
             parent_skel = self._cart_set_values(
                 skel=parent_skel
             )
@@ -454,12 +454,12 @@ class Cart(ShopModuleAbstract, Tree):
         if shipping_key is not SENTINEL:
             if shipping_key is None:
                 skel["shipping"] = None
-                skel.setBoneValue("shipping_status", "cheapest")
+                skel.setBoneValue("shipping_status", ShippingStatus.CHEAPEST)
             else:
                 skel.setBoneValue("shipping", shipping_key)
-                skel.setBoneValue("shipping_status", "user")
+                skel.setBoneValue("shipping_status", ShippingStatus.USER)
         else:
-            if skel["shipping_status"] == "cheapest":
+            if skel["shipping_status"] == ShippingStatus.CHEAPEST:
                 applicable_shippings = self.shop.shipping.get_shipping_skels_for_cart(skel["key"])
                 logger.error(f"cart {skel=}")
                 if applicable_shippings:
