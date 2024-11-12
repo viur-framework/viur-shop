@@ -461,7 +461,6 @@ class Cart(ShopModuleAbstract, Tree):
         else:
             if skel["shipping_status"] == ShippingStatus.CHEAPEST:
                 applicable_shippings = self.shop.shipping.get_shipping_skels_for_cart(skel["key"])
-                logger.error(f"cart {skel=}")
                 if applicable_shippings:
                     cheapest_shipping = min(applicable_shippings,
                                             key=lambda shipping: shipping["dest"]["shipping_cost"] or 0)
