@@ -174,6 +174,14 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
         kind="{{viur_shop_modulename}}_shipping",
         module="{{viur_shop_modulename}}/shipping",
     )
+    shipping_status = SelectBone(
+        values={
+            "user": "Selected by a user",
+            "cheapest": "Cheapest Shipping is computed"
+        },
+        defaultValue="cheapest"
+
+    )
     """Versand bei Warenkorb der einer Bestellung zugehört"""
 
     discount = RelationalBone(

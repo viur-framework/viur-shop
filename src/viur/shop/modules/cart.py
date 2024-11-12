@@ -294,6 +294,11 @@ class Cart(ShopModuleAbstract, Tree):
                 descr_appendix=f'Quantity of free article cannot be greater than 1! (reached {skel["quantity"]})'
             )
         # TODO: Validate quantity with hook (stock availability)
+        if parent_skel["shipping_status"]=="cheapest":
+            parent_skel=self._cart_set_values(
+                skel=parent_skel
+            )
+            parent_skel.toDB()
         key = skel.toDB()
         return skel
 
@@ -444,8 +449,18 @@ class Cart(ShopModuleAbstract, Tree):
         if shipping_key is not SENTINEL:
             if shipping_key is None:
                 skel["shipping"] = None
+                skel.setBoneValue("shipping_status", "cheapest")
             else:
                 skel.setBoneValue("shipping", shipping_key)
+                skel.setBoneValue("shipping_status", "user")
+        else:
+            if skel["shipping_status"] == "cheapest":
+                applicable_shippings = self.shop.shipping.get_shipping_skels_for_cart(skel["key"])
+                if applicable_shippings:
+                    cheapest_shipping = min(applicable_shippings,
+                                            key=lambda shipping: shipping["dest"]["shipping_cost"] or 0)
+                    skel.setBoneValue("shipping", cheapest_shipping["dest"]["key"])
+
         if discount_key is not SENTINEL:
             if discount_key is None:
                 skel["discount"] = None
