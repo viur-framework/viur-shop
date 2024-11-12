@@ -173,6 +173,11 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     shipping = RelationalBone(
         kind="{{viur_shop_modulename}}_shipping",
         module="{{viur_shop_modulename}}/shipping",
+        refKeys=[
+            "key",
+            "name",
+            "shipping_cost"
+        ]
     )
     shipping_status = SelectBone(
         values={
