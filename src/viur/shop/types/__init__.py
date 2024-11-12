@@ -16,6 +16,7 @@ from .enums import (  # noqa
     QuantityMode,
     QuantityModeType,
     Salutation,
+    ShippingStatus,
 )
 from .exceptions import (  # noqa
     DispatchError,
