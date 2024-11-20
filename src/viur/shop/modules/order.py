@@ -320,7 +320,9 @@ class Order(ShopModuleAbstract, List):
             errors.append(ClientError("missing payment_provider"))
         if not order_skel["billing_address"]:
             errors.append(ClientError("billing_address is missing"))
-        if pp_errors := self.get_payment_provider_by_name(order_skel["payment_provider"]).can_order(order_skel):
+        if not order_skel["payment_provider"]:
+            errors.append(ClientError("missing payment_provider"))
+        elif pp_errors := self.get_payment_provider_by_name(order_skel["payment_provider"]).can_order(order_skel):
             errors.extend(pp_errors)
 
         # TODO: ...
