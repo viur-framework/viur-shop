@@ -131,6 +131,7 @@ class Shop(InstancedModule, Module):
             )
         from viur.shop import CartItemSkel  # import must stay here to avoid circular imports
         CartItemSkel.article.kind = self.article_skel.kindName
+        CartItemSkel.article.module = self.article_skel.kindName
         DiscountConditionSkel.scope_article.kind = self.article_skel.kindName
         DiscountConditionSkel.scope_article.module = self.article_skel.kindName
         DiscountSkel.free_article.kind = self.article_skel.kindName
