@@ -205,6 +205,7 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
 
     article = RelationalBone(
         kind="...",  # will be set in Shop._set_kind_names()
+        module="...",  # will be set in Shop._set_kind_names()
         # FIXME: What's necessary here?
         parentKeys=["key", "parententry", "article"],
         refKeys=[
