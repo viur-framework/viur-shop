@@ -201,7 +201,9 @@ class Shop(InstancedModule, Module):
             key = key.lower()
             skel = TranslationSkel().all().filter("tr_key =", key).getSkel()
             if skel is not None:
-                old_translations = copy.deepcopy((skel["translations"], skel["default_text"], skel["hint"], skel["public"]))
+                old_translations = copy.deepcopy(
+                    (skel["translations"], skel["default_text"], skel["hint"], skel["public"])
+                )
                 for lang, value in tr_dict.items():
                     if lang in skel.translations.languages:
                         skel["translations"][lang] = skel["translations"].get(lang) or value
