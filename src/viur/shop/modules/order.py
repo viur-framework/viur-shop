@@ -71,9 +71,6 @@ class Order(ShopModuleAbstract, List):
             state_rts=state_rts,
         )
         skel.toDB()
-        if cart_key == self.shop.cart.current_session_cart_key:
-            # This is now an order basket and should no longer be modified
-            self.shop.cart.detach_session_cart()
         return skel
 
     def order_update(
@@ -191,6 +188,10 @@ class Order(ShopModuleAbstract, List):
                 "errors": errors,
             }, status_code=400)
             raise e.InvalidStateError(", ".join(errors))
+
+        if order_skel["cart"]["dest"]["key"] == self.shop.cart.current_session_cart_key:
+            # This is now an order basket and should no longer be modified
+            self.shop.cart.detach_session_cart()
 
         order_skel = self.freeze_order(order_skel)
         order_skel.toDB()
