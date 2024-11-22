@@ -201,13 +201,14 @@ class Shop(InstancedModule, Module):
             key = key.lower()
             skel = TranslationSkel().all().filter("tr_key =", key).getSkel()
             if skel is not None:
-                old_translations = copy.deepcopy((skel["translations"], skel["default_text"], skel["hint"]))
+                old_translations = copy.deepcopy((skel["translations"], skel["default_text"], skel["hint"], skel["public"]))
                 for lang, value in tr_dict.items():
                     if lang in skel.translations.languages:
                         skel["translations"][lang] = skel["translations"].get(lang) or value
                 skel["default_text"] = skel["default_text"] or tr_dict.get("_default_text") or ""
                 skel["hint"] = skel["hint"] or tr_dict.get("_hint") or ""
-                if old_translations != (skel["translations"], skel["default_text"], skel["hint"]):
+                skel["public"] = True
+                if old_translations != (skel["translations"], skel["default_text"], skel["hint"], skel["public"]):
                     logger.info(f"Update existing translation {key}")
                     logger.debug(f'{old_translations} --> {skel["translations"], skel["default_text"], skel["hint"]}')
                     try:
@@ -222,6 +223,7 @@ class Shop(InstancedModule, Module):
             skel["default_text"] = tr_dict.get("_default_text") or None
             skel["hint"] = tr_dict.get("_hint") or None
             skel["creator"] = Creator.VIUR
+            skel["public"] = True
             try:
                 skel.toDB()
             except Exception as exc:
