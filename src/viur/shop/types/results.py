@@ -22,6 +22,7 @@ class OrderViewResult(t.TypedDict):
     can_checkout: StatusError
     can_order: StatusError
 
+
 class PaymentProviderResult(t.TypedDict):
     title: translate
     descr: translate
