@@ -38,7 +38,7 @@ version = { attr = "viur.shop.version.__version__" }
 
 [project.optional-dependencies]
 unzer = [
-    "unzer~=1.0.0.dev4",
+    "unzer~=1.0.0.dev5",
 ]
 
 [tool.setuptools.packages.find]

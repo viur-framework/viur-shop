@@ -11,5 +11,8 @@ except ImportError:
 else:
     del unzer
     from .unzer_abstract import UnzerAbstract
+    from .unzer_bancontact import UnzerBancontact
     from .unzer_card import UnzerCard
+    from .unzer_ideal import UnzerIdeal
     from .unzer_paypal import UnzerPayPal
+    from .unzer_sofort import UnzerSofort
