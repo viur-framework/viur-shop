@@ -1,4 +1,5 @@
 import abc
+import functools
 import typing as t
 
 from viur.core import Module, translate
@@ -24,13 +25,13 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
         self,
         *,
         image_path: str | None = None,
-        is_available: t.Callable[[SkeletonInstance_T[OrderSkel] | None], bool] | None = None,
+        is_available: t.Callable[[t.Self, SkeletonInstance_T[OrderSkel] | None], bool] | None = None,
     ) -> None:
         super().__init__()
         self.image_path = image_path
         if is_available is not None:
             assert callable(is_available), f"{is_available=} ({type(is_available)})"
-            self.is_available = is_available
+            self.is_available = functools.partial(is_available, self)  # type: ignore[assignment]
 
     @property
     @abc.abstractmethod
@@ -49,7 +50,7 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
         return translate(f"viur.shop.payment_provider.{self.name}.descr", self.name)
 
     def is_available(
-        self,
+        self: t.Self,
         order_skel: SkeletonInstance_T[OrderSkel] | None,
     ) -> bool:
         return True

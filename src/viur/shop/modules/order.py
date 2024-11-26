@@ -51,7 +51,7 @@ class Order(ShopModuleAbstract, List):
     # --- (internal) API methods ----------------------------------------------
 
     @exposed
-    def payment_providers_list(
+    def payment_providers_list(  # TODO(discuss): Move: to API?
         self,
         only_available: bool = True,
     ) -> JsonResponse[dict[str, PaymentProviderResult]]:
