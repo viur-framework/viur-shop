@@ -1,6 +1,6 @@
 import typing as t
 
-from viur.core import current, db
+from viur.core import current, db, translate
 from viur.core.prototypes import List
 from viur.core.prototypes.skelmodule import DEFAULT_ORDER_TYPE
 from viur.core.skeleton import SkeletonInstance
@@ -22,6 +22,19 @@ class Address(ShopModuleAbstract, List):
     def adminInfo(self) -> dict:
         admin_info = super().adminInfo()
         admin_info["icon"] = "person-vcard"
+
+        if user := current.user.get():
+            admin_info.setdefault("views", []).append({
+                "name": translate(
+                    "viur.shop.my_addresses",
+                    "My Addresses",
+                ),
+                "filter": {
+                    "customer.dest.key": user["key"],
+                    "cloned_from": "None",
+                },
+            })
+
         return admin_info
 
     def canAdd(self) -> bool:
