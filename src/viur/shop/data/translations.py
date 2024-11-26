@@ -52,6 +52,11 @@ TRANSLATIONS = {
         "_hint": "viur-shop payment provider: unzer-card",
         "de": "Kreditkarte über Unzer",
     },
+    "viur.shop.payment_provider.unzer-bancontact": {
+        "_default_text": "Bancontact via Unzer",
+        "_hint": "viur-shop payment provider: unzer-bancontact",
+        "de": "Bancontact über Unzer",
+    },
     "viur.shop.payment_provider.unzer-paypal": {
         "_default_text": "PayPal via Unzer",
         "_hint": "viur-shop payment provider: unzer-paypal",
