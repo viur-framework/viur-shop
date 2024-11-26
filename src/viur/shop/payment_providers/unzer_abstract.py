@@ -5,9 +5,9 @@ import unzer
 from unzer.model import PaymentType
 from unzer.model.customer import Salutation as UnzerSalutation
 from unzer.model.payment import PaymentState
-
 from viur.core import current, db, errors, exposed, utils
 from viur.core.skeleton import SkeletonInstance
+
 from viur.shop.types import *
 from . import PaymentProviderAbstract
 from ..globals import SHOP_LOGGER
@@ -110,8 +110,15 @@ class UnzerAbstract(PaymentProviderAbstract):
         self,
         order_skel: SkeletonInstance,
     ) -> list[ClientError]:
-        # TODO: if payment is prepared ...
         errs = []
+
+        # logger.debug(f'{order_skel=}')
+        logger.debug(f'{order_skel["key"]=} | {order_skel["payment"]=}')
+
+        if not order_skel["payment"] or not order_skel["payment"].get("payments"):
+            errs.append(ClientError("payment is missing"))
+            # TODO: if payment is prepared and not aborted, type matches ...
+
         return errs
 
     def charge(self):
@@ -155,8 +162,6 @@ class UnzerAbstract(PaymentProviderAbstract):
         elif is_paid:
             logger.info(f'Mark order {order_skel["key"]} as paid')
             self.shop.order.set_paid(order_skel)
-            # order_skel["is_paid"] = True  # TODO: transaction
-            # order_skel.toDB()
         else:
             raise errors.NotImplemented("Order not paid")
         return "OKAY, paid"

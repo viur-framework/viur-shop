@@ -1,14 +1,17 @@
 import typing as t  # noqa
 
 from google.protobuf.message import DecodeError
+from viur.core import current, db, errors, exposed, force_post
+from viur.core.render.json.default import DefaultRender as JsonRenderer
 
 import viur.shop.types.exceptions as e
-from viur.core import db, errors, exposed, force_post
-from viur.core.render.json.default import DefaultRender as JsonRenderer
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.skeletons import ShippingSkel
 from viur.shop.types import *
 from ..globals import SENTINEL, SHOP_INSTANCE_VI, SHOP_LOGGER
+
+if t.TYPE_CHECKING:
+    from viur.shop import OrderSkel, SkeletonInstance_T
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -243,9 +246,17 @@ class Api(ShopModuleAbstract):
 
     @exposed
     def basket_list(
-        self
+        self,
     ):
+        """List the children of the basket (the cart stored in the session)"""
         return self.cart_list(cart_key=self.shop.cart.current_session_cart_key)
+
+    @exposed
+    def basket_view(
+        self,
+    ):
+        """View the basket (the cart stored in the session) itself"""
+        return self.shop.cart.view(key=self.shop.cart.current_session_cart_key)
 
     @exposed
     def cart_list(
@@ -333,16 +344,62 @@ class Api(ShopModuleAbstract):
         ...
 
     @exposed
-    @force_post
+    def order_list(
+        self,
+        **kwargs,
+    ) -> JsonResponse[list[OrderViewResult]]:
+        """List the orders of the current user"""
+        query: db.Query = self.shop.order.viewSkel().all()
+        if user := current.user.get():
+            query.filter("customer.dest.__key__ =", user["key"])
+        elif self.shop.order.current_session_order_key:
+            query.mergeExternalFilter({"key": self.shop.order.current_session_order_key})
+        else:
+            return JsonResponse([])
+        query.mergeExternalFilter(kwargs)  # Allow more filtering, cursor, amount, ...
+        return JsonResponse([
+            self._get_order_view_result(skel) for skel in query.fetch()
+        ])
+
+    @exposed
     def order_view(
         self,
-        order_key: str | db.Key,
-    ):
+        order_key: str | db.Key | t.Literal["SESSION"] = "SESSION",
+    ) -> JsonResponse[OrderViewResult]:
         """
-        Gibt gesetzte Werte (BillAddress) aus und gibt computed Wert "is_orderable" aus,
-        ob alle Vorbedingungen für Bestellabschluss erfüllt sind.
+        View an order
+
+        :param order_key: Key of the order to view. Use "SESSION" as key to view the order of the current session
         """
-        ...
+        if order_key == "SESSION":
+            if not self.shop.order.current_session_order_key:
+                raise errors.PreconditionFailed(
+                    "There is no order in the current session"
+                )
+            order_key = self.shop.order.current_session_order_key
+        else:
+            order_key = self._normalize_external_key(order_key, "order_key")  # noqa: type
+
+        if (skel := self.shop.order.order_get(order_key)) is None:
+            raise errors.NotFound("Order not found")
+
+        return JsonResponse(self._get_order_view_result(skel))
+
+    def _get_order_view_result(
+        self,
+        order_skel: SkeletonInstance_T["OrderSkel"],
+    ) -> OrderViewResult:
+        return {
+            "skel": order_skel,
+            "can_order": {
+                "status": not bool(can_order_errors := self.shop.order.can_order(order_skel)),
+                "errors": can_order_errors,
+            },
+            "can_checkout": {
+                "status": not bool(can_checkout_errors := self.shop.order.can_checkout(order_skel)),
+                "errors": can_checkout_errors,
+            },
+        }
 
     @exposed
     @force_post
