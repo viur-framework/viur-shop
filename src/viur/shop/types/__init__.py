@@ -36,6 +36,7 @@ from .response import ExtendedCustomJsonEncoder, JsonResponse  # noqa
 from .results import (  # noqa
     StatusError,
     OrderViewResult,
+    PaymentProviderResult,
 )
 
 SkeletonCls_co = t.TypeVar("SkeletonCls_co", bound=t.Type[_Skeleton], covariant=True)

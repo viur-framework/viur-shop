@@ -62,16 +62,14 @@ class Order(ShopModuleAbstract, List):
         only_available: bool = True,
     ) -> dict[str, PaymentProviderResult]:
         order_skel = self.current_order_skel  # Evaluate property only once
-        return {
-            pp.name: PaymentProviderResult(
-                title=pp.title,
-                descr=pp.description,
-                image_path=pp.image_path,
-                is_available=available,
-            )
+        res: dict[str, PaymentProviderResult] = {
+            pp.name: pp.serialize_for_api(order_skel)
             for pp in self.shop.payment_providers
-            if (available := pp.is_available(order_skel)) or not only_available
         }
+        if only_available:
+            return {name: result for name, result in res.items()
+                    if result["is_available"]}
+        return res
 
     def order_get(
         self,

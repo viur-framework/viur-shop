@@ -8,7 +8,8 @@ from viur.core.skeleton import SkeletonInstance
 from viur.shop.types.response import T
 
 from viur.shop.skeletons.order import OrderSkel
-from ..types import ClientError, SkeletonInstance_T
+
+from ..types import *
 
 if t.TYPE_CHECKING:
     from ..shop import Shop
@@ -114,5 +115,20 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
     def get_debug_information(self):
         ...
 
+    def serialize_for_api(
+        self,
+        order_skel: SkeletonInstance_T[OrderSkel] | None,
+    ) -> PaymentProviderResult:
+        """Serialize this Payment Provder for the API
+
+        Used by :meth:`Order.get_payment_providers` and :meth:`Order.payment_providers_list`
+        Can be subclasses to expose more information via API.
+        """
+        return PaymentProviderResult(
+            title=self.title,
+            descr=self.description,
+            image_path=self.image_path,
+            is_available=self.is_available(order_skel),
+        )
 
 PaymentProviderAbstract.html = True
