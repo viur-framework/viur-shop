@@ -67,7 +67,7 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
         """
         errs = []
         if not self.is_available(order_skel):
-            errs.append(ClientError("is not available", True))
+            errs.append(ClientError(f"PaymentProvider {self.name} is not available", True))
         return errs
 
     @abc.abstractmethod
