@@ -16,55 +16,64 @@ class AddressSkel(Skeleton):  # STATE: Complete (as in model)
         compute=Compute(
             lambda skel: f'{skel["salutation"]} {skel["firstname"]} {skel["lastname"]}'.strip(),
             ComputeInterval(ComputeMethod.OnWrite),
-        )
+        ),
     )
 
     customer_type = SelectBone(
         values=CustomerType,
         translation_key_prefix=translation_key_prefix_skeleton_bonename,
-        params={"group": "Customer Info"}
+        params={"group": "Customer Info"},
+        required=True,
     )
 
     salutation = SelectBone(
         values=Salutation,
         translation_key_prefix=translation_key_prefix_skeleton_bonename,
-        params={"group": "Customer Info"}
+        params={"group": "Customer Info"},
+        required=True,
     )
 
     company_name = StringBone(
-        params={"group": "Customer Info"}
+        params={"group": "Customer Info"},
     )
 
     firstname = StringBone(
-        params={"group": "Customer Info"}
+        params={"group": "Customer Info"},
+        required=True,
     )
 
     lastname = StringBone(
-        params={"group": "Customer Info"}
+        params={"group": "Customer Info"},
+        required=True,
     )
 
     street_name = StringBone(
-        params={"group": "Customer Address"}
+        params={"group": "Customer Address"},
+        required=True,
     )
 
     street_number = StringBone(
-        params={"group": "Customer Address"}
+        params={"group": "Customer Address"},
+        required=True,
     )
 
     address_addition = StringBone(
-        params={"group": "Customer Address"}
+        params={"group": "Customer Address"},
     )
 
     zip_code = StringBone(
-        params={"group": "Customer Address"}
+        params={"group": "Customer Address"},
+        required=True,
     )
 
     city = StringBone(
-        params={"group": "Customer Address"}
+        params={"group": "Customer Address"},
+        required=True,
     )
 
     country = SelectCountryBone(
-        params={"group": "Customer Address"}
+        params={"group": "Customer Address"},
+        required=True,
     )
 
     customer = RelationalBone(
@@ -77,7 +86,8 @@ class AddressSkel(Skeleton):  # STATE: Complete (as in model)
     address_type = SelectBone(
         values=AddressType,
         translation_key_prefix=translation_key_prefix_skeleton_bonename,
-        params={"group": "Customer Address"}
+        params={"group": "Customer Address"},
+        required=True,
     )
 
     cloned_from = RelationalBone(
