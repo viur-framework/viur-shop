@@ -2,9 +2,10 @@ import logging
 import time
 import typing as t  # noqa
 
-from viur import toolkit
 from viur.core import current, db, errors as core_errors, exposed, force_post
 from viur.core.prototypes import List
+
+from viur import toolkit
 from viur.shop.types import *
 from .abstract import ShopModuleAbstract
 from ..globals import SENTINEL, SHOP_LOGGER
@@ -28,9 +29,35 @@ class Order(ShopModuleAbstract, List):
         admin_info["icon"] = "cart-check"
         return admin_info
 
+    # --- Session -------------------------------------------------------------
+
+    @property
+    def current_session_order_key(self) -> db.Key | None:
+        return self.session.get("session_order_key")
+
+    @current_session_order_key.setter
+    def current_session_order_key(self, value: db.Key) -> None:
+        self.session["session_order_key"] = value
+        current.session.get().markChanged()
+
+    # --- (internal) API methods ----------------------------------------------
+
     @exposed
     def payment_providers_list(self):
         return JsonResponse(get_payment_providers_list())
+
+    def order_get(
+        self,
+        order_key: db.Key,
+    ) -> SkeletonInstance_T[OrderSkel] | None:
+        if not isinstance(order_key, db.Key):
+            raise TypeError(f"order_key must be an instance of db.Key")
+        skel = self.viewSkel()
+        if not skel.fromDB(order_key):
+            return None
+        if not self.canView(skel):
+            return None
+        return skel
 
     def order_add(
         self,
@@ -71,6 +98,7 @@ class Order(ShopModuleAbstract, List):
             state_rts=state_rts,
         )
         skel.toDB()
+        self.current_session_order_key = skel["key"]
         return skel
 
     def order_update(
@@ -175,6 +203,11 @@ class Order(ShopModuleAbstract, List):
         self,
         order_key: db.Key,
     ):
+        """
+        Starts the checkout process.
+
+        Requires no errors in :meth:`self.can_checkout`.
+        """
         order_key = self.shop.api._normalize_external_key(order_key, "order_key")
         if not isinstance(order_key, db.Key):
             raise TypeError(f"order_key must be an instance of db.Key")
@@ -283,6 +316,11 @@ class Order(ShopModuleAbstract, List):
         self,
         order_key: db.Key,
     ):
+        """
+        The final order now step.
+
+        Requires no errors in :meth:`self.can_order`.
+        """
         order_key = self.shop.api._normalize_external_key(order_key, "order_key")
         if not isinstance(order_key, db.Key):
             raise TypeError(f"order_key must be an instance of db.Key")
