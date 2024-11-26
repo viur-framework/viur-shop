@@ -28,6 +28,10 @@ from .exceptions import (  # noqa
 )
 from .price import Price  # noqa
 from .response import ExtendedCustomJsonEncoder, JsonResponse  # noqa
+from .results import (
+    StatusError,
+    OrderViewResult,
+)
 
 SkeletonCls_co = t.TypeVar("SkeletonCls_co", bound=t.Type[_Skeleton], covariant=True)
 
