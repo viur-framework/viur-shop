@@ -7,11 +7,13 @@ from viur.core.prototypes import List
 
 from viur import toolkit
 from viur.shop.types import *
+from viur.shop.types.response import T
+from viur.shop.types.results import PaymentProviderResult
 from .abstract import ShopModuleAbstract
 from ..globals import SENTINEL, SHOP_LOGGER
 from ..payment_providers import PaymentProviderAbstract
 from ..services import EVENT_SERVICE, Event, HOOK_SERVICE, Hook
-from ..skeletons.order import OrderSkel, get_payment_providers, get_payment_providers_list
+from ..skeletons.order import OrderSkel, get_payment_providers
 from ..types import exceptions as e
 
 if t.TYPE_CHECKING:
@@ -40,11 +42,36 @@ class Order(ShopModuleAbstract, List):
         self.session["session_order_key"] = value
         current.session.get().markChanged()
 
+    @property
+    def current_order_skel(self) -> SkeletonInstance_T[OrderSkel] | None:
+        if not self.current_session_order_key:
+            return None
+        return self.order_get(self.current_session_order_key)
+
     # --- (internal) API methods ----------------------------------------------
 
     @exposed
-    def payment_providers_list(self):
-        return JsonResponse(get_payment_providers_list())
+    def payment_providers_list(
+        self,
+        only_available: bool = True,
+    ) -> JsonResponse[dict[str, PaymentProviderResult]]:
+        return JsonResponse(self.get_payment_providers(only_available))
+
+    def get_payment_providers(
+        self,
+        only_available: bool = True,
+    ) -> dict[str, PaymentProviderResult]:
+        order_skel = self.current_order_skel  # Evaluate property only once
+        return {
+            pp.name: PaymentProviderResult(
+                title=pp.title,
+                descr=pp.description,
+                image_path=pp.image_path,
+                is_available=available,
+            )
+            for pp in self.shop.payment_providers
+            if (available := pp.is_available(order_skel)) or not only_available
+        }
 
     def order_get(
         self,
@@ -150,7 +177,7 @@ class Order(ShopModuleAbstract, List):
         state_rts: bool = SENTINEL,
     ) -> SkeletonInstance_T[OrderSkel]:
         if payment_provider is not SENTINEL:
-            if payment_provider is not None and payment_provider not in get_payment_providers():
+            if payment_provider is not None and payment_provider not in self.get_payment_providers(True):
                 raise e.InvalidArgumentException("payment_provider")
             skel["payment_provider"] = payment_provider
         if billing_address_key is not SENTINEL:

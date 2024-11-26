@@ -44,7 +44,7 @@ class UnzerAbstract(PaymentProviderAbstract):
         self,
         order_skel: SkeletonInstance,
     ) -> list[ClientError]:
-        errs = []
+        errs = super().can_checkout(order_skel)
         if not order_skel["billing_address"]:
             errs.append(ClientError("billing_address is missing"))
         if not order_skel["cart"] or not order_skel["cart"]["dest"]["shipping_address"]:
