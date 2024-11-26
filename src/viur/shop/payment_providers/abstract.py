@@ -65,7 +65,7 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
         a list with errors rejects the checkout start.
         """
         errs = []
-        if not self.is_available:
+        if not self.is_available(order_skel):
             errs.append(ClientError("is not available", True))
         return errs
 
