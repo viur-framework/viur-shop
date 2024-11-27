@@ -66,7 +66,7 @@ class Address(ShopModuleAbstract, List):
         query = self.editSkel().all() \
             .filter("is_default =", True) \
             .filter("customer.dest.__key__ =", skel["customer"]["dest"]["key"]) \
-            .filter("address_type =", skel["address_type"].value)
+            .filter("address_type IN", [at.value for at in skel["address_type"]])
         for other_skel in query.fetch(100):
             if skel["key"] != other_skel["key"]:
                 other_skel["is_default"] = False
