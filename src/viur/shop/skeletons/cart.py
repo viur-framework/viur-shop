@@ -1,3 +1,4 @@
+import collections
 import typing as t  # noqa
 
 from viur.core import db
@@ -5,6 +6,7 @@ from viur.core.bones import *
 from viur.core.prototypes.tree import TreeSkel
 from viur.core.skeleton import SkeletonInstance
 from viur.shop.types import *
+from .vat import VatSkel
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 from ..types.response import make_json_dumpable
 
@@ -74,24 +76,24 @@ class DiscountFactory(TotalFactory):
         )
 
 
-def get_vat_rate_for_node(skel: "CartNodeSkel", bone: RelationalBone):
+def get_vat_rate_for_node(skel: "CartNodeSkel", bone: RecordBone):
     children = SHOP_INSTANCE.get().cart.get_children_from_cache(skel["key"])
-    rel_keys = set()
-    # logger.debug(f"{skel = }")
+    cat2value = collections.defaultdict(lambda: 0)
+    logger.debug(f"{skel = }")
     for child in children:
-        # logger.debug(f"{child = }")
+        logger.debug(f"{child = }")
         if issubclass(child.skeletonCls, CartNodeSkel):
-            for rel in child["vat_rate"] or []:
-                if rel is None:
-                    logger.error(f'Relation vat_rate of {child["key"]} is broken.')
-                    continue
-                rel_keys.add(rel["dest"]["key"])
+            for entry in child["vat"] or []:
+                cat2value[entry["category"]] += entry["value"]
         elif issubclass(child.skeletonCls, CartItemSkel):
-            if child["shop_vat"] is not None:
-                rel_keys.add(child["shop_vat"]["dest"]["key"])
+            try:
+                cat2value[child["shop_vat_rate_category"]] += child.price_.vat_value * child["quantity"]
+            except TypeError as e:
+                logger.warning(e)
     return [
-        bone.createRelSkelFromKey(key)
-        for key in rel_keys
+        {"category": cat, "value": value}
+        for cat, value in cat2value.items()
+        if cat and value
     ]
 
 
@@ -130,15 +132,15 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
         ),
     )
 
-    """
-    vat_rate = RelationalBone(
-        kind="{{viur_shop_modulename}}_vat",
-        module="{{viur_shop_modulename}}/vat",
-        compute=Compute(get_vat_rate_for_node, ComputeInterval(ComputeMethod.Always)),
-        refKeys=["key", "name", "rate"],
+    vat = RecordBone(
+        using=VatSkel,
         multiple=True,
+        format="$(rate): $(value)",
+        compute=Compute(
+            get_vat_rate_for_node,
+            ComputeInterval(ComputeMethod.Always),
+        ),
     )
-    """
 
     total_quantity = NumericBone(
         precision=0,
@@ -258,14 +260,13 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     shop_art_no_or_gtin = StringBone(
     )
 
-    """
-    shop_vat = RelationalBone(
-        kind="{{viur_shop_modulename}}_vat",
-        module="{{viur_shop_modulename}}/vat",
-        refKeys=["key", "name", "rate"],
-        consistency=RelationalConsistency.PreventDeletion,
+    shop_vat_rate_category = SelectBone(
+        values=VatRateCategory,
+        translation_key_prefix="viur.shop.vat_rate_category.",
     )
-    """
+
+    shop_vat_rate_value = NumericBone(
+    )
 
     shop_shipping_config = RelationalBone(
         kind="{{viur_shop_modulename}}_shipping_config",

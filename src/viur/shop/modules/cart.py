@@ -1,6 +1,7 @@
 import typing as t  # noqa
 
 import viur.shop.types.exceptions as e
+from skeletons.order import OrderSkel
 from viur.core import conf, current, db, errors, exposed, utils
 from viur.core.bones import BaseBone
 from viur.core.prototypes import Tree
@@ -253,6 +254,7 @@ class Cart(ShopModuleAbstract, Tree):
             # Copy values from the article
             for bone in skel.keys():
                 if not bone.startswith("shop_"): continue
+                if bone == "shop_vat_rate_value": continue  # evaluated below
                 instance = getattr(article_skel.skeletonCls, bone)
                 if isinstance(instance, BaseBone):
                     value = article_skel[bone]
@@ -261,6 +263,9 @@ class Cart(ShopModuleAbstract, Tree):
                 else:
                     raise NotImplementedError
                 skel[bone] = value
+            skel["shop_vat_rate_value"] = self.shop.vat_rate.get_vat_rate_for_country(
+                category=article_skel["shop_vat_rate_category"],
+            )
         else:
             parent_skel = skel.parent_skel
         if quantity == 0 and quantity_mode in (QuantityMode.INCREASE, QuantityMode.DECREASE):
@@ -495,11 +500,23 @@ class Cart(ShopModuleAbstract, Tree):
     def freeze_cart(
         self,
         cart_key: db.Key,
+        order_skel: SkeletonInstance_T[OrderSkel],
     ) -> None:
         # TODO: for node in tree:
         #   freeze node with values, discount, shipping (JSON dump? bone duplication?)
         #   ensure each article still exists and shop_listed is True
-        ...
+        return NotImplemented
+        cart_skel = self.editSkel("node")
+        assert cart_skel.fromDB(cart_key)
+        """
+        skel["shop_vat_rate_value"] = self.shop.vat_rate.get_vat_rate_for_country(
+            country=order_skel["billing_address"]["dest"]["country"],
+            category=article_skel["shop_vat_rate_category"],
+        )
+        """
+        cart_skel.toDB()
+
+
 
     # -------------------------------------------------------------------------
 

@@ -285,7 +285,7 @@ class Order(ShopModuleAbstract, List):
         # TODO:
         #  - recalculate cart
         #  - copy values (should not be hit by update relations)
-        self.shop.cart.freeze_cart(order_skel["cart"]["dest"]["key"])
+        self.shop.cart.freeze_cart(order_skel["cart"]["dest"]["key"], order_skel)
 
         cart_skel = self.shop.cart.viewSkel("node")
         assert cart_skel.fromDB(order_skel["cart"]["dest"]["key"])
