@@ -61,7 +61,7 @@ class Address(ShopModuleAbstract, List):
 
     def _disable_old_default(self, skel: SkeletonInstance) -> None:
         """Disable old is_default"""
-        if not skel["is_default"] or not skel["address_type"]:
+        if not skel["is_default"] or not skel["address_type"] or not skel["customer"]:
             return
         query = self.editSkel().all() \
             .filter("is_default =", True) \

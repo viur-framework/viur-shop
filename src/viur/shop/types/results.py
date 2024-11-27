@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from viur.core import translate
 import typing as t
 
 from .data import ClientError
@@ -20,3 +21,10 @@ class OrderViewResult(t.TypedDict):
     skel: SkeletonInstance_T[OrderSkel]
     can_checkout: StatusError
     can_order: StatusError
+
+
+class PaymentProviderResult(t.TypedDict):
+    title: translate
+    descr: translate
+    image_path: str | None
+    is_available: bool
