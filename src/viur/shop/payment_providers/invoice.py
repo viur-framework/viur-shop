@@ -1,6 +1,5 @@
 import typing as t
 
-from deprecated.sphinx import deprecated
 from viur.core import errors, exposed, utils
 from viur.core.skeleton import SkeletonInstance
 
@@ -11,19 +10,20 @@ from ..types.exceptions import IllegalOperationError
 logger = SHOP_LOGGER.getChild(__name__)
 
 
-class Prepayment(PaymentProviderAbstract):
+class Invoice(PaymentProviderAbstract):
     """
-    Order is RTS as soon as the customer has paid.
+    Order is directly RTS, but not paid.
 
-    The customer pays this order in the next x days, shipping will wait.
+    The customer pays this order in the next x days, independent of shipping.
     But this will not be handled or checked here.
     """
-    name: t.Final[str] = "prepayment"
+
+    name: t.Final[str] = "invoice"
 
     def checkout(
         self,
         order_skel: SkeletonInstance,
-    ) -> t.Any:
+    ) -> None:
         # TODO: Standardize this, write in txn
         order_skel["payment"].setdefault("payments", []).append({
             "pp": self.name,
@@ -34,13 +34,13 @@ class Prepayment(PaymentProviderAbstract):
 
     def charge(self) -> None:
         # An invoice cannot be charged, The user has to do this on his own
-        raise IllegalOperationError("A prepayment cannot be charged")
+        raise IllegalOperationError("An invoice cannot be charged")
 
     def check_payment_state(
         self,
         order_skel: SkeletonInstance,
     ) -> tuple[bool, t.Any]:
-        # A prepayment payment state cannot be checked without access to the target bank account
+        # An invoice payment state cannot be checked without access to the target bank account
         # Use meth:`Order.set_paid` to mark an order by external events as paid.
         raise IllegalOperationError("The invoice payment_state cannot be checked by this PaymentProvider")
 
@@ -56,12 +56,3 @@ class Prepayment(PaymentProviderAbstract):
     @exposed
     def get_debug_information(self):
         raise errors.NotImplemented  # TODO
-
-
-@deprecated(
-    reason="Class has been renamed, Use :class:`Prepayment`",
-    version="0.1.0.dev24",
-    action="always",
-)
-class PrePayment(Prepayment):
-    ...

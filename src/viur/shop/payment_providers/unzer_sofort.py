@@ -1,7 +1,9 @@
+import typing as t
+
 import unzer
 from unzer.model import PaymentType
-
 from viur.core.skeleton import SkeletonInstance
+
 from .unzer_abstract import UnzerAbstract
 from ..globals import SHOP_LOGGER
 
@@ -9,7 +11,7 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 
 class UnzerSofort(UnzerAbstract):
-    name = "unzer-sofort"
+    name: t.Final[str] = "unzer-sofort"
 
     def get_payment_type(
         self,

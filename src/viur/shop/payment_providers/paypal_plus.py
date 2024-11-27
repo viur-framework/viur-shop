@@ -2,6 +2,7 @@ import typing as t
 
 from viur.core import errors, exposed
 from viur.core.skeleton import SkeletonInstance
+
 from . import PaymentProviderAbstract
 from ..globals import SHOP_LOGGER
 
@@ -9,7 +10,7 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 
 class PayPalPlus(PaymentProviderAbstract):
-    name = "paypal_plus"
+    name: t.Final[str] = "paypal_plus"
 
     def checkout(
         self,
