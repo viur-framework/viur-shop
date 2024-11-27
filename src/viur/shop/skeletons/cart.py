@@ -79,9 +79,9 @@ class DiscountFactory(TotalFactory):
 def get_vat_rate_for_node(skel: "CartNodeSkel", bone: RecordBone):
     children = SHOP_INSTANCE.get().cart.get_children_from_cache(skel["key"])
     cat2value = collections.defaultdict(lambda: 0)
-    logger.debug(f"{skel = }")
+    logger.debug(f"{skel=}")
     for child in children:
-        logger.debug(f"{child = }")
+        logger.debug(f"{child=}")
         if issubclass(child.skeletonCls, CartNodeSkel):
             for entry in child["vat"] or []:
                 cat2value[entry["category"]] += entry["value"]

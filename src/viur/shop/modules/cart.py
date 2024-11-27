@@ -253,8 +253,10 @@ class Cart(ShopModuleAbstract, Tree):
                 raise errors.UnprocessableEntity(f"Article is not listed for the shop!")
             # Copy values from the article
             for bone in skel.keys():
-                if not bone.startswith("shop_"): continue
-                if bone == "shop_vat_rate_value": continue  # evaluated below
+                if not bone.startswith("shop_"):
+                    continue
+                if bone == "shop_vat_rate_value":  # evaluated below
+                    continue
                 instance = getattr(article_skel.skeletonCls, bone)
                 if isinstance(instance, BaseBone):
                     value = article_skel[bone]
@@ -515,8 +517,6 @@ class Cart(ShopModuleAbstract, Tree):
         )
         """
         cart_skel.toDB()
-
-
 
     # -------------------------------------------------------------------------
 
