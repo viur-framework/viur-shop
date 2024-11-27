@@ -39,7 +39,7 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
         kind="{{viur_shop_modulename}}_cart_node",
         module="{{viur_shop_modulename}}/cart_node",
         consistency=RelationalConsistency.PreventDeletion,
-        refKeys=["key", "name", "shipping_address"],
+        refKeys=["name", "shipping_address", "total_quantity"],
     )
 
     total = NumericBone(
