@@ -1,6 +1,7 @@
 import typing as t
 
 from viur.core.skeleton import Skeleton as _Skeleton, SkeletonInstance as _SkeletonInstance
+
 from .data import ClientError, Supplier  # noqa
 from .enums import (  # noqa
     AddressType,
@@ -17,6 +18,7 @@ from .enums import (  # noqa
     QuantityModeType,
     Salutation,
     ShippingStatus,
+    VatRate,
 )
 from .dc_scope import (  # noqa
     DiscountConditionScope,

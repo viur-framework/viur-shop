@@ -7,11 +7,11 @@ from ..globals import SHOP_LOGGER
 logger = SHOP_LOGGER.getChild(__name__)
 
 
-class Vat(ShopModuleAbstract, List):
-    moduleName = "vat"
-    kindName = "{{viur_shop_modulename}}_vat"
+class VatRate(ShopModuleAbstract, List):
+    moduleName = "vat_rate"
+    kindName = "{{viur_shop_modulename}}_vat_rate"
 
-    default_order = ("rate", db.SortOrder.Ascending)
+    # default_order = ("country", db.SortOrder.Ascending)
 
     def adminInfo(self) -> dict:
         admin_info = super().adminInfo()

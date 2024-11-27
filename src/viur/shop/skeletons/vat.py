@@ -1,22 +1,22 @@
 import typing as t  # noqa
 
 from viur.core.bones import *
-from viur.core.skeleton import Skeleton
+from viur.core.skeleton import RelSkel
+
+from ..types import VatRate
 from ..globals import SHOP_LOGGER
 
 logger = SHOP_LOGGER.getChild(__name__)
 
 
-class VatSkel(Skeleton):  # STATE: Complete (as in model)
-    kindName = "{{viur_shop_modulename}}_vat"
-
-    # TODO: add descr bone?!
-
-    name = StringBone(
-        compute=Compute(lambda skel: f'{skel["rate"]} %', ComputeInterval(ComputeMethod.OnWrite)),
+class VatSkel(RelSkel):
+    rate = SelectBone(
+        values=VatRate,
+        translation_key_prefix="viur.shop.vat_rate.",
+        required=True,
     )
 
-    rate = NumericBone(
+    value = NumericBone(
         required=True,
         precision=2,
         min=0,

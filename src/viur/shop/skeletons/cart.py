@@ -130,6 +130,7 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
         ),
     )
 
+    """
     vat_rate = RelationalBone(
         kind="{{viur_shop_modulename}}_vat",
         module="{{viur_shop_modulename}}/vat",
@@ -137,6 +138,7 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
         refKeys=["key", "name", "rate"],
         multiple=True,
     )
+    """
 
     total_quantity = NumericBone(
         precision=0,
@@ -256,12 +258,14 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     shop_art_no_or_gtin = StringBone(
     )
 
+    """
     shop_vat = RelationalBone(
         kind="{{viur_shop_modulename}}_vat",
         module="{{viur_shop_modulename}}/vat",
         refKeys=["key", "name", "rate"],
         consistency=RelationalConsistency.PreventDeletion,
     )
+    """
 
     shop_shipping_config = RelationalBone(
         kind="{{viur_shop_modulename}}_shipping_config",

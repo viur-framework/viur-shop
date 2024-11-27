@@ -12,7 +12,7 @@ from viur.core.skeleton import MetaSkel, skeletonByKind
 from viur.shop.data.translations import TRANSLATIONS
 from viur.shop.skeletons.article import ArticleAbstractSkel
 from .globals import SHOP_INSTANCE, SHOP_INSTANCE_VI, SHOP_LOGGER
-from .modules import Address, Api, Cart, Discount, DiscountCondition, Order, Shipping, ShippingConfig, Vat
+from .modules import Address, Api, Cart, Discount, DiscountCondition, Order, Shipping, ShippingConfig, VatRate
 from .payment_providers import PaymentProviderAbstract
 from .services.hooks import HOOK_SERVICE
 from .skeletons.discount import DiscountSkel
@@ -48,7 +48,7 @@ class Shop(InstancedModule, Module):
         order_cls: t.Type[Order] = Order,
         shipping_cls: t.Type[Shipping] = Shipping,
         shipping_config_cls: t.Type[ShippingConfig] = ShippingConfig,
-        vat_cls: t.Type[Vat] = Vat,
+        vat_rate_cls: t.Type[VatRate] = VatRate,
         #
         **kwargs: t.Any,
     ):
@@ -69,7 +69,7 @@ class Shop(InstancedModule, Module):
         self.order_cls = order_cls
         self.shipping_cls = shipping_cls
         self.shipping_config_cls = shipping_config_cls
-        self.vat_cls = vat_cls
+        self.vat_rate_cls = vat_rate_cls
         self.additional_settings: dict[str, t.Any] = dict(kwargs)
 
         # Debug only
@@ -95,7 +95,7 @@ class Shop(InstancedModule, Module):
         self.order = self.order_cls(shop=self)
         self.shipping = self.shipping_cls(shop=self)
         self.shipping_config = self.shipping_config_cls(moduleName="shipping_config", shop=self)
-        self.vat = self.vat_cls(shop=self)
+        self.vat_rate = self.vat_rate_cls(shop=self)
 
         # Make payment_providers routable as sub modules
         for idx, pp in enumerate(self.payment_providers):
@@ -189,7 +189,6 @@ class Shop(InstancedModule, Module):
         At this point we are and must be before setSystemInitialized.
         """
         self.article_skel.shop_shipping_config.refKeys |= {"name", "shipping"}
-        self.article_skel.shop_vat.refKeys |= {"name", "rate"}
 
     def _add_translations(self) -> None:
         """Setup translations required for the viur-shop"""

@@ -111,5 +111,21 @@ class ShippingStatus(enum.Enum):
     """Cheapest shipping selected"""
 
 
+class VatRate(enum.StrEnum):
+    """
+    Enumeration for VAT rate categories in the EU.
+    """
+    STANDARD = "standard"
+    """Applies to most goods and services, with a minimum rate of 15% mandated by the EU."""
+
+    REDUCED = "reduced"
+    """Applies to specific goods and services (e.g., food, books), typically at rates above 5%."""
+
+    SUPER_REDUCED = "Super_reduced"
+    """Special cases with rates below 5%, applied to essential goods or services in some countries."""
+
+    ZERO = "zero"
+    """Applies to specific goods and services with no VAT charged, such as exports or essential items."""
+
 
 QuantityModeType = t.Literal["replace", "increase", "decrease"]

@@ -24,6 +24,7 @@ from .shipping import ShippingSkel
 from .shipping_config import ShippingConfigSkel
 from .shipping_precondition import ShippingPreconditionRelSkel
 from .vat import VatSkel
+from .vat_rate import VatRateSkel
 
 # tmp used to generate translation dict
 _tr = {}
