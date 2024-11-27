@@ -16,17 +16,6 @@ def get_payment_providers() -> dict[str, str | translate]:
     }
 
 
-def get_payment_providers_list() -> dict[str, dict[str, t.Any]]:
-    return {
-        pp.name: {
-            "title": pp.title,
-            "descr": pp.description,
-            "image_path": pp.image_path,
-        }
-
-        for pp in SHOP_INSTANCE.get().payment_providers
-    }
-
 class OrderSkel(Skeleton):  # STATE: Complete (as in model)
     kindName = "{{viur_shop_modulename}}_order"
 

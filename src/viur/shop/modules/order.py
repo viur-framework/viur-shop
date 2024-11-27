@@ -7,11 +7,13 @@ from viur.core.prototypes import List
 
 from viur import toolkit
 from viur.shop.types import *
+from viur.shop.types.response import T
+from viur.shop.types.results import PaymentProviderResult
 from .abstract import ShopModuleAbstract
 from ..globals import SENTINEL, SHOP_LOGGER
 from ..payment_providers import PaymentProviderAbstract
 from ..services import EVENT_SERVICE, Event, HOOK_SERVICE, Hook
-from ..skeletons.order import OrderSkel, get_payment_providers, get_payment_providers_list
+from ..skeletons.order import OrderSkel, get_payment_providers
 from ..types import exceptions as e
 
 if t.TYPE_CHECKING:
@@ -40,11 +42,34 @@ class Order(ShopModuleAbstract, List):
         self.session["session_order_key"] = value
         current.session.get().markChanged()
 
+    @property
+    def current_order_skel(self) -> SkeletonInstance_T[OrderSkel] | None:
+        if not self.current_session_order_key:
+            return None
+        return self.order_get(self.current_session_order_key)
+
     # --- (internal) API methods ----------------------------------------------
 
     @exposed
-    def payment_providers_list(self):
-        return JsonResponse(get_payment_providers_list())
+    def payment_providers_list(  # TODO(discuss): Move: to API?
+        self,
+        only_available: bool = True,
+    ) -> JsonResponse[dict[str, PaymentProviderResult]]:
+        return JsonResponse(self.get_payment_providers(only_available))
+
+    def get_payment_providers(
+        self,
+        only_available: bool = True,
+    ) -> dict[str, PaymentProviderResult]:
+        order_skel = self.current_order_skel  # Evaluate property only once
+        res: dict[str, PaymentProviderResult] = {
+            pp.name: pp.serialize_for_api(order_skel)
+            for pp in self.shop.payment_providers
+        }
+        if only_available:
+            return {name: result for name, result in res.items()
+                    if result["is_available"]}
+        return res
 
     def order_get(
         self,
@@ -147,7 +172,7 @@ class Order(ShopModuleAbstract, List):
         state_rts: bool = SENTINEL,
     ) -> SkeletonInstance_T[OrderSkel]:
         if payment_provider is not SENTINEL:
-            if payment_provider is not None and payment_provider not in get_payment_providers():
+            if payment_provider is not None and payment_provider not in self.get_payment_providers(True):
                 raise e.InvalidArgumentException("payment_provider")
             skel["payment_provider"] = payment_provider
         if billing_address_key is not SENTINEL:
@@ -173,6 +198,11 @@ class Order(ShopModuleAbstract, List):
 
         # TODO(discussion): Do we really want to set this by the frontend?
         #  Or what are the pre conditions?
+        if state_ordered != SENTINEL or state_paid != SENTINEL or state_rts != SENTINEL:
+            # any of these values should be set
+            if not self.canEdit(skel):
+                raise core_errors.Forbidden("You are not allowed to change a sate")
+            logger.debug("Can change states")
         if state_ordered is not SENTINEL:
             skel["state_ordered"] = state_ordered
         if state_paid is not SENTINEL:
