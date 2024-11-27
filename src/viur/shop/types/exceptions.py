@@ -17,6 +17,9 @@ class ViURShopException(Exception):
 class InvalidStateError(ViURShopException):
     ...
 
+class ConfigurationError(ViURShopException):
+    ...
+
 
 class DispatchError(ViURShopException):
     def __init__(self, msg: t.Any, hook: Hook, *args: t.Any) -> None:

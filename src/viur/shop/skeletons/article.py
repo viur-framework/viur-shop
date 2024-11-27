@@ -60,11 +60,11 @@ class ArticleAbstractSkel(BaseSkeleton):
     def shop_art_no_or_gtin(self) -> StringBone:
         ...
 
-    shop_vat_rate = SelectBone(
-        values=VatRate,
-        translation_key_prefix="viur.shop.vat_rate.",
+    shop_vat_rate_category = SelectBone(
+        values=VatRateCategory,
+        translation_key_prefix="viur.shop.vat_rate_category.",
         required=True,
-        defaultValue=VatRate.STANDARD,
+        defaultValue=VatRateCategory.STANDARD,
     )
 
     @property

@@ -7,6 +7,7 @@ from viur.core import current, utils
 from viur.core.skeleton import SkeletonInstance
 from .enums import ApplicationDomain, ConditionOperator, DiscountType
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
+from ..types import ConfigurationError
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -147,9 +148,14 @@ class Price:
 
         :returns: value as float (0.0 <= value <= 1.0)
         """
-        if not (vat := self.article_skel["shop_vat"]):
-            return 0.0
-        return (vat["dest"]["rate"] or 0.0) / 100
+        try:
+            vat_rate = SHOP_INSTANCE.get().vat_rate.get_vat_rate_for_country(
+                category=self.article_skel["shop_vat_rate_category"],
+            )
+        except ConfigurationError as e:  # TODO(discussion): Or re-raise or implement fallback?
+            logger.warning(f"No vat rate for article :: {e}")
+            vat_rate = 0.0
+        return (vat_rate or 0.0) / 100
 
     @property
     def vat_value(self) -> float:

@@ -111,7 +111,7 @@ class ShippingStatus(enum.Enum):
     """Cheapest shipping selected"""
 
 
-class VatRate(enum.StrEnum):
+class VatRateCategory(enum.StrEnum):
     """
     Enumeration for VAT rate categories in the EU.
     """

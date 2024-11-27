@@ -18,7 +18,7 @@ from .enums import (  # noqa
     QuantityModeType,
     Salutation,
     ShippingStatus,
-    VatRate,
+    VatRateCategory,
 )
 from .dc_scope import (  # noqa
     DiscountConditionScope,
@@ -26,6 +26,7 @@ from .dc_scope import (  # noqa
     DiscountValidator,
 )
 from .exceptions import (  # noqa
+    ConfigurationError,
     DispatchError,
     InvalidArgumentException,
     InvalidKeyException,
