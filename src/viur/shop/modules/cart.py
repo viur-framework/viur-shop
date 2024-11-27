@@ -1,4 +1,3 @@
-import pprint
 import typing as t  # noqa
 
 import viur.shop.types.exceptions as e

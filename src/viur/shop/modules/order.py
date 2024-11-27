@@ -2,18 +2,16 @@ import logging
 import time
 import typing as t  # noqa
 
+from viur import toolkit
 from viur.core import current, db, errors as core_errors, exposed, force_post
 from viur.core.prototypes import List
-
-from viur import toolkit
 from viur.shop.types import *
-from viur.shop.types.response import T
 from viur.shop.types.results import PaymentProviderResult
 from .abstract import ShopModuleAbstract
 from ..globals import SENTINEL, SHOP_LOGGER
 from ..payment_providers import PaymentProviderAbstract
 from ..services import EVENT_SERVICE, Event, HOOK_SERVICE, Hook
-from ..skeletons.order import OrderSkel, get_payment_providers
+from ..skeletons.order import OrderSkel
 from ..types import exceptions as e
 
 if t.TYPE_CHECKING:

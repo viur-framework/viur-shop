@@ -17,6 +17,7 @@ class ViURShopException(Exception):
 class InvalidStateError(ViURShopException):
     ...
 
+
 class ConfigurationError(ViURShopException):
     ...
 

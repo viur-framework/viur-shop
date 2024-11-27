@@ -17,7 +17,6 @@ class ShopModuleAbstract(Module):
     of custom classes.
     """
 
-
     def adminInfo(self) -> dict:
         return {
             "name": translate(f"viur.shop.module.{self.moduleName.lower()}"),

@@ -5,9 +5,9 @@ import unzer
 from unzer.model import PaymentType
 from unzer.model.customer import Salutation as UnzerSalutation
 from unzer.model.payment import PaymentState
+
 from viur.core import current, db, errors, exposed, utils
 from viur.core.skeleton import SkeletonInstance
-
 from viur.shop.types import *
 from . import PaymentProviderAbstract
 from ..globals import SHOP_LOGGER

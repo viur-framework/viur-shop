@@ -14,17 +14,17 @@ if _dir not in conf.skeleton_search_path:
         .replace(str(conf.instance.core_base_path), "")
     )
 
-from .address import AddressSkel
-from .article import ArticleAbstractSkel
-from .cart import CartNodeSkel, CartItemSkel
-from .discount import DiscountSkel
-from .discount_condition import DiscountConditionSkel
-from .order import OrderSkel
-from .shipping import ShippingSkel
-from .shipping_config import ShippingConfigSkel
-from .shipping_precondition import ShippingPreconditionRelSkel
-from .vat import VatSkel
-from .vat_rate import VatRateSkel
+from .address import AddressSkel  # noqa: E402
+from .article import ArticleAbstractSkel  # noqa: E402
+from .cart import CartNodeSkel, CartItemSkel  # noqa: E402
+from .discount import DiscountSkel  # noqa: E402
+from .discount_condition import DiscountConditionSkel  # noqa: E402
+from .order import OrderSkel  # noqa: E402
+from .shipping import ShippingSkel  # noqa: E402
+from .shipping_config import ShippingConfigSkel  # noqa: E402
+from .shipping_precondition import ShippingPreconditionRelSkel  # noqa: E402
+from .vat import VatSkel  # noqa: E402
+from .vat_rate import VatRateSkel  # noqa: E402
 
 # tmp used to generate translation dict
 _tr = {}

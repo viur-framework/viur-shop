@@ -317,7 +317,6 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     )
     shipping.type = JsonBone.type
 
-
     @classmethod
     def toDB(cls, skelValues: SkeletonInstance, update_relations: bool = True, **kwargs) -> db.Key:
         return super().toDB(skelValues, update_relations, **kwargs)

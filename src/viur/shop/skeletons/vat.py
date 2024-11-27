@@ -2,9 +2,8 @@ import typing as t  # noqa
 
 from viur.core.bones import *
 from viur.core.skeleton import RelSkel
-
-from ..types import VatRateCategory
 from ..globals import SHOP_LOGGER
+from ..types import VatRateCategory
 
 logger = SHOP_LOGGER.getChild(__name__)
 

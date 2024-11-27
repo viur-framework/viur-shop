@@ -5,7 +5,6 @@ from viur.core import db, errors
 from viur.core.prototypes import List
 from viur.core.skeleton import SkeletonInstance
 from viur.shop.types import *
-from viur.shop.skeletons.discount_condition import DiscountConditionSkel
 from .abstract import ShopModuleAbstract
 from ..globals import SHOP_LOGGER
 from ..types.dc_scope import DiscountValidator
