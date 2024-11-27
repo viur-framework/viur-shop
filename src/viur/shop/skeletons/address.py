@@ -80,6 +80,8 @@ class AddressSkel(Skeleton):  # STATE: Complete (as in model)
         kind="user",
     )
 
+    # FIXME: What happens if an AddressSkel has both address_types and is_default
+    #        and you add an new default AddressSkel with only one address_type?
     is_default = BooleanBone(
     )
 
@@ -88,6 +90,7 @@ class AddressSkel(Skeleton):  # STATE: Complete (as in model)
         translation_key_prefix=translation_key_prefix_skeleton_bonename,
         params={"group": "Customer Address"},
         required=True,
+        multiple=True,
     )
 
     cloned_from = RelationalBone(

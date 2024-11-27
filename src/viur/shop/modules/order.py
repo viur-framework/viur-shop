@@ -180,7 +180,7 @@ class Order(ShopModuleAbstract, List):
                 skel["billing_address"] = None
             else:
                 skel.setBoneValue("billing_address", billing_address_key)
-                if skel["billing_address"]["dest"]["address_type"] != AddressType.BILLING:
+                if AddressType.BILLING not in skel["billing_address"]["dest"]["address_type"]:
                     raise e.InvalidArgumentException(
                         "shipping_address",
                         descr_appendix="Address is not of type billing."
