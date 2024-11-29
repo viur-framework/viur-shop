@@ -112,6 +112,10 @@ class Order(ShopModuleAbstract, List):
             # use current user as default value
             skel["email"] = user["name"]
             skel.setBoneValue("customer", user["key"])
+        # Initialize list for payment attempts / partial payments
+        if not skel["payment"]:
+            skel["payment"] = {}
+        skel["payment"].setdefault("payments", [])
         skel = self._order_set_values(
             skel,
             payment_provider=payment_provider,
@@ -385,6 +389,8 @@ class Order(ShopModuleAbstract, List):
             errors.append(ClientError("cart is missing"))
         if not order_skel["cart"] or not order_skel["cart"]["dest"]["shipping_address"]:
             errors.append(ClientError("cart.shipping_address is missing"))
+        if not order_skel["cart"] or not order_skel["cart"]["dest"]["total_quantity"]:
+            errors.append(ClientError("cart.total_quantity is zero"))
         if not order_skel["payment_provider"]:
             errors.append(ClientError("missing payment_provider"))
         if not order_skel["billing_address"]:

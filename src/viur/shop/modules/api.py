@@ -256,7 +256,7 @@ class Api(ShopModuleAbstract):
         self,
     ):
         """View the basket (the cart stored in the session) itself"""
-        return self.shop.cart.view(key=self.shop.cart.current_session_cart_key)
+        return self.shop.cart.view(key=self.shop.cart.current_session_cart_key, skelType="node")
 
     @exposed
     def cart_list(
