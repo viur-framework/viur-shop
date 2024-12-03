@@ -25,6 +25,7 @@ class VatSkel(RelSkel):
     )
     """Vat rate (percentage)"""
 
+
 class VatIncludedSkel(VatSkel):
 
     value = NumericBone(
