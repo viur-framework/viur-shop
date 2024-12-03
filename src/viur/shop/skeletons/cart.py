@@ -6,7 +6,7 @@ from viur.core.bones import *
 from viur.core.prototypes.tree import TreeSkel
 from viur.core.skeleton import SkeletonInstance
 from viur.shop.types import *
-from .vat import VatSkel
+from .vat import VatIncludedSkel, VatSkel
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 from ..types.response import make_json_dumpable
 
@@ -76,22 +76,26 @@ class DiscountFactory(TotalFactory):
         )
 
 
-def get_vat_rate_for_node(skel: "CartNodeSkel", bone: RecordBone):
+def get_vat_for_node(skel: "CartNodeSkel", bone: RecordBone):
     children = SHOP_INSTANCE.get().cart.get_children_from_cache(skel["key"])
     cat2value = collections.defaultdict(lambda: 0)
+    cat2rate = {}
     logger.debug(f"{skel=}")
     for child in children:
         logger.debug(f"{child=}")
         if issubclass(child.skeletonCls, CartNodeSkel):
             for entry in child["vat"] or []:
+                logger.debug(f'{child["shop_vat_rate_category"]} | {entry=}')
                 cat2value[entry["category"]] += entry["value"]
+                cat2rate[entry["category"]] = entry["percentage"]
         elif issubclass(child.skeletonCls, CartItemSkel):
             try:
-                cat2value[child["shop_vat_rate_category"]] += child.price_.vat_value * child["quantity"]
+                cat2value[child["shop_vat_rate_category"]] += child.price_.vat_included * child["quantity"]
+                cat2rate[child["shop_vat_rate_category"]] = child.price_.vat_rate
             except TypeError as e:
                 logger.warning(e)
     return [
-        {"category": cat, "value": value}
+        {"category": cat, "value": value, "percentage": cat2rate[cat]}
         for cat, value in cat2value.items()
         if cat and value
     ]
@@ -124,20 +128,12 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
         ),
     )
 
-    vat_total = NumericBone(
-        precision=2,
-        compute=Compute(
-            TotalFactory("vat_total", lambda child: child.price_.vat_value, True),
-            ComputeInterval(ComputeMethod.Always),
-        ),
-    )
-
     vat = RecordBone(
-        using=VatSkel,
+        using=VatIncludedSkel,
         multiple=True,
-        format="$(rate): $(value)",
+        format="$(category) ($(percentage)) : $(value)",
         compute=Compute(
-            get_vat_rate_for_node,
+            get_vat_for_node,
             ComputeInterval(ComputeMethod.Always),
         ),
     )
@@ -220,6 +216,7 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
             "shop_vat", "shop_shipping_config",
             "shop_is_weee", "shop_is_low_price",
             "shop_price_current",
+            "shop_*",
         ],
         consistency=RelationalConsistency.CascadeDeletion,
     )
@@ -265,8 +262,9 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
         translation_key_prefix="viur.shop.vat_rate_category.",
     )
 
-    shop_vat_rate_value = NumericBone(
+    shop_vat_rate_percentage = NumericBone(
     )
+    """vat rate in %"""
 
     shop_shipping_config = RelationalBone(
         kind="{{viur_shop_modulename}}_shipping_config",

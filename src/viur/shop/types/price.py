@@ -158,8 +158,8 @@ class Price:
         return (vat_rate or 0.0) / 100
 
     @property
-    def vat_value(self) -> float:
-        """Calculate the vat value based on current price and vat rate"""
+    def vat_included(self) -> float:
+        """Calculate the included vat value based on current price and vat rate"""
         try:
             return toolkit.round_decimal(self.vat_rate * self.current, 2)
         except TypeError:  # One value is None

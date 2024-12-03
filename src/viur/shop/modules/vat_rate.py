@@ -25,7 +25,7 @@ class VatRate(ShopModuleAbstract, List):
         country: str | None = None,
         category: VatRateCategory,
     ) -> float:
-        """Get the configured vat rate for a country."""
+        """Get the configured vat rate percentage for a country."""
         if country is None:
             country = HOOK_SERVICE.dispatch(Hook.CURRENT_COUNTRY)("vat_rate")
         skel = self.viewSkel()
@@ -35,7 +35,7 @@ class VatRate(ShopModuleAbstract, List):
             raise ConfigurationError(f"VatRate Skeleton missing for {country=}")
         for configuration in skel["configuration"]:
             if configuration["category"] == category:
-                return configuration["value"]
+                return configuration["percentage"]
         if category == VatRateCategory.ZERO:
             return 0.0
         raise ConfigurationError(f"VatRate configuration missing for {country=} and {category=}")

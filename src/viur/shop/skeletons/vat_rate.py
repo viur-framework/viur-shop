@@ -15,7 +15,7 @@ class VatRateSkel(Skeleton):
         compute=Compute(
             lambda skel: ' | '.join((
                 f'{skel["country"]}',
-                ", ".join(f'{v["rate"]}: {v["value"]}' for v in skel["configuration"]),
+                ", ".join(f'{v["category"]}: {v["percentage"]} %' for v in skel["configuration"]),
             )),
             ComputeInterval(ComputeMethod.OnWrite)
         ),
@@ -30,5 +30,5 @@ class VatRateSkel(Skeleton):
         using=VatSkel,
         required=True,
         multiple=True,
-        format="$(rate): $(value)",
+        format="$(category): $(percentage) %",
     )

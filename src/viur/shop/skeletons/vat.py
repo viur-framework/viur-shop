@@ -1,3 +1,4 @@
+from calendar import c
 import typing as t  # noqa
 
 from viur.core.bones import *
@@ -15,10 +16,22 @@ class VatSkel(RelSkel):
         required=True,
     )
 
-    value = NumericBone(
+    percentage = NumericBone(
         required=True,
         precision=2,
         min=0,
         getEmptyValueFunc=lambda: None,
         # TODO: UnitBone / PercentageBone
     )
+    """Vat rate (percentage)"""
+
+class VatIncludedSkel(VatSkel):
+
+    value = NumericBone(
+        required=True,
+        # precision=2,
+        min=0,
+        getEmptyValueFunc=lambda: None,
+        # TODO: UnitBone / CurrencyBone
+    )
+    """Included vat value (EUR)"""

@@ -255,7 +255,7 @@ class Cart(ShopModuleAbstract, Tree):
             for bone in skel.keys():
                 if not bone.startswith("shop_"):
                     continue
-                if bone == "shop_vat_rate_value":  # evaluated below
+                if bone in "shop_vat_rate_percentage":  # evaluated below
                     continue
                 instance = getattr(article_skel.skeletonCls, bone)
                 if isinstance(instance, BaseBone):
@@ -265,7 +265,8 @@ class Cart(ShopModuleAbstract, Tree):
                 else:
                     raise NotImplementedError
                 skel[bone] = value
-            skel["shop_vat_rate_value"] = self.shop.vat_rate.get_vat_rate_for_country(
+            # TODO: isn't this in the price object enough?
+            skel["shop_vat_rate_percentage"] = self.shop.vat_rate.get_vat_rate_for_country(
                 category=article_skel["shop_vat_rate_category"],
             )
         else:
