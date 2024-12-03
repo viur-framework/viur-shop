@@ -262,7 +262,7 @@ class Order(ShopModuleAbstract, List):
 
         order_skel = self.freeze_order(order_skel)
         order_skel.toDB()
-        EVENT_SERVICE.call(Event.ORDER_STARTED, order_skel=order_skel)
+        self.set_checkout_in_progress(order_skel)
         return JsonResponse({
             "skel": order_skel,
             "payment": self.get_payment_provider_by_name(order_skel["payment_provider"]).get_checkout_start_data(
@@ -402,6 +402,16 @@ class Order(ShopModuleAbstract, List):
 
         # TODO: ...
         return errors
+
+    def set_checkout_in_progress(self, order_skel: "SkeletonInstance") -> "SkeletonInstance":
+        """Set an order to the state _is_checkout_in_progress_"""
+        order_skel = toolkit.set_status(
+            key=order_skel["key"],
+            skel=order_skel,
+            values={"is_checkout_in_progress": True},
+        )
+        EVENT_SERVICE.call(Event.CHECKOUT_STARTED, order_skel=order_skel)
+        return order_skel
 
     def set_ordered(self, order_skel: "SkeletonInstance", payment: t.Any) -> "SkeletonInstance":
         """Set an order to the state _ordered_"""
