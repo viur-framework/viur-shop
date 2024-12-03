@@ -68,6 +68,9 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
     is_rts = BooleanBone(
     )
 
+    is_checkout_in_progress = BooleanBone(
+    )
+
     state = SelectBone(
         values=OrderState,
         multiple=True,
