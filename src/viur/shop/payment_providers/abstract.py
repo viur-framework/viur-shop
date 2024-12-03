@@ -4,6 +4,7 @@ import functools
 from viur.core import Module, translate
 from viur.core.prototypes.instanced_module import InstancedModule
 from viur.core.skeleton import SkeletonInstance
+
 from viur.shop.skeletons.order import OrderSkel
 from ..types import *
 
@@ -94,6 +95,11 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
         self,
         order_skel: SkeletonInstance,
     ) -> tuple[bool, t.Any]:
+        """
+        Check the payment state from the PaymentProvider API/service
+
+        Access :attr:`OrderSkel.is_paid` to get the payment state of an order.
+        """
         ...
 
     @abc.abstractmethod

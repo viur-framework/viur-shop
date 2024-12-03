@@ -184,8 +184,7 @@ class UnzerAbstract(PaymentProviderAbstract):
         order_skel = self.shop.order.editSkel()
         if not order_skel.fromDB(order_key):
             raise errors.NotFound
-        if not order_skel["payment"]:
-            order_skel["payment"] = {}
+        # TODO: Standardize this, write in txn
         order_skel["payment"].setdefault("payments", []).append({
             "pp": self.name,
             "creationdate": utils.utcNow().isoformat(),
