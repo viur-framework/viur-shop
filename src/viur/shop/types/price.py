@@ -143,7 +143,7 @@ class Price:
 
     # @property
     @functools.cached_property
-    def vat_rate(self) -> float:
+    def vat_rate_percentage(self) -> float:
         """Vat rate for the article
 
         :returns: value as float (0.0 <= value <= 1.0)
@@ -161,7 +161,7 @@ class Price:
     def vat_included(self) -> float:
         """Calculate the included vat value based on current price and vat rate"""
         try:
-            return toolkit.round_decimal(self.vat_rate * self.current, 2)
+            return toolkit.round_decimal(self.vat_rate_percentage * self.current, 2)
         except TypeError:  # One value is None
             return 0.0
 

@@ -91,7 +91,7 @@ def get_vat_for_node(skel: "CartNodeSkel", bone: RecordBone):
         elif issubclass(child.skeletonCls, CartItemSkel):
             try:
                 cat2value[child["shop_vat_rate_category"]] += child.price_.vat_included * child["quantity"]
-                cat2rate[child["shop_vat_rate_category"]] = child.price_.vat_rate
+                cat2rate[child["shop_vat_rate_category"]] = child.price_.vat_rate_percentage
             except TypeError as e:
                 logger.warning(e)
     return [
