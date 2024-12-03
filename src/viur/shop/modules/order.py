@@ -55,6 +55,18 @@ class Order(ShopModuleAbstract, List):
         self,
         only_available: bool = True,
     ) -> JsonResponse[dict[str, PaymentProviderResult]]:
+        """
+        Get a list of payment providers.
+
+        This method returns a JSON response containing a dictionary of payment
+        providers. The keys represent provider identifiers, and the values are
+        instances of `PaymentProviderResult` (dict) containing the details of each provider.
+
+        :param only_available: If ``True`` (default), only payment providers that
+            are currently available will be included in the response.
+            If ``False``, all providers will be listed regardless of availability.
+        :return: A JSON response with a dictionary of payment providers.
+        """
         return JsonResponse(self.get_payment_providers(only_available))
 
     def get_payment_providers(
@@ -238,7 +250,7 @@ class Order(ShopModuleAbstract, List):
         order_key: db.Key,
     ):
         """
-        Starts the checkout process.
+        Start the checkout process.
 
         Requires no errors in :meth:`self.can_checkout`.
         """
