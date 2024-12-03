@@ -262,10 +262,6 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
         translation_key_prefix="viur.shop.vat_rate_category.",
     )
 
-    shop_vat_rate_percentage = NumericBone(
-    )
-    """vat rate in %"""
-
     shop_shipping_config = RelationalBone(
         kind="{{viur_shop_modulename}}_shipping_config",
         module="{{viur_shop_modulename}}/shipping_config",
