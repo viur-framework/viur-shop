@@ -121,7 +121,7 @@ class VatRateCategory(enum.StrEnum):
     REDUCED = "reduced"
     """Applies to specific goods and services (e.g., food, books), typically at rates above 5%."""
 
-    SUPER_REDUCED = "Super_reduced"
+    SUPER_REDUCED = "super_reduced"
     """Special cases with rates below 5%, applied to essential goods or services in some countries."""
 
     ZERO = "zero"
