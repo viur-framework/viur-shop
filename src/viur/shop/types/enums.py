@@ -85,6 +85,9 @@ class OrderState(enum.Enum):
     ORDERED = "ordered"
     """Customer completed this order and clicked on buy"""
 
+    CHECKOUT_IN_PROGRESS = "checkout_in_progress"
+    """Customer started the checkout"""
+
     PAID = "paid"
     """Payment completed"""
 
