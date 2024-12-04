@@ -8,7 +8,7 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 
 class Event(enum.IntEnum):
-    ORDER_STARTED = enum.auto()
+    CHECKOUT_STARTED = enum.auto()
     ORDER_ORDERED = enum.auto()
     ORDER_PAID = enum.auto()
     ORDER_RTS = enum.auto()

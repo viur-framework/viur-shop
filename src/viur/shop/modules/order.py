@@ -53,6 +53,18 @@ class Order(ShopModuleAbstract, List):
         self,
         only_available: bool = True,
     ) -> JsonResponse[dict[str, PaymentProviderResult]]:
+        """
+        Get a list of payment providers.
+
+        This method returns a JSON response containing a dictionary of payment
+        providers. The keys represent provider identifiers, and the values are
+        instances of `PaymentProviderResult` (dict) containing the details of each provider.
+
+        :param only_available: If ``True`` (default), only payment providers that
+            are currently available will be included in the response.
+            If ``False``, all providers will be listed regardless of availability.
+        :return: A JSON response with a dictionary of payment providers.
+        """
         return JsonResponse(self.get_payment_providers(only_available))
 
     def get_payment_providers(
@@ -236,7 +248,7 @@ class Order(ShopModuleAbstract, List):
         order_key: db.Key,
     ):
         """
-        Starts the checkout process.
+        Start the checkout process.
 
         Requires no errors in :meth:`self.can_checkout`.
         """
@@ -260,7 +272,7 @@ class Order(ShopModuleAbstract, List):
 
         order_skel = self.freeze_order(order_skel)
         order_skel.toDB()
-        EVENT_SERVICE.call(Event.ORDER_STARTED, order_skel=order_skel)
+        self.set_checkout_in_progress(order_skel)
         return JsonResponse({
             "skel": order_skel,
             "payment": self.get_payment_provider_by_name(order_skel["payment_provider"]).get_checkout_start_data(
@@ -400,6 +412,16 @@ class Order(ShopModuleAbstract, List):
 
         # TODO: ...
         return errors
+
+    def set_checkout_in_progress(self, order_skel: "SkeletonInstance") -> "SkeletonInstance":
+        """Set an order to the state _is_checkout_in_progress_"""
+        order_skel = toolkit.set_status(
+            key=order_skel["key"],
+            skel=order_skel,
+            values={"is_checkout_in_progress": True},
+        )
+        EVENT_SERVICE.call(Event.CHECKOUT_STARTED, order_skel=order_skel)
+        return order_skel
 
     def set_ordered(self, order_skel: "SkeletonInstance", payment: t.Any) -> "SkeletonInstance":
         """Set an order to the state _ordered_"""
