@@ -18,6 +18,10 @@ class InvalidStateError(ViURShopException):
     ...
 
 
+class ConfigurationError(ViURShopException):
+    ...
+
+
 class IllegalOperationError(ViURShopException):
     ...
 

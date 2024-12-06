@@ -7,6 +7,7 @@ from viur.core import current, utils
 from viur.core.skeleton import SkeletonInstance
 from .enums import ApplicationDomain, ConditionOperator, DiscountType
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
+from ..types import ConfigurationError
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -142,20 +143,25 @@ class Price:
 
     # @property
     @functools.cached_property
-    def vat_rate(self) -> float:
+    def vat_rate_percentage(self) -> float:
         """Vat rate for the article
 
         :returns: value as float (0.0 <= value <= 1.0)
         """
-        if not (vat := self.article_skel["shop_vat"]):
-            return 0.0
-        return (vat["dest"]["rate"] or 0.0) / 100
+        try:
+            vat_rate = SHOP_INSTANCE.get().vat_rate.get_vat_rate_for_country(
+                category=self.article_skel["shop_vat_rate_category"],
+            )
+        except ConfigurationError as e:  # TODO(discussion): Or re-raise or implement fallback?
+            logger.warning(f"No vat rate for article :: {e}")
+            vat_rate = 0.0
+        return (vat_rate or 0.0) / 100
 
     @property
-    def vat_value(self) -> float:
-        """Calculate the vat value based on current price and vat rate"""
+    def vat_included(self) -> float:
+        """Calculate the included vat value based on current price and vat rate"""
         try:
-            return toolkit.round_decimal(self.vat_rate * self.current, 2)
+            return toolkit.round_decimal(self.vat_rate_percentage * self.current, 2)
         except TypeError:  # One value is None
             return 0.0
 

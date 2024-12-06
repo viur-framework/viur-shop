@@ -3,8 +3,9 @@ import typing as t  # noqa
 
 from viur.core import current, utils
 from viur.core.skeleton import Skeleton, SkeletonInstance, skeletonByKind
+from .exceptions import InvalidStateError
 from ..globals import SENTINEL, SHOP_INSTANCE, SHOP_LOGGER
-from ..types import *
+from .enums import *
 
 logger = SHOP_LOGGER.getChild(__name__)
 

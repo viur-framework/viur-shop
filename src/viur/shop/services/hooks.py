@@ -25,7 +25,7 @@ class Hook(enum.IntEnum):
 
     CURRENT_COUNTRY = enum.auto()
     """Provide the country of a global site context
-    type: (context: t.Literal["cart", "article"]) -> str
+    type: (context: t.Literal["cart", "article", "vat_rate"]) -> str
     """
 
 

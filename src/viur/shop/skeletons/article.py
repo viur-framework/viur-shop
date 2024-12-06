@@ -60,11 +60,12 @@ class ArticleAbstractSkel(BaseSkeleton):
     def shop_art_no_or_gtin(self) -> StringBone:
         ...
 
-    @property
-    @abc.abstractmethod
-    def shop_vat(self) -> RelationalBone:
-        """References a VatSkel"""
-        ...
+    shop_vat_rate_category = SelectBone(
+        values=VatRateCategory,
+        translation_key_prefix="viur.shop.vat_rate_category.",
+        required=True,
+        defaultValue=VatRateCategory.STANDARD,
+    )
 
     @property
     @abc.abstractmethod

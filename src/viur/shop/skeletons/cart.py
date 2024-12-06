@@ -1,3 +1,4 @@
+import collections
 import typing as t  # noqa
 
 from viur.core import db
@@ -5,6 +6,7 @@ from viur.core.bones import *
 from viur.core.prototypes.tree import TreeSkel
 from viur.core.skeleton import SkeletonInstance
 from viur.shop.types import *
+from .vat import VatIncludedSkel, VatSkel
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 from ..types.response import make_json_dumpable
 
@@ -74,24 +76,28 @@ class DiscountFactory(TotalFactory):
         )
 
 
-def get_vat_rate_for_node(skel: "CartNodeSkel", bone: RelationalBone):
+def get_vat_for_node(skel: "CartNodeSkel", bone: RecordBone):
     children = SHOP_INSTANCE.get().cart.get_children_from_cache(skel["key"])
-    rel_keys = set()
-    # logger.debug(f"{skel = }")
+    cat2value = collections.defaultdict(lambda: 0)
+    cat2rate = {}
+    logger.debug(f"{skel=}")
     for child in children:
-        # logger.debug(f"{child = }")
+        logger.debug(f"{child=}")
         if issubclass(child.skeletonCls, CartNodeSkel):
-            for rel in child["vat_rate"] or []:
-                if rel is None:
-                    logger.error(f'Relation vat_rate of {child["key"]} is broken.')
-                    continue
-                rel_keys.add(rel["dest"]["key"])
+            for entry in child["vat"] or []:
+                logger.debug(f'{child["shop_vat_rate_category"]} | {entry=}')
+                cat2value[entry["category"]] += entry["value"]
+                cat2rate[entry["category"]] = entry["percentage"]
         elif issubclass(child.skeletonCls, CartItemSkel):
-            if child["shop_vat"] is not None:
-                rel_keys.add(child["shop_vat"]["dest"]["key"])
+            try:
+                cat2value[child["shop_vat_rate_category"]] += child.price_.vat_included * child["quantity"]
+                cat2rate[child["shop_vat_rate_category"]] = child.price_.vat_rate_percentage
+            except TypeError as e:
+                logger.warning(e)
     return [
-        bone.createRelSkelFromKey(key)
-        for key in rel_keys
+        {"category": cat, "value": value, "percentage": cat2rate[cat]}
+        for cat, value in cat2value.items()
+        if cat and value
     ]
 
 
@@ -122,20 +128,14 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
         ),
     )
 
-    vat_total = NumericBone(
-        precision=2,
+    vat = RecordBone(
+        using=VatIncludedSkel,
+        multiple=True,
+        format="$(category) ($(percentage)) : $(value)",
         compute=Compute(
-            TotalFactory("vat_total", lambda child: child.price_.vat_value, True),
+            get_vat_for_node,
             ComputeInterval(ComputeMethod.Always),
         ),
-    )
-
-    vat_rate = RelationalBone(
-        kind="{{viur_shop_modulename}}_vat",
-        module="{{viur_shop_modulename}}/vat",
-        compute=Compute(get_vat_rate_for_node, ComputeInterval(ComputeMethod.Always)),
-        refKeys=["key", "name", "rate"],
-        multiple=True,
     )
 
     total_quantity = NumericBone(
@@ -220,6 +220,7 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
             "shop_vat", "shop_shipping_config",
             "shop_is_weee", "shop_is_low_price",
             "shop_price_current",
+            "shop_*",
         ],
         consistency=RelationalConsistency.CascadeDeletion,
     )
@@ -260,11 +261,9 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     shop_art_no_or_gtin = StringBone(
     )
 
-    shop_vat = RelationalBone(
-        kind="{{viur_shop_modulename}}_vat",
-        module="{{viur_shop_modulename}}/vat",
-        refKeys=["key", "name", "rate"],
-        consistency=RelationalConsistency.PreventDeletion,
+    shop_vat_rate_category = SelectBone(
+        values=VatRateCategory,
+        translation_key_prefix="viur.shop.vat_rate_category.",
     )
 
     shop_shipping_config = RelationalBone(
@@ -316,7 +315,6 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
             ComputeInterval(ComputeMethod.Always)),
     )
     shipping.type = JsonBone.type
-
 
     @classmethod
     def toDB(cls, skelValues: SkeletonInstance, update_relations: bool = True, **kwargs) -> db.Key:

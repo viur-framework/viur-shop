@@ -1,6 +1,6 @@
 from viur.core.prototypes import List
 from viur.core.skeleton import RefSkel, RelSkel
-from viur.shop.skeletons import CartNodeSkel, ArticleAbstractSkel
+from viur.shop.skeletons import ArticleAbstractSkel, CartNodeSkel
 from viur.shop.types import SkeletonInstance_T
 from .abstract import ShopModuleAbstract
 from ..globals import SHOP_LOGGER

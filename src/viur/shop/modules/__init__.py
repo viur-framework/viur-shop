@@ -6,4 +6,4 @@ from .discount_condition import DiscountCondition
 from .order import Order
 from .shipping import Shipping
 from .shipping_config import ShippingConfig
-from .vat import Vat
+from .vat_rate import VatRate

@@ -41,10 +41,10 @@ TRANSLATIONS = {
         "de": "Versandkonfiguration",
         "_hint": "modulename: shipping_config",
     },
-    "viur.shop.module.vat": {
+    "viur.shop.module.vat_rate": {
         "en": "Tax rates",
         "de": "Steuersätze",
-        "_hint": "modulename: vat",
+        "_hint": "modulename: vat_rate",
     },
     # Payment providers #TODO
     "viur.shop.payment_provider.unzer-card": {
@@ -114,6 +114,19 @@ TRANSLATIONS = {
         "fr": "Panier",
         "de": "Warenkorb",
         "_hint": "cart type: basket",
+    },
+    # VatRateCategory
+    "viur.shop.vat_rate_category.standard": {
+        "de": "Normalsatz",
+    },
+    "viur.shop.vat_rate_category.reduced": {
+        "de": "Ermäßigter Satz",
+    },
+    "viur.shop.vat_rate_category.super_reduced": {
+        "de": "Stark ermäßigter Satz",
+    },
+    "viur.shop.vat_rate_category.zero": {
+        "de": "Nullsatz",
     },
     # Costumer type
     "skeleton.address.customer_type.private": {
