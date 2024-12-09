@@ -401,8 +401,6 @@ class Order(ShopModuleAbstract, List):
             errors.append(ClientError("cart.shipping_address is missing"))
         if not order_skel["cart"] or not order_skel["cart"]["dest"]["total_quantity"]:
             errors.append(ClientError("cart.total_quantity is zero"))
-        if not order_skel["payment_provider"]:
-            errors.append(ClientError("missing payment_provider"))
         if not order_skel["billing_address"]:
             errors.append(ClientError("billing_address is missing"))
         if not order_skel["payment_provider"]:
