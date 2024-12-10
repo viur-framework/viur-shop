@@ -1,7 +1,6 @@
 import typing as t  # noqa
 
 import viur.shop.types.exceptions as e
-from skeletons.order import OrderSkel
 from viur.core import conf, current, db, errors, exposed, utils
 from viur.core.bones import BaseBone
 from viur.core.prototypes import Tree
@@ -12,6 +11,7 @@ from viur.shop.types import *
 from viur.shop.types.exceptions import InvalidStateError
 from ..globals import SENTINEL, SHOP_LOGGER
 from ..skeletons.cart import CartItemSkel, CartNodeSkel
+from ..skeletons.order import OrderSkel
 
 logger = SHOP_LOGGER.getChild(__name__)
 
