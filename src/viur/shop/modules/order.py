@@ -2,9 +2,10 @@ import logging
 import time
 import typing as t  # noqa
 
-from viur import toolkit
 from viur.core import current, db, errors as core_errors, exposed, force_post
 from viur.core.prototypes import List
+
+from viur import toolkit
 from viur.shop.types import *
 from viur.shop.types.results import PaymentProviderResult
 from .abstract import ShopModuleAbstract
@@ -23,6 +24,8 @@ logger = SHOP_LOGGER.getChild(__name__)
 class Order(ShopModuleAbstract, List):
     moduleName = "order"
     kindName = "{{viur_shop_modulename}}_order"
+
+    reference_user_created_skeletons_in_session = True
 
     def adminInfo(self) -> dict:
         admin_info = super().adminInfo()
@@ -45,6 +48,16 @@ class Order(ShopModuleAbstract, List):
         if not self.current_session_order_key:
             return None
         return self.order_get(self.current_session_order_key)
+
+    def canView(self, skel: "SkeletonInstance") -> bool:
+        if super().canView(skel):
+            return True
+
+        if skel["key"] in self.session.get("created_skel_keys", ()):
+            logger.debug(f"User added this order in his session: {skel['key']!r}")
+            return True
+
+        return False
 
     # --- (internal) API methods ----------------------------------------------
 
@@ -89,8 +102,10 @@ class Order(ShopModuleAbstract, List):
             raise TypeError(f"order_key must be an instance of db.Key")
         skel = self.viewSkel()
         if not skel.fromDB(order_key):
+            logger.debug(f"Order {order_key} does not exist")
             return None
         if not self.canView(skel):
+            logger.debug(f"Order {order_key} is forbidden by canView")
             return None
         return skel
 
@@ -138,6 +153,7 @@ class Order(ShopModuleAbstract, List):
         )
         skel.toDB()
         self.current_session_order_key = skel["key"]
+        self.onAdded(skel)
         return skel
 
     def order_update(

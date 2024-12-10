@@ -14,6 +14,8 @@ class Address(ShopModuleAbstract, List):
     moduleName = "address"
     kindName = "{{viur_shop_modulename}}_address"
 
+    reference_user_created_skeletons_in_session = True
+
     default_order: DEFAULT_ORDER_TYPE = (
         ("firstname", db.SortOrder.Ascending),
         ("lastname", db.SortOrder.Ascending),
@@ -39,6 +41,16 @@ class Address(ShopModuleAbstract, List):
 
     def canAdd(self) -> bool:
         return True
+
+    def canEdit(self, skel: SkeletonInstance) -> bool:
+        if super().canEdit(skel):
+            return True
+
+        if skel["key"] in self.session.get("created_skel_keys", ()):
+            logger.debug(f"User added this address in his session: {skel['key']!r}")
+            return True
+
+        return False
 
     def listFilter(self, query: db.Query) -> t.Optional[db.Query]:
         # The current customer is only allowed to see his own addresses
