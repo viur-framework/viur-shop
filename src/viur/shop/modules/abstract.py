@@ -1,6 +1,8 @@
 import typing as t
 
 from viur.core import Module, current, translate
+from viur.core.skeleton import SkeletonInstance
+
 from ..globals import SHOP_LOGGER
 
 if t.TYPE_CHECKING:
@@ -16,6 +18,9 @@ class ShopModuleAbstract(Module):
     so the final module name for routing it not affected by the name
     of custom classes.
     """
+
+    reference_user_created_skeletons_in_session: bool = False
+    """If True, keys of skeletons that the current user has created will be stored in the session."""
 
     def adminInfo(self) -> dict:
         return {
@@ -60,3 +65,7 @@ class ShopModuleAbstract(Module):
             session_shop[self.moduleName] = {}
             session.markChanged()
         return session_shop[self.moduleName]
+
+    def onAdded(self, skel: SkeletonInstance) -> None:
+        super().onAdded(skel)  # noqa: Modules which call onAdded, has this in the prototype
+        self.session.setdefault("created_skel_keys", []).append(skel["key"])

@@ -371,6 +371,7 @@ class Cart(ShopModuleAbstract, Tree):
             discount_key=discount_key,
         )
         skel.toDB()
+        self.onAdded(skel)
         return skel
 
     def cart_update(
