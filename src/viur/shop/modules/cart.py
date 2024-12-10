@@ -456,10 +456,10 @@ class Cart(ShopModuleAbstract, Tree):
         if shipping_key is not SENTINEL:
             if shipping_key is None:
                 skel["shipping"] = None
-                skel.setBoneValue("shipping_status", ShippingStatus.CHEAPEST)
+                skel["shipping_status"] = ShippingStatus.CHEAPEST
             else:
                 skel.setBoneValue("shipping", shipping_key)
-                skel.setBoneValue("shipping_status", ShippingStatus.USER)
+                skel["shipping_status"] = ShippingStatus.USER
         else:
             if skel["shipping_status"] == ShippingStatus.CHEAPEST:
                 applicable_shippings = self.shop.shipping.get_shipping_skels_for_cart(skel["key"])
