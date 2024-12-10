@@ -30,5 +30,5 @@ class VatRateSkel(Skeleton):
         using=VatSkel,
         required=True,
         multiple=True,
-        format="$(category): $(percentage) %",
+        format="$(dest.category): $(dest.percentage) %",
     )

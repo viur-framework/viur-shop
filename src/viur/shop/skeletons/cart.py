@@ -131,7 +131,7 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     vat = RecordBone(
         using=VatIncludedSkel,
         multiple=True,
-        format="$(category) ($(percentage)) : $(value)",
+        format="$(dest.category) ($(dest.percentage)) : $(dest.value)",
         compute=Compute(
             get_vat_for_node,
             ComputeInterval(ComputeMethod.Always),
