@@ -19,7 +19,7 @@ class ShopModuleAbstract(Module):
     of custom classes.
     """
 
-    reference_user_created_skeletons_in_session : bool = False
+    reference_user_created_skeletons_in_session: bool = False
     """If True, keys of skeletons that the current user has created will be stored in the session."""
 
     def adminInfo(self) -> dict:
@@ -65,7 +65,6 @@ class ShopModuleAbstract(Module):
             session_shop[self.moduleName] = {}
             session.markChanged()
         return session_shop[self.moduleName]
-
 
     def onAdded(self, skel: SkeletonInstance) -> None:
         super().onAdded(skel)  # noqa: Modules which call onAdded, has this in the prototype
