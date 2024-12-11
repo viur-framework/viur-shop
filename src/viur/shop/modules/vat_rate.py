@@ -1,3 +1,5 @@
+import functools
+
 from viur.core.prototypes import List
 from .abstract import ShopModuleAbstract
 from ..globals import SHOP_LOGGER
@@ -19,6 +21,7 @@ class VatRate(ShopModuleAbstract, List):
         admin_info["icon"] = "cash-stack"
         return admin_info
 
+    @functools.lru_cache(maxsize=None)
     def get_vat_rate_for_country(
         self,
         *,
