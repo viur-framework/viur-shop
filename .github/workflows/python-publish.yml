@@ -63,3 +63,4 @@ jobs:
         with:
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, 'dev') }}
+          body: "https://pypi.org/project/viur-shop/${{ github.ref_name }}/"
