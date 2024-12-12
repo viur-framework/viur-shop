@@ -49,6 +49,8 @@ class Order(ShopModuleAbstract, List):
             return None
         return self.order_get(self.current_session_order_key)
 
+    # --- ViUR ----------------------------------------------------------------
+
     def canView(self, skel: "SkeletonInstance") -> bool:
         if super().canView(skel):
             return True
