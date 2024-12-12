@@ -1,13 +1,13 @@
 import typing as t  # noqa
 
-from google.protobuf.message import DecodeError
-
 import viur.shop.types.exceptions as e
+from google.protobuf.message import DecodeError
 from viur.core import current, db, errors, exposed, force_post
 from viur.core.render.json.default import DefaultRender as JsonRenderer
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.skeletons import ShippingSkel
 from viur.shop.types import *
+
 from ..globals import SENTINEL, SHOP_INSTANCE_VI, SHOP_LOGGER
 
 if t.TYPE_CHECKING:
@@ -256,7 +256,9 @@ class Api(ShopModuleAbstract):
         self,
     ):
         """View the basket (the cart stored in the session) itself"""
-        return self.shop.cart.view(key=self.shop.cart.current_session_cart_key, skelType="node")
+        return JsonResponse(self.shop.cart.cart_get(
+            cart_key=self.shop.cart.current_session_cart_key, skel_type="node",
+        ))
 
     @exposed
     def cart_list(

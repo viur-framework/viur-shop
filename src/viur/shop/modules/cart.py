@@ -9,6 +9,7 @@ from viur.core.skeleton import Skeleton, SkeletonInstance
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.types import *
 from viur.shop.types.exceptions import InvalidStateError
+
 from ..globals import SENTINEL, SHOP_LOGGER
 from ..skeletons.cart import CartItemSkel, CartNodeSkel
 from ..skeletons.order import OrderSkel
@@ -42,6 +43,17 @@ class Cart(ShopModuleAbstract, Tree):
             return cls.subSkel(*sub_skel)
         else:
             return cls.subSkel(sub_skel)
+
+    def canView(self, skelType: SkelType, skel: SkeletonInstance) -> bool:
+        if super().canView(skelType, skel):
+            return True
+        logger.debug(f"{skel=}")
+        if skelType == "leaf":
+            nearest_node_key = skel["parententry"]
+        else:
+            assert skelType == "node"
+            nearest_node_key = skel["key"]
+        return self.is_valid_node(nearest_node_key)
 
     # --- Session -------------------------------------------------------------
 
@@ -129,6 +141,8 @@ class Cart(ShopModuleAbstract, Tree):
             for skel in self.getAvailableRootNodes(*args, **kwargs)
         ])
 
+    # --- helpers -------------------------------------------------------------
+
     def is_valid_node(
         self,
         node_key: db.Key,
@@ -197,6 +211,22 @@ class Cart(ShopModuleAbstract, Tree):
         current.request_data.get()["shop_cache_cart_children"] = {}
 
     # --- (internal) API methods ----------------------------------------------
+
+    def cart_get(
+        self,
+        cart_key: db.Key,
+        skel_type: SkelType,
+    ) -> SkeletonInstance_T[CartNodeSkel | CartItemSkel] | None:
+        if not isinstance(cart_key, db.Key):
+            raise TypeError(f"cart_key must be an instance of db.Key")
+        skel = self.viewSkel(skel_type)
+        if not skel.fromDB(cart_key):
+            logger.debug(f"Cart {cart_key} does not exist")
+            return None
+        if not self.canView(skel_type, skel):
+            logger.debug(f"Cart {cart_key} is forbidden by canView")
+            return None
+        return skel
 
     def get_article(
         self,
