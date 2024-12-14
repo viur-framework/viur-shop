@@ -197,7 +197,7 @@ class Discount(ShopModuleAbstract, List):
             return False, None
 
         dv = DiscountValidator()(cart_skel=cart, article_skel=article_skel, discount_skel=skel, code=code)
-        logger.debug(f"{dv.is_fulfilled=} | {dv=}")
+        # logger.debug(f"{dv.is_fulfilled=} | {dv=}")
         return dv.is_fulfilled, dv
 
     @property

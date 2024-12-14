@@ -96,7 +96,7 @@ class Price:
         for skel in SHOP_INSTANCE.get().discount.current_automatically_discounts:
             # TODO: if can apply (article range, lang, ...)
             applicable, dv = discount_module.can_apply(skel, article_skel=article_skel, as_automatically=True)
-            logger.debug(f"{dv=}")
+            # logger.debug(f"{dv=}")
             if not applicable:
                 logger.debug(f"{skel} is NOT applicable")
                 continue

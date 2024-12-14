@@ -318,7 +318,7 @@ class ScopeCustomerGroup(DiscountConditionScope):
 @ConditionValidator.register
 class ScopeCombinableLowPrice(DiscountConditionScope):
     def precondition(self) -> bool:
-        logger.debug(f"ScopeCombinableLowPrice :: {self.cart_skel=} | {self.article_skel=}")
+        # logger.debug(f"ScopeCombinableLowPrice :: {self.cart_skel=} | {self.article_skel=}")
         return (
             self.condition_skel["scope_combinable_low_price"] is not None
             and self.article_skel
