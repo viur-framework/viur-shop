@@ -9,6 +9,9 @@ from .enums import ApplicationDomain, ConditionOperator, DiscountType
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 from ..types import ConfigurationError
 
+if t.TYPE_CHECKING:
+    from ..modules import Discount
+
 logger = SHOP_LOGGER.getChild(__name__)
 
 
@@ -43,7 +46,7 @@ class Price:
         else:
             raise TypeError(f"Unsupported type {type(src_object)}")
 
-        # logger.debug(f"{self.article_skel = }")
+        logger.debug(f"{self.article_skel = }")
         # logger.debug(f"{self.article_skel.shop_current_discount = }")
 
         if (best_discount := self.shop_current_discount(self.article_skel)) is not None:
@@ -84,14 +87,20 @@ class Price:
             return toolkit.round_decimal(best_price, 2)
         return self.retail
 
-    def shop_current_discount(self, skel) -> None | tuple[float, "SkeletonInstance"]:
+    def shop_current_discount(self, article_skel: SkeletonInstance) -> None | tuple[float, "SkeletonInstance"]:
         """Best permanent discount campaign for article"""
         best_discount = None
         article_price = self.retail or 0.0  # FIXME: how to handle None prices?
         if not article_price:
             return None
+        discount_module: "Discount" = SHOP_INSTANCE.get().discount
         for skel in SHOP_INSTANCE.get().discount.current_automatically_discounts:
             # TODO: if can apply (article range, lang, ...)
+            applicable, dv = discount_module.can_apply(skel, article_skel=article_skel, as_automatically=True)
+            logger.debug(f"{dv=}")
+            if not applicable:
+                logger.debug(f"{skel} is NOT applicable")
+                continue
             price = self.apply_discount(skel, article_price)
             if best_discount is None or price < best_discount[0]:
                 best_discount = price, skel

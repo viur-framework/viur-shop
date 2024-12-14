@@ -18,11 +18,13 @@ class DiscountConditionScope:
         self,
         *,
         cart_skel=SENTINEL,
+        article_skel=SENTINEL,
         discount_skel=SENTINEL,
         condition_skel=SENTINEL,
         code=SENTINEL,
     ):
         self.cart_skel = cart_skel
+        self.article_skel = article_skel
         self.discount_skel = discount_skel
         self.condition_skel = condition_skel
         self.code = code
@@ -61,6 +63,7 @@ class ConditionValidator:
         self._is_fulfilled = None
         self.scope_instances = []
         self.cart_skel = None
+        self.article_skel = None
         self.discount_skel = None
         self.condition_skel = None
 
@@ -68,6 +71,7 @@ class ConditionValidator:
         self,
         *,
         cart_skel=SENTINEL,
+        article_skel=SENTINEL,
         discount_skel=SENTINEL,
         condition_skel=SENTINEL,
         code=SENTINEL,
@@ -79,6 +83,7 @@ class ConditionValidator:
         for Scope in ConditionValidator.scopes:
             scope = Scope(
                 cart_skel=cart_skel,
+                article_skel=article_skel,
                 discount_skel=discount_skel,
                 condition_skel=condition_skel,
                 code=code,
@@ -115,6 +120,7 @@ class DiscountValidator:
         self._is_fulfilled = None
         self.condition_validator_instances: list[ConditionValidator] = []
         self.cart_skel = None
+        self.article_skel = None
         self.discount_skel = None
         self.condition_skels = []
 
@@ -122,10 +128,12 @@ class DiscountValidator:
         self,
         *,
         cart_skel=SENTINEL,
+        article_skel=SENTINEL,
         discount_skel=SENTINEL,
         code=SENTINEL,
     ) -> t.Self:
         self.cart_skel = cart_skel
+        self.article_skel = article_skel
         self.discount_skel = discount_skel
         self.code = discount_skel
 

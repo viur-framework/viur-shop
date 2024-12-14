@@ -86,7 +86,7 @@ class Discount(ShopModuleAbstract, List):
         for discount_skel in skels:
             logger.debug(f'{discount_skel["name"]=} // {discount_skel["description"]=}')
             # logger.debug(f"{discount_skel = }")
-            applicable, dv = self.can_apply(discount_skel, cart_key, code)
+            applicable, dv = self.can_apply(discount_skel, cart_key=cart_key, code=code)
             if applicable:
                 logger.debug("is applicable")
                 break
@@ -173,10 +173,13 @@ class Discount(ShopModuleAbstract, List):
     def can_apply(
         self,
         skel: SkeletonInstance,
+        *,
         cart_key: db.Key | None = None,
+        article_skel: SkeletonInstance | None = None,
         code: str | None = None,
         as_automatically: bool = False,
     ) -> tuple[bool, DiscountValidator | None]:
+        logger.debug(f"--- Calling can_apply() ---")
         logger.debug(f'{skel["name"] = } // {skel["description"] = }')
         # logger.debug(f"{skel = }")
 
@@ -188,10 +191,11 @@ class Discount(ShopModuleAbstract, List):
                 raise errors.NotFound
 
         if not as_automatically and skel["activate_automatically"]:
-            logger.info(f"is activate_automatically")
+            logger.info(f"looking for as_automatically")
             return False, None
 
-        dv = DiscountValidator()(cart_skel=cart, discount_skel=skel, code=code)
+        dv = DiscountValidator()(cart_skel=cart, article_skel=article_skel, discount_skel=skel, code=code)
+        logger.debug(f"{dv.is_fulfilled=} | {dv=}")
         return dv.is_fulfilled, dv
 
     @property
@@ -205,7 +209,7 @@ class Discount(ShopModuleAbstract, List):
                 logger.debug(f'Skipping discount {skel["key"]} {skel["name"]}')
                 continue
             discounts.append(skel)
-        logger.debug(f'current {discounts=}')
+        logger.debug(f'current_automatically_discounts {discounts=}')
         return discounts
 
     def remove(
