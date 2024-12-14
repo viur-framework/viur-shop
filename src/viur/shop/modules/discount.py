@@ -4,9 +4,11 @@ import typing as t  # noqa
 from viur.core import db, errors
 from viur.core.prototypes import List
 from viur.core.skeleton import SkeletonInstance
+
 from viur.shop.types import *
 from .abstract import ShopModuleAbstract
 from ..globals import SHOP_LOGGER
+from ..skeletons import DiscountSkel
 from ..types.dc_scope import DiscountValidator
 
 logger = SHOP_LOGGER.getChild(__name__)
@@ -172,7 +174,7 @@ class Discount(ShopModuleAbstract, List):
 
     def can_apply(
         self,
-        skel: SkeletonInstance,
+        skel: SkeletonInstance_T[DiscountSkel],
         *,
         cart_key: db.Key | None = None,
         article_skel: SkeletonInstance | None = None,
@@ -200,7 +202,7 @@ class Discount(ShopModuleAbstract, List):
 
     @property
     @functools.cache
-    def current_automatically_discounts(self) -> list[SkeletonInstance]:
+    def current_automatically_discounts(self) -> list[SkeletonInstance_T[DiscountSkel]]:
         query = self.viewSkel().all().filter("activate_automatically =", True)
         discounts = []
         for skel in query.fetch(100):

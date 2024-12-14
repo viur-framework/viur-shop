@@ -46,8 +46,7 @@ class Price:
         else:
             raise TypeError(f"Unsupported type {type(src_object)}")
 
-        logger.debug(f"{self.article_skel = }")
-        # logger.debug(f"{self.article_skel.shop_current_discount = }")
+        # logger.debug(f"{self.article_skel = }")
 
         if (best_discount := self.shop_current_discount(self.article_skel)) is not None:
             price, skel = best_discount
