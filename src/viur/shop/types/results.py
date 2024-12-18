@@ -3,6 +3,7 @@ from __future__ import annotations
 import typing as t
 
 from viur.core import translate
+
 from .data import ClientError
 from ..globals import SHOP_LOGGER
 

@@ -5,6 +5,7 @@ import typing as t  # noqa
 from viur import toolkit
 from viur.core import current, utils
 from viur.core.skeleton import SkeletonInstance
+
 from .enums import ApplicationDomain, ConditionOperator, DiscountType
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 from ..types import ConfigurationError
