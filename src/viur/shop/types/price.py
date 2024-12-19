@@ -127,7 +127,7 @@ class Price:
                 combinables.append(discount)
             elif discount["condition_operator"] == ConditionOperator.ONE_OF \
                 and any(c["dest"]["scope_combinable_other_discount"] for c in discount["condition"]):
-                logger.warning("#TODO: this case is tricky")  # #TODO: this case is tricky
+                logger.warning("#TODO: this case is tricky")  # TODO: this case is tricky
                 combinables.append(discount)
             else:
                 logger.info(f"Not suitable for combinables")
@@ -210,7 +210,7 @@ class Price:
         # logger.debug(f"Called get_or_create with {src_object = }")
         try:
             cls.cache[src_object["key"]]
-            logger.info(f'Price.get_or_create() hit cache for {src_object["key"]}')
+            logger.debug(f'Price.get_or_create() hit cache for {src_object["key"]}')
             return cls.cache[src_object["key"]]
         except KeyError:
             pass

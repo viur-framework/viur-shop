@@ -34,7 +34,7 @@ class Shipping(ShopModuleAbstract, List):
         # TODO(discuss): List all options?
         """
         if not article_skel["shop_shipping_config"]:
-            logger.debug(f'{article_skel["key"]} has no shop_shipping set.')  # TODO: fallback??
+            logger.debug(f'{article_skel["key"]} has no shop_shipping_config set.')  # TODO: fallback??
             return None
 
         shipping_config_skel = article_skel["shop_shipping_config"]["dest"]
