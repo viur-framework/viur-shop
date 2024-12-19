@@ -6,6 +6,7 @@ from viur import toolkit
 from viur.core import current
 from viur.core.render.json.default import CustomJsonEncoder
 from viur.core.skeleton import SkeletonInstance
+
 from .data import ClientError
 from ..globals import SHOP_INSTANCE_VI, SHOP_LOGGER
 
