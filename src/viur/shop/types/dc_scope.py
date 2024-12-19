@@ -2,10 +2,15 @@ import abc
 import typing as t  # noqa
 
 from viur.core import current, utils
-from viur.core.skeleton import Skeleton, SkeletonInstance, skeletonByKind
-from .exceptions import InvalidStateError
-from ..globals import SENTINEL, SHOP_INSTANCE, SHOP_LOGGER
+from viur.core.skeleton import Skeleton, skeletonByKind
+
 from .enums import *
+from .exceptions import InvalidStateError
+from ..globals import SENTINEL, SHOP_INSTANCE, SHOP_LOGGER, Sentinel
+from ..types import SkeletonInstance_T
+
+if t.TYPE_CHECKING:
+    from ..skeletons import ArticleAbstractSkel, CartNodeSkel, DiscountConditionSkel, DiscountSkel
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -17,12 +22,14 @@ class DiscountConditionScope:
     def __init__(
         self,
         *,
-        cart_skel=SENTINEL,
-        discount_skel=SENTINEL,
-        condition_skel=SENTINEL,
-        code=SENTINEL,
+        cart_skel: SkeletonInstance_T["CartNodeSkel"] | None | Sentinel = SENTINEL,
+        article_skel: SkeletonInstance_T["ArticleAbstractSkel"] | None | Sentinel = SENTINEL,
+        discount_skel: SkeletonInstance_T["DiscountSkel"] | None | Sentinel = SENTINEL,
+        code: str | None | Sentinel = SENTINEL,
+        condition_skel: SkeletonInstance_T["DiscountConditionSkel"],
     ):
         self.cart_skel = cart_skel
+        self.article_skel = article_skel
         self.discount_skel = discount_skel
         self.condition_skel = condition_skel
         self.code = code
@@ -61,16 +68,18 @@ class ConditionValidator:
         self._is_fulfilled = None
         self.scope_instances = []
         self.cart_skel = None
+        self.article_skel = None
         self.discount_skel = None
         self.condition_skel = None
 
     def __call__(
         self,
         *,
-        cart_skel=SENTINEL,
-        discount_skel=SENTINEL,
-        condition_skel=SENTINEL,
-        code=SENTINEL,
+        cart_skel: SkeletonInstance_T["CartNodeSkel"] | None | Sentinel = SENTINEL,
+        article_skel: SkeletonInstance_T["ArticleAbstractSkel"] | None | Sentinel = SENTINEL,
+        discount_skel: SkeletonInstance_T["DiscountSkel"] | None | Sentinel = SENTINEL,
+        code: str | None | Sentinel = SENTINEL,
+        condition_skel: SkeletonInstance_T["DiscountConditionSkel"],
     ) -> t.Self:
         self.cart_skel = cart_skel
         self.discount_skel = discount_skel
@@ -79,6 +88,7 @@ class ConditionValidator:
         for Scope in ConditionValidator.scopes:
             scope = Scope(
                 cart_skel=cart_skel,
+                article_skel=article_skel,
                 discount_skel=discount_skel,
                 condition_skel=condition_skel,
                 code=code,
@@ -115,32 +125,40 @@ class DiscountValidator:
         self._is_fulfilled = None
         self.condition_validator_instances: list[ConditionValidator] = []
         self.cart_skel = None
+        self.article_skel = None
         self.discount_skel = None
         self.condition_skels = []
 
     def __call__(
         self,
         *,
-        cart_skel=SENTINEL,
-        discount_skel=SENTINEL,
-        code=SENTINEL,
+        cart_skel: SkeletonInstance_T["CartNodeSkel"] | None | Sentinel = SENTINEL,
+        article_skel: SkeletonInstance_T["ArticleAbstractSkel"] | None | Sentinel = SENTINEL,
+        discount_skel: SkeletonInstance_T["DiscountSkel"] | None | Sentinel = SENTINEL,
+        code: str | None | Sentinel = SENTINEL,
     ) -> t.Self:
         self.cart_skel = cart_skel
+        self.article_skel = article_skel
         self.discount_skel = discount_skel
         self.code = discount_skel
 
         # We need the full skel with all bones (otherwise the refSkel would be to large)
         condition_skel_cls: t.Type[Skeleton] = skeletonByKind(discount_skel.condition.kind)
         for condition in discount_skel["condition"]:
-            condition_skel: SkeletonInstance = condition_skel_cls()  # noqa
+            condition_skel: SkeletonInstance_T[DiscountConditionSkel] = condition_skel_cls()  # noqa
             if not condition_skel.fromDB(condition["dest"]["key"]):
                 logger.warning(f'Broken relation {condition=} in {discount_skel["key"]}?!')
                 raise InvalidStateError(f'Broken relation {condition=} in {discount_skel["key"]}?!')
                 self.condition_skels.append(None)  # TODO
                 self.condition_validator_instances.append(None)  # TODO
                 continue
-            cv = ConditionValidator()(cart_skel=cart_skel, discount_skel=discount_skel, condition_skel=condition_skel,
-                                      code=code)
+            cv = ConditionValidator()(
+                cart_skel=cart_skel,
+                article_skel=article_skel,
+                discount_skel=discount_skel,
+                condition_skel=condition_skel,
+                code=code,
+            )
             self.condition_skels.append(condition_skel)
             self.condition_validator_instances.append(cv)
 
@@ -297,17 +315,17 @@ class ScopeCustomerGroup(DiscountConditionScope):
         raise NotImplementedError
 
 
-# @ConditionValidator.register TODO
+@ConditionValidator.register
 class ScopeCombinableLowPrice(DiscountConditionScope):
     def precondition(self) -> bool:
+        # logger.debug(f"ScopeCombinableLowPrice :: {self.cart_skel=} | {self.article_skel=}")
         return (
             self.condition_skel["scope_combinable_low_price"] is not None
-            # and self.cart_skel is not None
+            and self.article_skel
         )
 
     def __call__(self) -> bool:
-        article_skel = ...  # FIXME: how we get this?
-        return not article_skel["shop_is_low_price"] or self.condition_skel["scope_combinable_low_price"]
+        return not self.article_skel["shop_is_low_price"] or self.condition_skel["scope_combinable_low_price"]
 
 
 @ConditionValidator.register

@@ -5,9 +5,13 @@ import typing as t  # noqa
 from viur import toolkit
 from viur.core import current, utils
 from viur.core.skeleton import SkeletonInstance
+
 from .enums import ApplicationDomain, ConditionOperator, DiscountType
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 from ..types import ConfigurationError
+
+if t.TYPE_CHECKING:
+    from ..modules import Discount
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -44,7 +48,6 @@ class Price:
             raise TypeError(f"Unsupported type {type(src_object)}")
 
         # logger.debug(f"{self.article_skel = }")
-        # logger.debug(f"{self.article_skel.shop_current_discount = }")
 
         if (best_discount := self.shop_current_discount(self.article_skel)) is not None:
             price, skel = best_discount
@@ -84,14 +87,20 @@ class Price:
             return toolkit.round_decimal(best_price, 2)
         return self.retail
 
-    def shop_current_discount(self, skel) -> None | tuple[float, "SkeletonInstance"]:
+    def shop_current_discount(self, article_skel: SkeletonInstance) -> None | tuple[float, "SkeletonInstance"]:
         """Best permanent discount campaign for article"""
         best_discount = None
         article_price = self.retail or 0.0  # FIXME: how to handle None prices?
         if not article_price:
             return None
+        discount_module: "Discount" = SHOP_INSTANCE.get().discount
         for skel in SHOP_INSTANCE.get().discount.current_automatically_discounts:
             # TODO: if can apply (article range, lang, ...)
+            applicable, dv = discount_module.can_apply(skel, article_skel=article_skel, as_automatically=True)
+            # logger.debug(f"{dv=}")
+            if not applicable:
+                logger.debug(f"{skel} is NOT applicable")
+                continue
             price = self.apply_discount(skel, article_price)
             if best_discount is None or price < best_discount[0]:
                 best_discount = price, skel
@@ -118,7 +127,7 @@ class Price:
                 combinables.append(discount)
             elif discount["condition_operator"] == ConditionOperator.ONE_OF \
                 and any(c["dest"]["scope_combinable_other_discount"] for c in discount["condition"]):
-                logger.warning("#TODO: this case is tricky")  # #TODO: this case is tricky
+                logger.warning("#TODO: this case is tricky")  # TODO: this case is tricky
                 combinables.append(discount)
             else:
                 logger.info(f"Not suitable for combinables")
@@ -201,7 +210,7 @@ class Price:
         # logger.debug(f"Called get_or_create with {src_object = }")
         try:
             cls.cache[src_object["key"]]
-            logger.info(f'Price.get_or_create() hit cache for {src_object["key"]}')
+            logger.debug(f'Price.get_or_create() hit cache for {src_object["key"]}')
             return cls.cache[src_object["key"]]
         except KeyError:
             pass
