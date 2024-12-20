@@ -1,6 +1,8 @@
 import typing as t
 
 from viur.core import Module, current, translate
+from viur.core.prototypes import List, Tree
+from viur.core.prototypes.tree import SkelType
 from viur.core.skeleton import SkeletonInstance
 
 from ..globals import SHOP_LOGGER
@@ -66,6 +68,14 @@ class ShopModuleAbstract(Module):
             session.markChanged()
         return session_shop[self.moduleName]
 
-    def onAdded(self, skel: SkeletonInstance) -> None:
-        super().onAdded(skel)  # noqa: Modules which call onAdded, has this in the prototype
+    def onAdded(self, *args) -> None:
+        skel: SkeletonInstance
+        skelType: SkelType
+        if isinstance(self, List):
+            skel, = args
+        elif isinstance(self, Tree):
+            skelType, skel = args
+        else:
+            raise NotImplementedError(type(self))
+        super().onAdded(*args)  # noqa: Modules which call onAdded, has this in the prototype
         self.session.setdefault("created_skel_keys", []).append(skel["key"])
