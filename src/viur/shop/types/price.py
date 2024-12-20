@@ -59,14 +59,26 @@ class Price:
         return self.article_skel["shop_price_retail"]
 
     @property
+    def retail_net(self) -> float:
+        return toolkit.round_decimal(self.gross_to_net(self.retail, self.vat_rate_percentage), 2)
+
+    @property
     def recommended(self) -> float:
         return self.article_skel["shop_price_recommended"]
+
+    @property
+    def recommended_net(self) -> float:
+        return toolkit.round_decimal(self.gross_to_net(self.recommended, self.vat_rate_percentage), 2)
 
     @property
     def saved(self) -> float:
         if self.retail is None or self.current is None:
             return 0
         return toolkit.round_decimal(self.retail - self.current, 2)
+
+    @property
+    def saved_net(self) -> float:
+        return toolkit.round_decimal(self.gross_to_net(self.saved, self.vat_rate_percentage), 2)
 
     @property
     def saved_percentage(self) -> float:
@@ -86,6 +98,10 @@ class Price:
             best_price, best_discounts = self.choose_best_discount_set()
             return toolkit.round_decimal(best_price, 2)
         return self.retail
+
+    @property
+    def current_net(self) -> float:
+        return toolkit.round_decimal(self.gross_to_net(self.current, self.vat_rate_percentage), 2)
 
     def shop_current_discount(self, article_skel: SkeletonInstance) -> None | tuple[float, "SkeletonInstance"]:
         """Best permanent discount campaign for article"""
@@ -203,6 +219,10 @@ class Price:
             logger.info(f"NotSupported discount: {discount_skel=}")
             raise NotImplementedError
         return price
+
+    @staticmethod
+    def gross_to_net(gross_value: float, vat_value: float) -> float:
+        return gross_value / (1 + vat_value)
 
     @classmethod
     def get_or_create(cls, src_object):
