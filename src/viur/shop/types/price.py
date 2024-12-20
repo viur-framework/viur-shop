@@ -222,6 +222,8 @@ class Price:
 
     @staticmethod
     def gross_to_net(gross_value: float, vat_value: float) -> float:
+        if not gross_value:
+            return 0.0
         return gross_value / (1 + vat_value)
 
     @classmethod
