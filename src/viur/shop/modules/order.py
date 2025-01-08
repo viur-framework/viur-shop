@@ -158,6 +158,11 @@ class Order(ShopModuleAbstract, List):
             state_paid=state_paid,
             state_rts=state_rts,
         )
+        try:
+            skel = HOOK_SERVICE.dispatch(Hook.ORDER_ADD_ADDITION)(skel)
+        except DispatchError:
+            pass
+        self.onAdd(skel)
         skel.toDB()
         self.current_session_order_key = skel["key"]
         self.onAdded(skel)
@@ -193,7 +198,13 @@ class Order(ShopModuleAbstract, List):
             state_paid=state_paid,
             state_rts=state_rts,
         )
+        try:
+            skel = HOOK_SERVICE.dispatch(Hook.ORDER_UPDATE_ADDITION)(skel)
+        except DispatchError:
+            pass
+        self.onEdit(skel)
         skel.toDB()
+        self.onEdited(skel)
         return skel
 
     def _order_set_values(
@@ -294,6 +305,10 @@ class Order(ShopModuleAbstract, List):
             self.shop.cart.detach_session_cart()
 
         order_skel = self.freeze_order(order_skel)
+        try:
+            order_skel = HOOK_SERVICE.dispatch(Hook.ORDER_CHECKOUT_START_ADDITION)(order_skel)
+        except DispatchError:
+            pass
         order_skel.toDB()
         self.set_checkout_in_progress(order_skel)
         return JsonResponse({

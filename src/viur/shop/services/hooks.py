@@ -2,6 +2,9 @@
 
 Register own implementations (:class:`Customization`) to influence
 a specific behavior (:class:`Hook`) of the viur-shop.
+
+Unlike events, which are just a trigger, hooks can (and usually should)
+modify objects and return something.
 """
 
 import abc
@@ -26,6 +29,24 @@ class Hook(enum.IntEnum):
     CURRENT_COUNTRY = enum.auto()
     """Provide the country of a global site context
     type: (context: t.Literal["cart", "article", "vat_rate"]) -> str
+    """
+
+    ORDER_ADD_ADDITION = enum.auto()
+    """Do some additional modifications on the OrderSkel on order_add action.
+    Called in :meth:`viur.shop.modules.order.Order.order_add` before saving with :meth:`Skeleton.toDB`.
+    type: (order_skel: SkeletonInstance_T[OrderSkel]) -> SkeletonInstance_T[OrderSkel]
+    """
+
+    ORDER_UPDATE_ADDITION = enum.auto()
+    """Do some additional modifications on the OrderSkel on order_update action.
+    Called in :meth:`viur.shop.modules.order.Order.order_update` before saving with :meth:`Skeleton.toDB`.
+    type: (order_skel: SkeletonInstance_T[OrderSkel]) -> SkeletonInstance_T[OrderSkel]
+    """
+
+    ORDER_CHECKOUT_START_ADDITION = enum.auto()
+    """Do some additional modifications on the OrderSkel on checkout_start action.
+    Called in :meth:`viur.shop.modules.order.Order.checkout_start` before saving with :meth:`Skeleton.toDB`.
+    type: (order_skel: SkeletonInstance_T[OrderSkel]) -> SkeletonInstance_T[OrderSkel]
     """
 
 
@@ -57,6 +78,11 @@ class Customization(abc.ABC):
 
 
 class HookService:
+    """
+
+    Note: Methods should be called only with positional arguments. Or keyword-only if really necessary.
+    """
+
     customizations: t.Final[list[Customization]] = []
 
     def register(self, customization: Customization | t.Type[Customization]) -> Customization:
@@ -86,6 +112,7 @@ class HookService:
         HookService.customizations.remove(customization)
 
     def dispatch(self, kind: Hook, default: t.Callable = None) -> t.Callable:
+        """Choose the matching registered customization for this kind"""
         for customization in HookService.customizations:
             if kind is customization.kind:  # TODO: add by_kind map
                 logger.debug(f"found {customization=}")
