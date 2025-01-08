@@ -29,8 +29,13 @@ class Order(ShopModuleAbstract, List):
 
     def adminInfo(self) -> dict:
         admin_info = super().adminInfo()
-        admin_info["icon"] = "cart-check"
-        return admin_info
+        return admin_info | {
+            "icon": "cart-check",
+            "filter": {
+                "orderby": "creationdate",
+                "orderdir": 1,  # Descending
+            }
+        }
 
     # --- Session -------------------------------------------------------------
 
@@ -304,6 +309,9 @@ class Order(ShopModuleAbstract, List):
         errors = []
         if not order_skel["cart"]:
             errors.append(ClientError("cart is missing"))
+        if not order_skel["billing_address"]:
+            errors.append(ClientError("billing_address is missing"))
+        # Note: payment_provider el-if
         if not order_skel["payment_provider"]:
             errors.append(ClientError("missing payment_provider"))
         elif pp_errors := self.get_payment_provider_by_name(order_skel["payment_provider"]).can_checkout(order_skel):
@@ -421,6 +429,9 @@ class Order(ShopModuleAbstract, List):
             errors.append(ClientError("cart.total_quantity is zero"))
         if not order_skel["billing_address"]:
             errors.append(ClientError("billing_address is missing"))
+        if not order_skel["email"]:
+            errors.append(ClientError("email is missing"))
+        # Note: payment_provider el-if
         if not order_skel["payment_provider"]:
             errors.append(ClientError("missing payment_provider"))
         elif pp_errors := self.get_payment_provider_by_name(order_skel["payment_provider"]).can_order(order_skel):
