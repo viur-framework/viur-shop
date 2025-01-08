@@ -112,7 +112,7 @@ class EventService:
             try:
                 func(*args, **kwargs)
             except Exception as e:
-                logger.exception(f"Error while calling {func} at event {_event}: {e}")
+                logger.exception(f"Error while calling {func} at event {_event!r}: {e}")
                 if _raise_errors:
                     raise e
 

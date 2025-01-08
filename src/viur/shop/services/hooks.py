@@ -119,7 +119,7 @@ class HookService:
                 return customization
         logger.debug(f"found no customization")
         if default is None:
-            raise DispatchError(f"No customization found for {kind}", kind)
+            raise DispatchError(f"No customization found for {kind!r}", kind)
         logger.debug(f"use default customization {default=}")
         return default
 
