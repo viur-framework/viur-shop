@@ -298,10 +298,10 @@ class ScopeCustomerGroup(DiscountConditionScope):
         )
 
     def __call__(self) -> bool:
-        if current.user.get() is None:
-            return False
         if self.condition_skel["scope_customer_group"] == CustomerGroup.ALL:
             return True
+        if current.user.get() is None:
+            return False
         orders = (
             SHOP_INSTANCE.get().order.viewSkel().all()
             .filter("customer.dest.__key__ =", current.user.get()["key"])
