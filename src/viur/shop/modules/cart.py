@@ -183,7 +183,7 @@ class Cart(ShopModuleAbstract, Tree):
         **filters: t.Any,
     ) -> t.Iterator[SkeletonInstance]:
         if not isinstance(parent_cart_key, db.Key):
-            raise TypeError(f"parent_cart_key must be an instance of db.Key")
+            raise TypeError(f"parent_cart_key must be an instance of db.Key. Got {parent_cart_key!r} instead")
         for skel_type in ("node", "leaf"):
             skel = self.viewSkel(skel_type)
             query = skel.all().mergeExternalFilter(filters)
