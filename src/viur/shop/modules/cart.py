@@ -1,15 +1,15 @@
 import typing as t  # noqa
 
-import viur.shop.types.exceptions as e
 from viur.core import conf, current, db, errors, exposed, utils
 from viur.core.bones import BaseBone
 from viur.core.prototypes import Tree
 from viur.core.prototypes.tree import SkelType
 from viur.core.skeleton import Skeleton, SkeletonInstance
+
+import viur.shop.types.exceptions as e
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.types import *
 from viur.shop.types.exceptions import InvalidStateError
-
 from ..globals import SENTINEL, SHOP_LOGGER
 from ..skeletons.cart import CartItemSkel, CartNodeSkel
 from ..skeletons.order import OrderSkel
@@ -491,7 +491,10 @@ class Cart(ShopModuleAbstract, Tree):
                 skel.setBoneValue("shipping", shipping_key)
                 skel["shipping_status"] = ShippingStatus.USER
         else:
-            if skel["shipping_status"] == ShippingStatus.CHEAPEST:
+            if (
+                skel["shipping_status"] == ShippingStatus.CHEAPEST
+                and skel["key"] is not None  # During add there is no key assigned yet
+            ):
                 applicable_shippings = self.shop.shipping.get_shipping_skels_for_cart(skel["key"])
                 if applicable_shippings:
                     cheapest_shipping = min(applicable_shippings,
