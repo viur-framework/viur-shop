@@ -1,5 +1,6 @@
 """
-Event handling module
+Event Handling Module
+=====================
 
 This module provides a flexible and extensible event-handling system that
 allows methods to be attached to specific events.
@@ -7,52 +8,73 @@ These methods are triggered when the corresponding events occur,
 enabling custom behavior and seamless integration of additional functionality
 into the application workflow.
 
-### Key Components:
-1. **Event Enum**: Defines the set of events that can be triggered in the system.
-   These events act as unique identifiers for specific points in the order's lifecycle. For example:
-   - `CHECKOUT_STARTED`: Triggered when a checkout process starts.
-   - `ORDER_ORDERED`: Triggered when an order is created.
-   - `ORDER_PAID`: Triggered when an order is paid.
-   - `ORDER_RTS`: Triggered when an order is ready to ship.
+Key Components
+--------------
 
-2. **EventService**: Manages the registration, unregistration, and invocation of event-handling methods.
-   - **Registration**: Use `register()` to associate a function with a specific event.
-   - **Unregistration**: Use `unregister()` to detach a function from an event.
-   - **Invocation**: Use `call()` to trigger all functions associated with an event, passing any required arguments.
+1. **Event Enum**
+   Defines the set of events that can be triggered in the system.
+   These events act as unique identifiers for specific points in the order's lifecycle.
+   For example:
 
-3. **on_event Decorator**: A convenient decorator for attaching methods to specific events.
+   - ``CHECKOUT_STARTED``: Triggered when a checkout process starts.
+   - ``ORDER_ORDERED``: Triggered when an order is created.
+   - ``ORDER_PAID``: Triggered when an order is paid.
+   - ``ORDER_RTS``: Triggered when an order is ready to ship.
+
+2. **EventService**
+   Manages the registration, unregistration, and invocation of event-handling methods.
+
+   - **Registration**: Use ``register()`` to associate a function with a specific event.
+   - **Unregistration**: Use ``unregister()`` to detach a function from an event.
+   - **Invocation**: Use ``call()`` to trigger all functions associated with an event,
+     passing any required arguments.
+
+3. **on_event Decorator**
+   A convenient decorator for attaching methods to specific events.
    This provides a clear and concise way to define event-driven behavior.
 
-### Usage:
-#### Registering an Event Handler:
-You can register an event handler manually or use the `@on_event` decorator.
+Usage
+-----
 
-```python
-from mymodule.events import Event, on_event
+### Registering an Event Handler
 
-# Using the decorator
-@on_event(Event.CHECKOUT_STARTED)
-def notify_user_on_checkout(skel):
-    print(f"Checkout started with skel: {skel}")
+You can register an event handler manually or use the ``@on_event`` decorator.
 
-# Registering manually
-EVENT_SERVICE.register(Event.ORDER_PAID, process_payment)
+.. code-block:: python
 
-### Triggering an Event:
-To trigger an event and execute all associated methods, use the call method of EventService.
+   from mymodule.events import Event, on_event
 
-```python
-from mymodule.events import EVENT_SERVICE, Event
+   # Using the decorator
+   @on_event(Event.CHECKOUT_STARTED)
+   def notify_user_on_checkout(skel):
+       print(f"Checkout started with skel: {skel}")
 
-EVENT_SERVICE.call(Event.CHECKOUT_STARTED, skel=order_skel)
-```
+   # Registering manually
+   EVENT_SERVICE.register(Event.ORDER_PAID, process_payment)
 
-### Error Handling:
-The call() method includes an _raise_errors parameter to control
+### Triggering an Event
+
+To trigger an event and execute all associated methods,
+use the ``call`` method of ``EventService``.
+
+.. code-block:: python
+
+   from mymodule.events import EVENT_SERVICE, Event
+
+   EVENT_SERVICE.call(Event.CHECKOUT_STARTED, skel=order_skel)
+
+Error Handling
+--------------
+
+The ``call()`` method includes an ``_raise_errors`` parameter to control
 whether exceptions should propagate or be suppressed.
 
-This module simplifies event-driven programming by decoupling event producers and consumers,
-allowing developers to extend the application without modifying its core logic.
+Overview
+--------
+
+This module simplifies event-driven programming by decoupling event producers
+and consumers, allowing developers to extend the application without modifying
+its core logic.
 """
 
 import collections
