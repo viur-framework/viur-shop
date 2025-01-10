@@ -11,6 +11,7 @@ from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.types import *
 from viur.shop.types.exceptions import InvalidStateError
 from ..globals import SENTINEL, SHOP_LOGGER
+from ..services import EVENT_SERVICE, Event, EventService
 from ..skeletons.cart import CartItemSkel, CartNodeSkel
 from ..skeletons.order import OrderSkel
 
@@ -315,6 +316,7 @@ class Cart(ShopModuleAbstract, Tree):
             )
         if skel["quantity"] == 0:
             skel.delete()
+            EVENT_SERVICE.call(Event.ARTICLE_CHANGED, skel=skel, deleted=True)
             return None
         try:
             discount_type = parent_skel["discount"]["dest"]["discount_type"]
@@ -328,12 +330,14 @@ class Cart(ShopModuleAbstract, Tree):
                 descr_appendix=f'Quantity of free article cannot be greater than 1! (reached {skel["quantity"]})'
             )
         key = skel.toDB()
+        EVENT_SERVICE.call(Event.ARTICLE_CHANGED, skel=skel, deleted=False)
         self.clear_children_cache()
         # TODO: Validate quantity with hook (stock availability)
         if parent_skel["shipping_status"] == ShippingStatus.CHEAPEST:
             parent_skel = self._cart_set_values(
                 skel=parent_skel
             )
+            EVENT_SERVICE.call(Event.CART_CHANGED, skel=parent_skel, deleted=False)
             parent_skel.toDB()
 
         return skel
@@ -369,6 +373,7 @@ class Cart(ShopModuleAbstract, Tree):
                 f"Target cart node is inside a different repo"
             )
         skel["parententry"] = new_parent_cart_key
+        EVENT_SERVICE.call(Event.ARTICLE_CHANGED, skel=skel, deleted=False)
         skel.toDB()
         return skel
 
@@ -401,6 +406,7 @@ class Cart(ShopModuleAbstract, Tree):
             discount_key=discount_key,
         )
         skel.toDB()
+        EVENT_SERVICE.call(Event.CART_CHANGED, skel=skel, deleted=False)
         self.onAdded("node", skel)
         return skel
 
@@ -439,6 +445,7 @@ class Cart(ShopModuleAbstract, Tree):
             discount_key=discount_key,
         )
         skel.toDB()
+        EVENT_SERVICE.call(Event.CART_CHANGED, skel=skel, deleted=False)
         return skel
 
     def _cart_set_values(
@@ -525,6 +532,7 @@ class Cart(ShopModuleAbstract, Tree):
                 # del self.session["session_cart_key"]
                 # current.session.get().markChanged()
         skel.delete()
+        EVENT_SERVICE.call(Event.CART_CHANGED, skel=skel, deleted=True)
 
     # --- Cart / order calculations -------------------------------------------
 
@@ -573,7 +581,11 @@ class Cart(ShopModuleAbstract, Tree):
         new_parent_skel["parentrepo"] = leaf_skel["parentrepo"]
         for key, value in kwargs.items():
             new_parent_skel[key] = value  # TODO: use .setBoneValue?
+        self.onAdd("node", new_parent_skel)
         new_parent_skel.toDB()
+        self.onAdded("node", new_parent_skel)
+        EVENT_SERVICE.call(Event.CART_CHANGED, skel=new_parent_skel, deleted=False)
         leaf_skel["parententry"] = new_parent_skel["key"]
         leaf_skel.toDB()
+        EVENT_SERVICE.call(Event.ARTICLE_CHANGED, skel=leaf_skel, deleted=False)
         return new_parent_skel

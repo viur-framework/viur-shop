@@ -42,12 +42,12 @@ You can register an event handler manually or use the ``@on_event`` decorator.
 
 .. code-block:: python
 
-   from mymodule.events import Event, on_event
+   from viur.shop.services import Event, on_event
 
    # Using the decorator
    @on_event(Event.CHECKOUT_STARTED)
-   def notify_user_on_checkout(skel):
-       print(f"Checkout started with skel: {skel}")
+   def notify_user_on_checkout(order_skel):
+       print(f"Checkout started with skel: {order_skel}")
 
    # Registering manually
    EVENT_SERVICE.register(Event.ORDER_PAID, process_payment)
@@ -59,9 +59,9 @@ use the ``call`` method of ``EventService``.
 
 .. code-block:: python
 
-   from mymodule.events import EVENT_SERVICE, Event
+   from viur.shop.services import Event, on_event
 
-   EVENT_SERVICE.call(Event.CHECKOUT_STARTED, skel=order_skel)
+   EVENT_SERVICE.call(Event.CHECKOUT_STARTED, order_skel=order_skel)
 
 Error Handling
 --------------
@@ -93,6 +93,15 @@ class Event(enum.IntEnum):
     This enumeration serves as the central registry for all predefined events
     that can be triggered and observed by the `EventService`.
     """
+
+    ARTICLE_CHANGED = enum.auto()
+    """Triggered when an article inside the cart (leaf) changed."""
+
+    CART_CHANGED = enum.auto()
+    """Triggered when a cart (node) changed."""
+
+    ORDER_CHANGED = enum.auto()
+    """Triggered when an order changed."""
 
     CHECKOUT_STARTED = enum.auto()
     """Triggered when a user begins the checkout process."""
