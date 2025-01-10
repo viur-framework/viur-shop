@@ -166,6 +166,7 @@ class Order(ShopModuleAbstract, List):
         skel.toDB()
         self.current_session_order_key = skel["key"]
         self.onAdded(skel)
+        EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=skel, deleted=False)
         return skel
 
     def order_update(
@@ -205,6 +206,7 @@ class Order(ShopModuleAbstract, List):
         self.onEdit(skel)
         skel.toDB()
         self.onEdited(skel)
+        EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=skel, deleted=False)
         return skel
 
     def _order_set_values(
@@ -311,6 +313,7 @@ class Order(ShopModuleAbstract, List):
             pass
         order_skel.toDB()
         self.set_checkout_in_progress(order_skel)
+        EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=order_skel, deleted=False)
         return JsonResponse({
             "skel": order_skel,
             "payment": self.get_payment_provider_by_name(order_skel["payment_provider"]).get_checkout_start_data(
@@ -372,6 +375,7 @@ class Order(ShopModuleAbstract, List):
             f'{ba_skel["key"]} != {ba_key}'
         order_skel.setBoneValue("billing_address", ba_skel["key"])
         order_skel.toDB()
+        EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=order_skel, deleted=False)
 
         return order_skel
 
@@ -424,6 +428,7 @@ class Order(ShopModuleAbstract, List):
         # TODO: charge order if it should directly be charged
         pp_res = self.get_payment_provider_by_name(order_skel["payment_provider"]).checkout(order_skel)
         order_skel = self.set_ordered(order_skel, pp_res)
+        EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=order_skel, deleted=False)
         return JsonResponse({
             "skel": order_skel,
             "payment": pp_res,
@@ -463,6 +468,7 @@ class Order(ShopModuleAbstract, List):
             values={"is_checkout_in_progress": True},
         )
         EVENT_SERVICE.call(Event.CHECKOUT_STARTED, order_skel=order_skel)
+        EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=order_skel, deleted=False)
         return order_skel
 
     def set_ordered(self, order_skel: "SkeletonInstance", payment: t.Any) -> "SkeletonInstance":
@@ -473,6 +479,7 @@ class Order(ShopModuleAbstract, List):
             values={"is_ordered": True},
         )
         EVENT_SERVICE.call(Event.ORDER_ORDERED, order_skel=order_skel, payment=payment)
+        EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=order_skel, deleted=False)
         return order_skel
 
     def set_paid(self, order_skel: "SkeletonInstance") -> "SkeletonInstance":
@@ -483,6 +490,7 @@ class Order(ShopModuleAbstract, List):
             values={"is_paid": True},
         )
         EVENT_SERVICE.call(Event.ORDER_PAID, order_skel=order_skel)
+        EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=order_skel, deleted=False)
         return order_skel
 
     def set_rts(self, order_skel: "SkeletonInstance") -> "SkeletonInstance":
@@ -493,6 +501,7 @@ class Order(ShopModuleAbstract, List):
             values={"is_rts": True},
         )
         EVENT_SERVICE.call(Event.ORDER_RTS, order_skel=order_skel)
+        EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=order_skel, deleted=False)
         return order_skel
 
     # --- Internal helpers  ----------------------------------------------------
