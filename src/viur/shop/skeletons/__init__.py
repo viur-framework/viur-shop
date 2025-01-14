@@ -46,4 +46,4 @@ for _key, _value in locals().copy().items():
                     "_hint": _bone_instance.descr.hint,
                 }
 
-# pprint(tr)
+# pprint(_tr, width=200)
