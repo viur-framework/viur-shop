@@ -716,6 +716,12 @@ TRANSLATIONS = {
         "en": "Email",
         "fr": "Email",
     },
+    "viur.shop.skeleton.order.phone": {
+        "_hint": "bone phone<StringBone> in OrderSkel in viur.shop",
+        "de": "Telefonnummer",
+        "en": "Phone number",
+        "fr": "Téléphone",
+    },
     "viur.shop.skeleton.order.is_checkout_in_progress": {
         "_hint": "bone is_checkout_in_progress<BooleanBone> in OrderSkel in viur.shop",
         "de": "Bestellvorgang läuft",

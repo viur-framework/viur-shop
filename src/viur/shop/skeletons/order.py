@@ -91,6 +91,9 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
     )
     """Kopieren von User oder Eingabe von Nutzer bei Gast"""
 
+    phone = StringBone(
+    )
+
     project_data = JsonBone(
     )
     """Zusätzliche Daten vom Projekt für eine Bestellung.
