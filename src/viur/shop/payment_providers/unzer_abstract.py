@@ -16,6 +16,19 @@ from ..types import exceptions as e
 logger = SHOP_LOGGER.getChild(__name__)
 
 
+class UnzerClientViURShop(unzer.UnzerClient):
+
+    def _request(self, url, method, headers, payload, auth):
+        # Extend with ViUR Logic:
+        # Before the request is performed, we update the accept-language with
+        # the language of the current request, except it's explicit set.
+        if self.language is None:
+            # language for translation of customerMessage in errors
+            headers["accept-language"] = current.language.get()
+
+        return super()._request(url, method, headers, payload, auth)
+
+
 class UnzerAbstract(PaymentProviderAbstract):
 
     def __init__(
@@ -24,15 +37,23 @@ class UnzerAbstract(PaymentProviderAbstract):
         private_key: str,
         public_key: str,
         sandbox: bool = False,
-        language: str = "en",
+        language: str | None = None,
         **kwargs: t.Any,
     ) -> None:
+        """
+        Create a new Unzer payment provider.
+
+        :param private_key: The private key to use for authentication.
+        :param public_key: The public key to use for authentication.
+        :param sandbox: Use sandbox mode (development mode).
+        :param language: Enforce this language. If ``None``, the language of the current request is used.
+        """
         super().__init__(**kwargs)
         self.private_key = private_key
         self.public_key = public_key
         self.sandbox = sandbox
         self.language = language
-        self.client = unzer.UnzerClient(
+        self.client = UnzerClientViURShop(
             private_key=self.private_key,
             public_key=self.public_key,
             sandbox=self.sandbox,
