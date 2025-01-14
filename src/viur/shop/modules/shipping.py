@@ -24,12 +24,16 @@ class Shipping(ShopModuleAbstract, List):
 
     def choose_shipping_skel_for_article(
         self,
-        article_skel: SkeletonInstance_T[ArticleAbstractSkel]
+        article_skel: SkeletonInstance_T[ArticleAbstractSkel],
+        *,
+        country: str | None = None,
     ) -> SkeletonInstance_T[ShippingSkel] | None | t.Literal[False]:
         """
         Chooses always the cheapest, applicable shipping for an article
 
         Ignores the supplier
+
+        :param country: Ignore the context and get shipping for this country.
 
         # TODO(discuss): List all options?
         """
@@ -43,7 +47,8 @@ class Shipping(ShopModuleAbstract, List):
         applicable_shippings = []
         for shipping in shipping_config_skel["shipping"]:
             is_applicable, reason = self.shop.shipping_config.is_applicable(
-                shipping["dest"], shipping["rel"], article_skel=article_skel)
+                shipping["dest"], shipping["rel"], article_skel=article_skel,
+                country=country)
             logger.debug(f"{shipping=} --> {is_applicable=} | {reason=}")
             if is_applicable:
                 applicable_shippings.append(shipping)
@@ -59,13 +64,16 @@ class Shipping(ShopModuleAbstract, List):
 
     def get_shipping_skels_for_cart(
         self,
-        cart_key: db.Key
+        cart_key: db.Key,
+        *,
+        country: str | None = None,
     ) -> list[SkeletonInstance_T[ShippingSkel]]:
         """Get all configured and applicable shippings of all items in the cart
 
         # TODO: how do we handle free shipping discounts?
 
         :param cart_key: Key of the parent cart node, can be a sub-cart too
+        :param country: Ignore the context and get shipping for this country.
         :return: A list of :class:`SkeletonInstance`s for the :class:`ShippingSkel`.
         """
         cart_skel = self.shop.cart.viewSkel("node")
@@ -100,7 +108,8 @@ class Shipping(ShopModuleAbstract, List):
         applicable_shippings: list[SkeletonInstance_T[ShippingSkel]] = []
         for shipping in all_shipping:
             is_applicable, reason = self.shop.shipping_config.is_applicable(
-                shipping["dest"], shipping["rel"], cart_skel=cart_skel)
+                shipping["dest"], shipping["rel"], cart_skel=cart_skel,
+                country=country)
             logger.debug(f"{shipping=} --> {is_applicable=} | {reason=}")
             if is_applicable:
                 applicable_shippings.append(shipping)
