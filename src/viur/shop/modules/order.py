@@ -458,8 +458,6 @@ class Order(ShopModuleAbstract, List):
             errors.append(ClientError("billing_address is missing"))
         if not order_skel["email"]:
             errors.append(ClientError("email is missing"))
-        logger.debug(
-            f'{order_skel["phone"]=} | {order_skel.phone.required=} | {order_skel.phone.params.get("required")=}')
         if not order_skel["phone"]:
             errors.append(ClientError(
                 "phone is missing",
