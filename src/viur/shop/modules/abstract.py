@@ -79,3 +79,4 @@ class ShopModuleAbstract(Module):
             raise NotImplementedError(type(self))
         super().onAdded(*args)  # noqa: Modules which call onAdded, has this in the prototype
         self.session.setdefault("created_skel_keys", []).append(skel["key"])
+        current.session.get().markChanged()
