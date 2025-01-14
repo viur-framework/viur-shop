@@ -2,10 +2,9 @@ import logging
 import time
 import typing as t  # noqa
 
+from viur import toolkit
 from viur.core import current, db, errors as core_errors, exposed, force_post
 from viur.core.prototypes import List
-
-from viur import toolkit
 from viur.shop.types import *
 from viur.shop.types.results import PaymentProviderResult
 from .abstract import ShopModuleAbstract
@@ -122,6 +121,7 @@ class Order(ShopModuleAbstract, List):
         payment_provider: str = SENTINEL,
         billing_address_key: db.Key = SENTINEL,
         email: str = SENTINEL,
+        phone: str = SENTINEL,
         customer_key: db.Key = SENTINEL,
         state_ordered: bool = SENTINEL,
         state_paid: bool = SENTINEL,
@@ -153,6 +153,7 @@ class Order(ShopModuleAbstract, List):
             payment_provider=payment_provider,
             billing_address_key=billing_address_key,
             email=email,
+            phone=phone,
             customer_key=customer_key,
             state_ordered=state_ordered,
             state_paid=state_paid,
@@ -175,6 +176,7 @@ class Order(ShopModuleAbstract, List):
         payment_provider: str = SENTINEL,
         billing_address_key: db.Key = SENTINEL,
         email: str = SENTINEL,
+        phone: str = SENTINEL,
         customer_key: db.Key = SENTINEL,
         state_ordered: bool = SENTINEL,
         state_paid: bool = SENTINEL,
@@ -194,6 +196,7 @@ class Order(ShopModuleAbstract, List):
             payment_provider=payment_provider,
             billing_address_key=billing_address_key,
             email=email,
+            phone=phone,
             customer_key=customer_key,
             state_ordered=state_ordered,
             state_paid=state_paid,
@@ -216,6 +219,7 @@ class Order(ShopModuleAbstract, List):
         payment_provider: str = SENTINEL,
         billing_address_key: db.Key = SENTINEL,
         email: str = SENTINEL,
+        phone: str = SENTINEL,
         customer_key: db.Key = SENTINEL,
         state_ordered: bool = SENTINEL,
         state_paid: bool = SENTINEL,
@@ -241,6 +245,9 @@ class Order(ShopModuleAbstract, List):
             skel.setBoneValue("customer", user["key"])
         if email is not SENTINEL:
             skel["email"] = email
+        if phone is not SENTINEL:
+            if not skel.setBoneValue("phone", phone):
+                raise e.InvalidArgumentException("phone")
         if customer_key is not SENTINEL:
             if not self.customer_is_valid(skel, customer_key):
                 raise e.InvalidArgumentException("customer_key")
@@ -295,7 +302,7 @@ class Order(ShopModuleAbstract, List):
         if not order_skel.fromDB(order_key):
             raise core_errors.NotFound()
         order_skel.refresh()  # TODO: cart.shipping_address relation seems not be updated by the core
-        if errors := self.can_checkout(order_skel):
+        if ClientError.has_failing_error(errors := self.can_checkout(order_skel)):
             logging.error(errors)
             return JsonResponse({
                 "errors": errors,
@@ -417,7 +424,7 @@ class Order(ShopModuleAbstract, List):
         if not order_skel.fromDB(order_key):
             raise core_errors.NotFound()
 
-        if errors := self.can_order(order_skel):
+        if ClientError.has_failing_error(errors := self.can_order(order_skel)):
             logging.error(errors)
             return JsonResponse({
                 "errors": errors,
@@ -451,6 +458,14 @@ class Order(ShopModuleAbstract, List):
             errors.append(ClientError("billing_address is missing"))
         if not order_skel["email"]:
             errors.append(ClientError("email is missing"))
+        logger.debug(
+            f'{order_skel["phone"]=} | {order_skel.phone.required=} | {order_skel.phone.params.get("required")=}')
+        if not order_skel["phone"]:
+            errors.append(ClientError(
+                "phone is missing",
+                # Phone number can be enforced by setting the whole bone required or soft-required via params.
+                causes_failure=order_skel.phone.required or order_skel.phone.params.get("required") or False,
+            ))
         # Note: payment_provider el-if
         if not order_skel["payment_provider"]:
             errors.append(ClientError("missing payment_provider"))

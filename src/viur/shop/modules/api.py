@@ -1,13 +1,13 @@
 import typing as t  # noqa
 
-import viur.shop.types.exceptions as e
 from google.protobuf.message import DecodeError
+
+import viur.shop.types.exceptions as e
 from viur.core import current, db, errors, exposed, force_post
 from viur.core.render.json.default import DefaultRender as JsonRenderer
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.skeletons import ShippingSkel
 from viur.shop.types import *
-
 from ..globals import SENTINEL, SHOP_INSTANCE_VI, SHOP_LOGGER
 
 if t.TYPE_CHECKING:
@@ -302,6 +302,7 @@ class Api(ShopModuleAbstract):
         payment_provider: str = SENTINEL,
         billing_address_key: str | db.Key = SENTINEL,
         email: str = SENTINEL,
+        phone: str = SENTINEL,
         customer_key: str | db.Key = SENTINEL,
         state_ordered: bool = SENTINEL,
         state_paid: bool = SENTINEL,
@@ -313,7 +314,7 @@ class Api(ShopModuleAbstract):
         ...
         return JsonResponse(self.shop.order.order_add(
             cart_key, payment_provider, billing_address_key,
-            email, customer_key, state_ordered, state_paid, state_rts))
+            email, phone, customer_key, state_ordered, state_paid, state_rts))
 
     @exposed
     @force_post
@@ -324,6 +325,7 @@ class Api(ShopModuleAbstract):
         payment_provider: str = SENTINEL,
         billing_address_key: str | db.Key = SENTINEL,
         email: str = SENTINEL,
+        phone: str = SENTINEL,
         customer_key: str | db.Key = SENTINEL,
         state_ordered: bool = SENTINEL,
         state_paid: bool = SENTINEL,
@@ -334,7 +336,7 @@ class Api(ShopModuleAbstract):
         customer_key = self._normalize_external_key(customer_key, "customer_key", True)
         return JsonResponse(self.shop.order.order_update(
             order_key, payment_provider, billing_address_key,
-            email, customer_key, state_ordered, state_paid, state_rts))
+            email, phone, customer_key, state_ordered, state_paid, state_rts))
 
     @exposed
     @force_post
@@ -391,14 +393,16 @@ class Api(ShopModuleAbstract):
         self,
         order_skel: SkeletonInstance_T["OrderSkel"],
     ) -> OrderViewResult:
+        can_order_errors = self.shop.order.can_order(order_skel)
+        can_checkout_errors = self.shop.order.can_checkout(order_skel)
         return {
             "skel": order_skel,
             "can_order": {
-                "status": not bool(can_order_errors := self.shop.order.can_order(order_skel)),
+                "status": not ClientError.has_failing_error(can_order_errors),
                 "errors": can_order_errors,
             },
             "can_checkout": {
-                "status": not bool(can_checkout_errors := self.shop.order.can_checkout(order_skel)),
+                "status": not ClientError.has_failing_error(can_checkout_errors),
                 "errors": can_checkout_errors,
             },
         }
