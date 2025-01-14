@@ -846,7 +846,7 @@ TRANSLATIONS = {
         "fr": "Nom",
     },
     "viur.shop.skeleton.vat.percentage": {
-        "_hint": "bone rate<NumericBone> in VatSkel in viur.shop",
+        "_hint": "bone percentage<NumericBone> in VatSkel in viur.shop",
         "de": "Steuersatz (%)",
         "en": "Rate",
         "fr": "Taux d'imposition",
