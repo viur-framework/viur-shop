@@ -115,6 +115,7 @@ class DiscountSkel(Skeleton):  # STATE: Complete (as in model)
         required=True,
         values=ConditionOperator,
         defaultValue=ConditionOperator.ALL,
+        translation_key_prefix="viur.shop.condition_operator.",
     )
 
     activate_automatically = BooleanBone(
