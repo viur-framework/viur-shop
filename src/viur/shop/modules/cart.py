@@ -65,6 +65,7 @@ class Cart(ShopModuleAbstract, Tree):
             user_skel.fromDB(user["key"])
             if user_skel["basket"]:
                 self.session["session_cart_key"] = user_skel["basket"]["dest"]["key"]
+                current.session.get().markChanged()
         self._ensure_current_session_cart()
         return self.session.get("session_cart_key")
 
