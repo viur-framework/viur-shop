@@ -70,7 +70,7 @@ class DiscountSkel(Skeleton):  # STATE: Complete (as in model)
     discount_type = SelectBone(
         required=True,
         values=DiscountType,
-        translation_key_prefix=translation_key_prefix_skeleton_bonename,
+        translation_key_prefix="viur.shop.discount_type.",
     )
 
     absolute = NumericBone(

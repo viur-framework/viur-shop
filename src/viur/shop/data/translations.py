@@ -239,6 +239,27 @@ TRANSLATIONS = {
         "en": "All conditions must be satisfied (logical and)",
         "de": "Alle Bedingungen müssen erfüllt sein (logisches und)",
     },
+    # DiscountType
+    "viur.shop.discount_type.percentage": {
+        "de": "Prozentualer Rabatt",
+        "en": "Percentage discount",
+        "fr": "Remise en pourcentage",
+    },
+    "viur.shop.discount_type.absolute": {
+        "de": "Absoluter Rabatt",
+        "en": "Absolute discount",
+        "fr": "Remise absolue",
+    },
+    "viur.shop.discount_type.free_article": {
+        "de": "Gratisartikel",
+        "en": "Free article",
+        "fr": "Article gratuit",
+    },
+    "viur.shop.discount_type.free_shipping": {
+        "de": "Kostenloser Versand",
+        "en": "Free shipping",
+        "fr": "Livraison gratuite",
+    },
 
     # --- Bone names ----------------------------------------------------------
     "viur.shop.skeleton.address.address_addition": {
