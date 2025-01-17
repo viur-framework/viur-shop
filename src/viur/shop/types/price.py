@@ -2,10 +2,10 @@ import functools
 import json
 import typing as t  # noqa
 
-from viur import toolkit
-from viur.core import current, utils
+from viur.core import current, db, utils
 from viur.core.skeleton import SkeletonInstance
 
+from viur import toolkit
 from .enums import ApplicationDomain, ConditionOperator, DiscountType
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 from ..types import ConfigurationError
@@ -186,11 +186,11 @@ class Price:
     def vat_included(self) -> float:
         """Calculate the included vat value based on current price and vat rate"""
         try:
-            return toolkit.round_decimal(self.vat_rate_percentage * self.current, 2)
+            return toolkit.round_decimal(self.gross_to_vat(self.current, self.vat_rate_percentage), 2)
         except TypeError:  # One value is None
             return 0.0
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         from viur.shop.types import ExtendedCustomJsonEncoder
         return {
             attr_name: getattr(self, attr_name)
@@ -205,7 +205,7 @@ class Price:
     def apply_discount(
         discount_skel: SkeletonInstance,
         article_price: float
-    ):
+    ) -> float:
         """Apply a given discount on the given price and return the new price"""
         if discount_skel["discount_type"] == DiscountType.FREE_ARTICLE:
             return 0.0
@@ -222,12 +222,22 @@ class Price:
 
     @staticmethod
     def gross_to_net(gross_value: float, vat_value: float) -> float:
+        if not (0 <= vat_value <= 1):
+            raise ValueError(f"Invalid vat value: {vat_value}")
         if not gross_value:
             return 0.0
         return gross_value / (1 + vat_value)
 
+    @staticmethod
+    def gross_to_vat(gross_value: float, vat_value: float) -> float:
+        if not (0 <= vat_value <= 1):
+            raise ValueError(f"Invalid vat value: {vat_value}")
+        if not gross_value:
+            return 0.0
+        return Price.gross_to_net(gross_value, vat_value) * vat_value
+
     @classmethod
-    def get_or_create(cls, src_object):
+    def get_or_create(cls, src_object) -> t.Self:
         """Get a existing cached or create a new Price object for ArticleSkel or CartItemSkel and cache it"""
         # logger.debug(f"Called get_or_create with {src_object = }")
         try:
@@ -242,5 +252,5 @@ class Price:
 
     @classmethod
     @property
-    def cache(cls):
+    def cache(cls) -> dict[db.Key, t.Self]:
         return current.request_data.get().setdefault("viur.shop", {}).setdefault("price_cache", {})

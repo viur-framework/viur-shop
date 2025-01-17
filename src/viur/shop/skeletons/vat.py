@@ -30,7 +30,7 @@ class VatIncludedSkel(VatSkel):
 
     value = NumericBone(
         required=True,
-        # precision=2,
+        precision=2,
         min=0,
         getEmptyValueFunc=lambda: None,
         # TODO: UnitBone / CurrencyBone
