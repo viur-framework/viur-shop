@@ -282,6 +282,7 @@ class Cart(ShopModuleAbstract, Tree):
             if not article_skel.fromDB(article_key):
                 raise errors.NotFound(f"Article with key {article_key=} does not exist!")
             if not article_skel["shop_listed"]:
+                logger.debug(f"not listed: {article_skel=}")
                 raise errors.UnprocessableEntity(f"Article is not listed for the shop!")
             # Copy values from the article
             for bone in skel.keys():
