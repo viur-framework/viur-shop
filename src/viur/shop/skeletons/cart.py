@@ -5,12 +5,16 @@ from viur.core import db
 from viur.core.bones import *
 from viur.core.prototypes.tree import TreeSkel
 from viur.core.skeleton import SkeletonInstance
+
+from viur import toolkit
 from viur.shop.types import *
-from .vat import VatIncludedSkel, VatSkel
+from .vat import VatIncludedSkel
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 from ..types.response import make_json_dumpable
 
 logger = SHOP_LOGGER.getChild(__name__)
+
+Addition = t.Callable[["TotalFactory", float, SkeletonInstance_T["CartNodeSkel"], BaseBone], float]
 
 
 class TotalFactory:
@@ -21,6 +25,8 @@ class TotalFactory:
         multiply_quantity: bool = True,
         precision: int | None = None,
         use_cache: bool = True,
+        *,
+        additions: list[Addition] | tuple[Addition, ...] = (),
     ):
         super().__init__()
         self.bone_node = bone_node
@@ -28,6 +34,7 @@ class TotalFactory:
         self.multiply_quantity = multiply_quantity
         self.precision = precision
         self.use_cache = use_cache
+        self.additions = additions
 
     def _get_children(self, parent_cart_key: db.Key) -> list[SkeletonInstance]:
         if self.use_cache:
@@ -35,7 +42,7 @@ class TotalFactory:
         else:
             return SHOP_INSTANCE.get().cart.get_children(parent_cart_key)
 
-    def __call__(self, skel: "CartNodeSkel", bone: NumericBone):
+    def __call__(self, skel: SkeletonInstance_T["CartNodeSkel"], bone: NumericBone):
         children = self._get_children(skel["key"])
         total = 0
         for child in children:
@@ -55,34 +62,40 @@ class TotalFactory:
                         value *= child["quantity"]
                     total += value
 
+        for addition in self.additions:
+            total = addition(self, total, skel, bone)
+
         return round(
             total,
             self.precision if self.precision is not None else bone.precision
         )
 
 
-class DiscountFactory(TotalFactory):
-    def __call__(self, skel: "CartNodeSkel", bone: NumericBone):
-        total = super().__call__(skel, bone)
-        if discount := skel["discount"]:
-            if any(
-                condition["dest"]["application_domain"] == ApplicationDomain.BASKET
-                for condition in discount["dest"]["condition"]
-            ):
-                total = Price.apply_discount(discount["dest"], total)
-        return round(
-            total,
-            self.precision if self.precision is not None else bone.precision
-        )
+# @toolkit.debug
+def add_discount(factory: TotalFactory, total: float, skel: "SkeletonInstance", bone: BaseBone) -> float:
+    if discount := skel["discount"]:
+        if any(
+            condition["dest"]["application_domain"] == ApplicationDomain.BASKET
+            for condition in discount["dest"]["condition"]
+        ):
+            total = Price.apply_discount(discount["dest"], total)
+    return total
 
 
-def get_vat_for_node(skel: "CartNodeSkel", bone: RecordBone):
+# @toolkit.debug
+def add_shipping(factory: TotalFactory, total: float, skel: "SkeletonInstance", bone: BaseBone) -> float:
+    if shipping := skel["shipping"]:
+        total += shipping["dest"]["shipping_cost"] or 0.0
+    return total
+
+
+def get_vat_for_node(skel: "CartNodeSkel", bone: RecordBone) -> list[dict]:
     children = SHOP_INSTANCE.get().cart.get_children_from_cache(skel["key"])
     cat2value = collections.defaultdict(lambda: 0)
     cat2rate = {}
-    logger.debug(f"{skel=}")
+    # logger.debug(f"{skel=}")
     for child in children:
-        logger.debug(f"{child=}")
+        # logger.debug(f"{child=}")
         if issubclass(child.skeletonCls, CartNodeSkel):
             for entry in child["vat"] or []:
                 logger.debug(f'{child["shop_vat_rate_category"]} | {entry=}')
@@ -94,8 +107,25 @@ def get_vat_for_node(skel: "CartNodeSkel", bone: RecordBone):
                 cat2rate[child["shop_vat_rate_category"]] = child.price_.vat_rate_percentage
             except TypeError as e:
                 logger.warning(e)
+
+    if shipping := skel["shipping"]:
+        try:
+            shipping_country = skel["shipping_address"]["dest"]["country"]
+        except (KeyError, TypeError):
+            shipping_country = None
+        vat_percentage = SHOP_INSTANCE.get().vat_rate.get_vat_rate_for_country(
+            country=shipping_country, category=VatRateCategory.STANDARD,
+        )
+        vat_value = Price.gross_to_vat(shipping["dest"]["shipping_cost"] or 0.0, vat_percentage / 100.0)
+        cat2rate[VatRateCategory.STANDARD] = vat_percentage
+        cat2value[VatRateCategory.STANDARD] += vat_value
+
     return [
-        {"category": cat, "value": value, "percentage": cat2rate[cat]}
+        {
+            "category": cat,
+            "value": toolkit.round_decimal(value, bone.using.percentage.precision),
+            "percentage": cat2rate[cat],
+        }
         for cat, value in cat2value.items()
         if cat and value
     ]
@@ -115,7 +145,8 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     total = NumericBone(
         precision=2,
         compute=Compute(
-            TotalFactory("total", lambda child: child.price_.current, True),
+            TotalFactory("total", lambda child: child.price_.current, True,
+                         additions=[add_shipping]),
             ComputeInterval(ComputeMethod.Always),
         ),
     )
@@ -123,7 +154,8 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     total_discount_price = NumericBone(
         precision=2,
         compute=Compute(
-            DiscountFactory("total_discount_price", lambda child: child.price_.current, True),
+            TotalFactory("total_discount_price", lambda child: child.price_.current, True,
+                         additions=[add_discount, add_shipping]),
             ComputeInterval(ComputeMethod.Always),
         ),
     )
