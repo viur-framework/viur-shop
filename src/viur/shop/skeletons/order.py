@@ -41,8 +41,11 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
         consistency=RelationalConsistency.PreventDeletion,
         refKeys=[
             "name",
-            "shipping_address",
+            "total",
+            "total_discount_price",
+            "vat",
             "total_quantity",
+            "shipping_address",
             "shipping",
             "project_data",
         ],
