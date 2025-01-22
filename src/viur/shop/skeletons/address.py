@@ -1,3 +1,4 @@
+from viur.core import conf, current, i18n
 from viur.core.bones import *
 from viur.core.skeleton import Skeleton
 from viur.shop.types import *
@@ -62,8 +63,18 @@ class AddressSkel(Skeleton):  # STATE: Complete (as in model)
     )
 
     zip_code = StringBone(
-        params={"group": "Customer Address"},
         required=True,
+        params={
+            "group": "Customer Address",
+            "pattern": {
+                country: r"\d{4,5}"
+                for country in conf.i18n.available_dialects
+            },
+            "pattern-error": i18n.translate(
+                "viur.shop.skeleton.address.zip_code.invalid",
+                public=True,
+            ),
+        },
     )
 
     city = StringBone(
@@ -78,6 +89,39 @@ class AddressSkel(Skeleton):  # STATE: Complete (as in model)
 
     customer = RelationalBone(
         kind="user",
+    )
+
+    email = EmailBone(
+        required=True,
+        defaultValue=lambda skel, bone: current.user.get() and current.user.get()["name"],
+        params={
+            "group": "Customer Info",
+            "pattern": {
+                # Pattern source: https://html.spec.whatwg.org/multipage/input.html#valid-e-mail-address
+                country: r"/^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/"  # noqa
+                for country in conf.i18n.available_dialects
+            },
+            "pattern-error": i18n.translate(
+                "viur.shop.skeleton.address.email.invalid",
+                public=True,
+            ),
+        },
+    )
+    """Kopieren von User oder Eingabe von Nutzer bei Gast"""
+
+    phone = StringBone(
+        required=True,
+        params={
+            "group": "Customer Info",
+            "pattern": {
+                country: r"^\+?(?:[\-\|\/\s\(\)]*\d){5,}$"
+                for country in conf.i18n.available_dialects
+            },
+            "pattern-error": i18n.translate(
+                "viur.shop.skeleton.address.phone.invalid",
+                public=True,
+            ),
+        },
     )
 
     # FIXME: What happens if an AddressSkel has both address_types and is_default
