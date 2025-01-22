@@ -1,5 +1,6 @@
 import abc
 import functools
+import uuid
 
 from viur import toolkit
 from viur.core import Module, translate, utils
@@ -136,6 +137,7 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
                     "payment_provider": self.name,
                     "pp": self.name,  # TODO: legacy, remove (payment_provider is more expressing)
                     "creationdate": utils.utcNow().isoformat(),
+                    "uuid": str(uuid.uuid4()),
                 }
                 | (payment or {})
             )

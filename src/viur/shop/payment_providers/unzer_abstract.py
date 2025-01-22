@@ -7,7 +7,7 @@ from unzer.model.customer import Salutation as UnzerSalutation
 from unzer.model.payment import PaymentState
 
 from viur import toolkit
-from viur.core import current, db, errors, exposed, utils
+from viur.core import current, db, errors, exposed
 from viur.core.skeleton import SkeletonInstance
 from viur.shop.types import *
 from . import PaymentProviderAbstract
@@ -220,22 +220,6 @@ class UnzerAbstract(PaymentProviderAbstract):
                 "aborted": False,
             }
         )
-
-        # def set_payment(skel: SkeletonInstance):
-        #     skel["payment"].setdefault("payments", []).append({
-        #         "pp": self.name,
-        #         "creationdate": utils.utcNow().isoformat(),
-        #         "type_id": type_id,
-        #         "charged": False,
-        #         "aborted": False,
-        #     })
-        #
-        # order_skel = toolkit.set_status(
-        #     key=order_skel["key"],
-        #     values=set_payment,
-        #     skel=order_skel,
-        # )
-
         return JsonResponse(order_skel)
 
     # --- utils ---------------------------------------------------------------
