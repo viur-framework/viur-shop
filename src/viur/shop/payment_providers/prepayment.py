@@ -1,11 +1,13 @@
 import typing as t
 
 from deprecated.sphinx import deprecated
-from viur.core import errors, exposed, utils
-from viur.core.skeleton import SkeletonInstance
 
+from viur.core import errors, exposed
+from viur.core.skeleton import SkeletonInstance
 from . import PaymentProviderAbstract
 from ..globals import SHOP_LOGGER
+from ..skeletons import OrderSkel
+from ..types import SkeletonInstance_T
 from ..types.exceptions import IllegalOperationError
 
 logger = SHOP_LOGGER.getChild(__name__)
@@ -22,14 +24,9 @@ class Prepayment(PaymentProviderAbstract):
 
     def checkout(
         self,
-        order_skel: SkeletonInstance,
-    ) -> t.Any:
-        # TODO: Standardize this, write in txn
-        order_skel["payment"].setdefault("payments", []).append({
-            "pp": self.name,
-            "creationdate": utils.utcNow().isoformat(),
-        })
-        order_skel.toDB()
+        order_skel: SkeletonInstance_T[OrderSkel],
+    ) -> None:
+        order_skel = self._append_payment_to_order_skel(order_skel)
         return None
 
     def charge(self) -> None:

@@ -44,6 +44,7 @@ from .exceptions import (  # noqa
     InvalidArgumentException,
     InvalidKeyException,
     InvalidStateError,
+    IllegalOperationError,
     ViURShopException,
     ViURShopHttpException,
 )

@@ -6,7 +6,8 @@ from unzer.model import PaymentType
 from unzer.model.customer import Salutation as UnzerSalutation
 from unzer.model.payment import PaymentState
 
-from viur.core import current, db, errors, exposed, utils
+from viur import toolkit
+from viur.core import current, db, errors, exposed
 from viur.core.skeleton import SkeletonInstance
 from viur.shop.types import *
 from . import PaymentProviderAbstract
@@ -105,9 +106,14 @@ class UnzerAbstract(PaymentProviderAbstract):
         logger.debug(f"{unzer_session = }")
         current.session.get().markChanged()
 
-        # TODO: write in transaction
-        order_skel["payment"]["payments"][-1]["payment_id"] = payment.paymentId
-        order_skel.toDB()
+        def set_payment(skel: SkeletonInstance):
+            skel["payment"]["payments"][-1]["payment_id"] = payment.paymentId
+
+        order_skel = toolkit.set_status(
+            key=order_skel["key"],
+            values=set_payment,
+            skel=order_skel,
+        )
 
         return unzer_session
 
@@ -205,16 +211,15 @@ class UnzerAbstract(PaymentProviderAbstract):
         order_skel = self.shop.order.editSkel()
         if not order_skel.fromDB(order_key):
             raise errors.NotFound
-        # TODO: Standardize this, write in txn
-        order_skel["payment"].setdefault("payments", []).append({
-            "pp": self.name,
-            "creationdate": utils.utcNow().isoformat(),
-            "type_id": type_id,
-            "charged": False,
-            "aborted": False,
-        })
-        order_skel.toDB()
 
+        order_skel = self._append_payment_to_order_skel(
+            order_skel,
+            {
+                "type_id": type_id,
+                "charged": False,
+                "aborted": False,
+            }
+        )
         return JsonResponse(order_skel)
 
     # --- utils ---------------------------------------------------------------
