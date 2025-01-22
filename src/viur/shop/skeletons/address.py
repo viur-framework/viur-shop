@@ -98,7 +98,7 @@ class AddressSkel(Skeleton):  # STATE: Complete (as in model)
             "group": "Customer Info",
             "pattern": {
                 # Pattern source: https://html.spec.whatwg.org/multipage/input.html#valid-e-mail-address
-                country: r"/^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/"
+                country: r"/^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/"  # noqa
                 for country in conf.i18n.available_dialects
             },
             "pattern-error": i18n.translate(
