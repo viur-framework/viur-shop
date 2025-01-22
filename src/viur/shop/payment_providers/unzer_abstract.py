@@ -231,8 +231,8 @@ class UnzerAbstract(PaymentProviderAbstract):
             lastname=ba["lastname"],
             salutation=self.shop_salutation_to_unzer_salutation(ba["salutation"]),
             customerId=self.customer_id_from_order_skel(order_skel),
-            email=order_skel["email"],
-            # TODO: phone=order_skel["phone"],
+            email=ba["email"],
+            phone=ba["phone"],
             billingAddress=self.address_from_address_skel(ba),
             shippingAddress=self.address_from_address_skel(sa),
         )

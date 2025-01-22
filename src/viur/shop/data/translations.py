@@ -351,6 +351,10 @@ TRANSLATIONS = {
         "en": "Zip code",
         "fr": "Code postal",
     },
+    "viur.shop.skeleton.address.zip_code.invalid": {
+        "de": "Diese Postleitzahl ist nicht gültig",
+        "en": "This zip code is invalid",
+    },
     "viur.shop.skeleton.articleabstract.shop_price": {
         "_hint": "bone shop_price<RawBone> in ArticleAbstractSkel in viur.shop",
         "de": "Preis",
@@ -489,7 +493,7 @@ TRANSLATIONS = {
     },
     "viur.shop.skeleton.cartnode.is_root_node": {
         "_hint": "bone is_root_node<BooleanBone> in CartNodeSkel in viur.shop",
-        "de": "Warenkorbstamm",
+        "de": "Ist Wurzel Knoten",
         "en": "Is root node",
     },
     "viur.shop.skeleton.cartnode.name": {
@@ -731,17 +735,25 @@ TRANSLATIONS = {
         "en": "Customer",
         "fr": "Client",
     },
-    "viur.shop.skeleton.order.email": {
-        "_hint": "bone email<EmailBone> in OrderSkel in viur.shop",
+    "viur.shop.skeleton.address.email": {
+        "_hint": "bone email<EmailBone> in AddressSkel in viur.shop",
         "de": "Email",
         "en": "Email",
         "fr": "Email",
     },
-    "viur.shop.skeleton.order.phone": {
-        "_hint": "bone phone<StringBone> in OrderSkel in viur.shop",
+    "viur.shop.skeleton.address.email.invalid": {
+        "de": "Diese Email ist nicht gültig",
+        "en": "This Email is invalid",
+    },
+    "viur.shop.skeleton.address.phone": {
+        "_hint": "bone phone<StringBone> in AddressSkel in viur.shop",
         "de": "Telefonnummer",
         "en": "Phone number",
         "fr": "Téléphone",
+    },
+    "viur.shop.skeleton.address.phone.invalid": {
+        "de": "Diese Telefonnummer ist nicht gültig",
+        "en": "This phone number is invalid",
     },
     "viur.shop.skeleton.order.is_checkout_in_progress": {
         "_hint": "bone is_checkout_in_progress<BooleanBone> in OrderSkel in viur.shop",

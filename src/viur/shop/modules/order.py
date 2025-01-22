@@ -120,8 +120,6 @@ class Order(ShopModuleAbstract, List):
         cart_key: db.Key,
         payment_provider: str = SENTINEL,
         billing_address_key: db.Key = SENTINEL,
-        email: str = SENTINEL,
-        phone: str = SENTINEL,
         customer_key: db.Key = SENTINEL,
         state_ordered: bool = SENTINEL,
         state_paid: bool = SENTINEL,
@@ -142,7 +140,6 @@ class Order(ShopModuleAbstract, List):
         skel["total"] = cart_skel["total"]
         if user := current.user.get():
             # use current user as default value
-            skel["email"] = user["name"]
             skel.setBoneValue("customer", user["key"])
         # Initialize list for payment attempts / partial payments
         if not skel["payment"]:
@@ -152,8 +149,6 @@ class Order(ShopModuleAbstract, List):
             skel,
             payment_provider=payment_provider,
             billing_address_key=billing_address_key,
-            email=email,
-            phone=phone,
             customer_key=customer_key,
             state_ordered=state_ordered,
             state_paid=state_paid,
@@ -175,8 +170,6 @@ class Order(ShopModuleAbstract, List):
         order_key: db.Key,
         payment_provider: str = SENTINEL,
         billing_address_key: db.Key = SENTINEL,
-        email: str = SENTINEL,
-        phone: str = SENTINEL,
         customer_key: db.Key = SENTINEL,
         state_ordered: bool = SENTINEL,
         state_paid: bool = SENTINEL,
@@ -195,8 +188,6 @@ class Order(ShopModuleAbstract, List):
             skel,
             payment_provider=payment_provider,
             billing_address_key=billing_address_key,
-            email=email,
-            phone=phone,
             customer_key=customer_key,
             state_ordered=state_ordered,
             state_paid=state_paid,
@@ -218,8 +209,6 @@ class Order(ShopModuleAbstract, List):
         *,
         payment_provider: str = SENTINEL,
         billing_address_key: db.Key = SENTINEL,
-        email: str = SENTINEL,
-        phone: str = SENTINEL,
         customer_key: db.Key = SENTINEL,
         state_ordered: bool = SENTINEL,
         state_paid: bool = SENTINEL,
@@ -241,13 +230,7 @@ class Order(ShopModuleAbstract, List):
                     )
         if user := current.user.get():
             # use current user as default value
-            skel["email"] = user["name"]
             skel.setBoneValue("customer", user["key"])
-        if email is not SENTINEL:
-            skel["email"] = email
-        if phone is not SENTINEL:
-            if not skel.setBoneValue("phone", phone):
-                raise e.InvalidArgumentException("phone")
         if customer_key is not SENTINEL:
             if not self.customer_is_valid(skel, customer_key):
                 raise e.InvalidArgumentException("customer_key")
@@ -456,13 +439,14 @@ class Order(ShopModuleAbstract, List):
             errors.append(ClientError("cart.total_quantity is zero"))
         if not order_skel["billing_address"]:
             errors.append(ClientError("billing_address is missing"))
-        if not order_skel["email"]:
+        if not order_skel["billing_address"] or not order_skel["billing_address"]["dest"]["email"]:
             errors.append(ClientError("email is missing"))
-        if not order_skel["phone"]:
+        if not order_skel["billing_address"] or not order_skel["billing_address"]["dest"]["phone"]:
+            address_skel = order_skel.billing_address._refSkelCache()
             errors.append(ClientError(
                 "phone is missing",
                 # Phone number can be enforced by setting the whole bone required or soft-required via params.
-                causes_failure=order_skel.phone.required or order_skel.phone.params.get("required") or False,
+                causes_failure=address_skel.phone.required or address_skel.phone.params.get("required") or False,
             ))
         # Note: payment_provider el-if
         if not order_skel["payment_provider"]:

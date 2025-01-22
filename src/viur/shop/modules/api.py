@@ -318,8 +318,6 @@ class Api(ShopModuleAbstract):
         cart_key: str | db.Key,
         payment_provider: str = SENTINEL,
         billing_address_key: str | db.Key = SENTINEL,
-        email: str = SENTINEL,
-        phone: str = SENTINEL,
         customer_key: str | db.Key = SENTINEL,
         state_ordered: bool = SENTINEL,
         state_paid: bool = SENTINEL,
@@ -331,7 +329,7 @@ class Api(ShopModuleAbstract):
         ...
         return JsonResponse(self.shop.order.order_add(
             cart_key, payment_provider, billing_address_key,
-            email, phone, customer_key, state_ordered, state_paid, state_rts))
+            customer_key, state_ordered, state_paid, state_rts))
 
     @exposed
     @force_post
@@ -341,8 +339,6 @@ class Api(ShopModuleAbstract):
         order_key: str | db.Key,
         payment_provider: str = SENTINEL,
         billing_address_key: str | db.Key = SENTINEL,
-        email: str = SENTINEL,
-        phone: str = SENTINEL,
         customer_key: str | db.Key = SENTINEL,
         state_ordered: bool = SENTINEL,
         state_paid: bool = SENTINEL,
@@ -353,7 +349,7 @@ class Api(ShopModuleAbstract):
         customer_key = self._normalize_external_key(customer_key, "customer_key", True)
         return JsonResponse(self.shop.order.order_update(
             order_key, payment_provider, billing_address_key,
-            email, phone, customer_key, state_ordered, state_paid, state_rts))
+            customer_key, state_ordered, state_paid, state_rts))
 
     @exposed
     @force_post

@@ -5,6 +5,7 @@ from viur.core.bones import *
 from viur.core.skeleton import Skeleton
 from viur.shop.types import *
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
+from deprecated import deprecated
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -27,6 +28,7 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
             "key", "name", "customer_type", "salutation", "company_name",
             "firstname", "lastname", "street_name", "street_number",
             "address_addition", "zip_code", "city", "country",
+            "email", "phone",
             "is_default", "address_type",
         ],
     )
@@ -91,11 +93,20 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
     )
 
     email = EmailBone(
+        readOnly=True,
     )
-    """Kopieren von User oder Eingabe von Nutzer bei Gast"""
+    """
+    .. deprecated:: 0.1.0.dev36
+        Use :py:attr:`shop.skeleton.AddressSkel.email` instead.
+    """
 
     phone = StringBone(
+        readOnly=True,
     )
+    """
+    .. deprecated:: 0.1.0.dev36
+        Use :py:attr:`shop.skeleton.AddressSkel.phone` instead.
+    """
 
     project_data = JsonBone(
     )

@@ -186,6 +186,7 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
             "key", "name", "customer_type", "salutation", "company_name",
             "firstname", "lastname", "street_name", "street_number",
             "address_addition", "zip_code", "city", "country",
+            "email", "phone",
             "is_default", "address_type",
         ],
     )
