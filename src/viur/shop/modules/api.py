@@ -255,7 +255,10 @@ class Api(ShopModuleAbstract):
     def basket_view(
         self,
     ):
-        """View the basket (the cart stored in the session) itself"""
+        """View the basket (the cart stored in the session) itself
+
+        See also :meth:`basket_view` to view any cart.
+        """
         return JsonResponse(self.shop.cart.cart_get(
             cart_key=self.shop.cart.current_session_cart_key, skel_type="node",
         ))
@@ -292,6 +295,20 @@ class Api(ShopModuleAbstract):
             child["skel_type"] = "leaf" if issubclass(child_skel.skeletonCls, self.shop.cart.leafSkelCls) else "node"
             children.append(child)
         return JsonResponse(children)
+
+    @exposed
+    def cart_view(
+        self,
+        cart_key: str | db.Key,
+    ):
+        """View a cart itself
+
+        See also :meth:`basket_view` to view the current basket.
+        """
+        cart_key = self._normalize_external_key(cart_key, "cart_key")
+        return JsonResponse(self.shop.cart.cart_get(
+            cart_key=cart_key, skel_type="node",
+        ))
 
     @exposed
     @force_post
