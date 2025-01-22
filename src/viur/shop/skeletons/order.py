@@ -37,7 +37,7 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
 
     cart = RelationalBone(
         kind="{{viur_shop_modulename}}_cart_node",
-        module="{{viur_shop_modulename}}/cart_node",
+        module="{{viur_shop_modulename}}/cart",
         consistency=RelationalConsistency.PreventDeletion,
         refKeys=[
             "name",

@@ -181,7 +181,7 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
 
     shipping_address = RelationalBone(
         kind="{{viur_shop_modulename}}_address",
-        module="{{viur_shop_modulename}}/shop_address",
+        module="{{viur_shop_modulename}}/address",
         refKeys=[
             "key", "name", "customer_type", "salutation", "company_name",
             "firstname", "lastname", "street_name", "street_number",
