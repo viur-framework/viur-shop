@@ -1,10 +1,10 @@
 import abc
 import functools
 
-from viur.core import Module, translate
+from viur import toolkit
+from viur.core import Module, translate, utils
 from viur.core.prototypes.instanced_module import InstancedModule
 from viur.core.skeleton import SkeletonInstance
-
 from viur.shop.skeletons.order import OrderSkel
 from ..types import *
 
@@ -116,6 +116,36 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
     # @exposed
     def get_debug_information(self):
         ...
+
+    def _append_payment_to_order_skel(
+        self,
+        order_skel: SkeletonInstance_T[OrderSkel],
+        payment: dict[str, t.Any] | None = None,
+    ) -> SkeletonInstance_T[OrderSkel]:
+        """Append payment data to an order
+
+        Append payment_provider name and creationdate by default.
+        Write safely in a transaction.
+        """
+
+        def set_payment(skel: SkeletonInstance):
+            if not skel["payment"]:
+                skel["payment"] = {}
+            skel["payment"].setdefault("payments", []).append(
+                {
+                    "payment_provider": self.name,
+                    "pp": self.name,  # TODO: legacy, remove (payment_provider is more expressing)
+                    "creationdate": utils.utcNow().isoformat(),
+                }
+                | (payment or {})
+            )
+
+        order_skel = toolkit.set_status(
+            key=order_skel["key"],
+            values=set_payment,
+            skel=order_skel,
+        )
+        return order_skel
 
     def serialize_for_api(
         self,

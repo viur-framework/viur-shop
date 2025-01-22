@@ -1,11 +1,11 @@
 import typing as t
 
-from viur.core import errors, exposed, utils
+from viur.core import errors, exposed
 from viur.core.skeleton import SkeletonInstance
-
 from . import PaymentProviderAbstract
 from ..globals import SHOP_LOGGER
-from ..types.exceptions import IllegalOperationError
+from ..skeletons import OrderSkel
+from ..types import IllegalOperationError, SkeletonInstance_T
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -22,14 +22,9 @@ class Invoice(PaymentProviderAbstract):
 
     def checkout(
         self,
-        order_skel: SkeletonInstance,
+        order_skel: SkeletonInstance_T[OrderSkel],
     ) -> None:
-        # TODO: Standardize this, write in txn
-        order_skel["payment"].setdefault("payments", []).append({
-            "pp": self.name,
-            "creationdate": utils.utcNow().isoformat(),
-        })
-        order_skel.toDB()
+        order_skel = self._append_payment_to_order_skel(order_skel)
         return None
 
     def charge(self) -> None:
