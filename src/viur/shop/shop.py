@@ -1,7 +1,7 @@
 import copy
 import typing as t
 
-from viur.core import conf
+from viur.core import conf, logging
 from viur.core.bones import RelationalBone
 from viur.core.decorators import exposed
 from viur.core.module import Module
@@ -22,6 +22,10 @@ from .types import Supplier, exceptions
 logger = SHOP_LOGGER.getChild(__name__)
 
 __all__ = ["Shop"]
+
+if SHOP_LOGGER.level == logging.NOTSET:
+    # By default, if not explicitly set before by the application, we set the logging level to INFO
+    SHOP_LOGGER.setLevel(logging.INFO)
 
 
 class Shop(InstancedModule, Module):
