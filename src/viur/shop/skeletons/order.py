@@ -51,6 +51,11 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
             "shipping",
             "project_data",
         ],
+        params={
+            "context": {
+                "skelType": "node",
+            },
+        }
     )
 
     total = NumericBone(
