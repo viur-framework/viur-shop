@@ -162,7 +162,7 @@ class DiscountCondition(ShopModuleAbstract, List):
     @staticmethod
     @functools.lru_cache()
     def _get_skel(key: db.Key, ttl_hash: int | None = None) -> SkeletonInstance_T["DiscountConditionSkel"] | None:
-        logger.debug(f"_get_skel({key=}, {ttl_hash=})")
+        # logger.debug(f"_get_skel({key=}, {ttl_hash=})")
         skel = SHOP_INSTANCE.get().discount_condition.viewSkel()
         if not skel.fromDB(key):
             return None
