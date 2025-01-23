@@ -143,10 +143,8 @@ class DiscountValidator:
         self.code = discount_skel
 
         # We need the full skel with all bones (otherwise the refSkel would be to large)
-        condition_skel_cls: t.Type[Skeleton] = skeletonByKind(discount_skel.condition.kind)
         for condition in discount_skel["condition"]:
-            condition_skel: SkeletonInstance_T[DiscountConditionSkel] = condition_skel_cls()  # noqa
-            if not condition_skel.fromDB(condition["dest"]["key"]):
+            if not (condition_skel := SHOP_INSTANCE.get().discount_condition.get_skel(condition["dest"]["key"])):
                 logger.warning(f'Broken relation {condition=} in {discount_skel["key"]}?!')
                 raise InvalidStateError(f'Broken relation {condition=} in {discount_skel["key"]}?!')
                 self.condition_skels.append(None)  # TODO
