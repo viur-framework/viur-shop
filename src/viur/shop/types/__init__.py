@@ -1,7 +1,7 @@
 import typing as t
 
 from viur.core.skeleton import Skeleton as _Skeleton, SkeletonInstance as _SkeletonInstance
-from ...core import i18n
+from viur.core import i18n
 
 SkeletonCls_co = t.TypeVar("SkeletonCls_co", bound=t.Type[_Skeleton], covariant=True)
 
