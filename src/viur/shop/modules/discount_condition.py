@@ -1,6 +1,8 @@
+import functools
 import pprint
 import random
 import string
+import time
 import typing as t
 
 from viur import toolkit
@@ -10,13 +12,21 @@ from viur.core.skeleton import SkeletonInstance
 from .abstract import ShopModuleAbstract
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 from ..services import Event, on_event
-from ..types import CodeType
+from ..types import CodeType, SkeletonInstance_T
+
+if t.TYPE_CHECKING:
+    from ..skeletons import DiscountConditionSkel
 
 logger = SHOP_LOGGER.getChild(__name__)
 
 CODE_CHARS = sorted(set(string.ascii_uppercase + string.digits).difference(set("0OIl1")))
 CODE_LENGTH = 8
 SUFFIX_LENGTH = 6
+
+
+def get_ttl_hash(seconds: int = 3600) -> int:
+    """Return the same value withing `seconds` time period"""
+    return round(time.time() / seconds)
 
 
 class DiscountCondition(ShopModuleAbstract, List):
@@ -142,6 +152,21 @@ class DiscountCondition(ShopModuleAbstract, List):
                 return
 
         logger.info(f"Finished code generation for {parent_key} ({prefix=}).")
+
+    # --- Helpers  ------------------------------------------------------------
+
+    @classmethod
+    def get_skel(cls, key: db.Key, expires: int = 3600) -> SkeletonInstance_T["DiscountConditionSkel"] | None:
+        return cls._get_skel(key, ttl_hash=get_ttl_hash(expires))
+
+    @staticmethod
+    @functools.lru_cache()
+    def _get_skel(key: db.Key, ttl_hash: int | None = None) -> SkeletonInstance_T["DiscountConditionSkel"] | None:
+        logger.debug(f"_get_skel({key=}, {ttl_hash=})")
+        skel = SHOP_INSTANCE.get().discount_condition.viewSkel()
+        if not skel.fromDB(key):
+            return None
+        return skel  # type: ignore
 
     # --- Apply logic ---------------------------------------------------------
 
