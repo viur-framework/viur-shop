@@ -98,7 +98,7 @@ def get_vat_for_node(skel: "CartNodeSkel", bone: RecordBone) -> list[dict]:
         # logger.debug(f"{child=}")
         if issubclass(child.skeletonCls, CartNodeSkel):
             for entry in child["vat"] or []:
-                logger.debug(f'{child["shop_vat_rate_category"]} | {entry=}')
+                # logger.debug(f'{child["shop_vat_rate_category"]} | {entry=}')
                 cat2value[entry["category"]] += entry["value"]
                 cat2rate[entry["category"]] = entry["percentage"]
         elif issubclass(child.skeletonCls, CartItemSkel):

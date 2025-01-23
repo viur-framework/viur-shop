@@ -37,7 +37,7 @@ class ShopModuleAbstract(Module):
         shop: "Shop" = None,
         *args, **kwargs
     ):
-        logger.debug(f"{self.__class__.__name__}<ShopModuleAbstract>.__init__()")
+        # logger.debug(f"{self.__class__.__name__}<ShopModuleAbstract>.__init__()")
         if shop is None:
             raise ValueError("Missing shop argument!")
         if moduleName is None:

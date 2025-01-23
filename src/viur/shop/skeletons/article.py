@@ -103,7 +103,7 @@ class ArticleAbstractSkel(BaseSkeleton):
 
     @classmethod
     def setSystemInitialized(cls):
-        logger.debug(f"Call setSystemInitialized({cls=})")
+        # logger.debug(f"Call setSystemInitialized({cls=})")
         # Check if all abstract methods are implemented
         for name in dir(cls):
             value = getattr(cls, name, None)

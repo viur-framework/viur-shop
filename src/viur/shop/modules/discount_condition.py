@@ -97,19 +97,19 @@ class DiscountCondition(ShopModuleAbstract, List):
         self.on_changed(skel, "edited")
 
     def on_change(self, skel, event: str):
-        logger.debug(pprint.pformat(skel, width=120))
+        # logger.debug(pprint.pformat(skel, width=120))
         skel_old = self.viewSkel()
         if skel["key"] is not None:  # not on add
             skel_old.fromDB(skel["key"])
         current.request_data.get()[f'shop_skel_{skel["key"]}'] = skel_old
 
     def on_changed(self, skel, event: str):
-        logger.debug(pprint.pformat(skel, width=120))
+        # logger.debug(pprint.pformat(skel, width=120))
         if skel["code_type"] == CodeType.INDIVIDUAL and not skel["is_subcode"]:
             skel_old = current.request_data.get()[f'shop_skel_{skel["key"]}']
             query = self.viewSkel().all().filter("parent_code.dest.__key__ =", skel["key"])
             counter = query.count()
-            logger.debug(f"{counter = }")
+            # logger.debug(f"{counter = }")
             if skel["individual_codes_amount"] > counter:
                 self.generate_subcodes(skel["key"], skel["individual_codes_prefix"],
                                        skel["individual_codes_amount"] - counter)
@@ -185,7 +185,7 @@ class DiscountCondition(ShopModuleAbstract, List):
         nodes = self.shop.cart.viewSkel("node").all().filter("parentrepo =", cart_key).fetch(100)
         discounts = []
         for node in nodes:
-            logger.debug(f"{node = }")
+            # logger.debug(f"{node = }")
             if node["discount"]:
                 discounts.append(node["discount"]["dest"]["key"])
         # TODO: collect used from price and automatically as well
@@ -198,7 +198,7 @@ class DiscountCondition(ShopModuleAbstract, List):
         logger.info(f"Calling mark_discount_used with {order_skel=} {payment=}")
         self = SHOP_INSTANCE.get().discount_condition
         discounts = self.get_discounts_from_cart(order_skel["cart"]["dest"]["key"])
-        logger.debug(f"{discounts = }")
+        # logger.debug(f"{discounts = }")
 
         for discount in discounts:
             d_skel = self.shop.discount.viewSkel()

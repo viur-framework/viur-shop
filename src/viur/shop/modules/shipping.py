@@ -42,24 +42,24 @@ class Shipping(ShopModuleAbstract, List):
             return None
 
         shipping_config_skel = article_skel["shop_shipping_config"]["dest"]
-        logger.debug(f"{shipping_config_skel=}")
+        # logger.debug(f"{shipping_config_skel=}")
 
         applicable_shippings = []
         for shipping in shipping_config_skel["shipping"]:
             is_applicable, reason = self.shop.shipping_config.is_applicable(
                 shipping["dest"], shipping["rel"], article_skel=article_skel,
                 country=country)
-            logger.debug(f"{shipping=} --> {is_applicable=} | {reason=}")
+            # logger.debug(f"{shipping=} --> {is_applicable=} | {reason=}")
             if is_applicable:
                 applicable_shippings.append(shipping)
 
-        logger.debug(f"<{len(applicable_shippings)}>{applicable_shippings=}")
+        # logger.debug(f"<{len(applicable_shippings)}>{applicable_shippings=}")
         if not applicable_shippings:
             logger.error("No suitable shipping found")  # TODO: fallback??
             return False
 
         cheapest_shipping = min(applicable_shippings, key=lambda shipping: shipping["dest"]["shipping_cost"] or 0)
-        logger.debug(f"{cheapest_shipping=}")
+        # logger.debug(f"{cheapest_shipping=}")
         return cheapest_shipping
 
     def get_shipping_skels_for_cart(
@@ -91,10 +91,10 @@ class Shipping(ShopModuleAbstract, List):
                 elif child.article_skel["shop_shipping_config"] is not None:
                     all_shipping_configs.append(child.article_skel["shop_shipping_config"]["dest"])
 
-        logger.debug(f"(before de-duplication) <{len(all_shipping_configs)}>{all_shipping_configs=}")
+        # logger.debug(f"(before de-duplication) <{len(all_shipping_configs)}>{all_shipping_configs=}")
         # eliminate duplicates
         all_shipping_configs = list(({sc["key"]: sc for sc in all_shipping_configs}).values())
-        logger.debug(f"(after de-duplication) <{len(all_shipping_configs)}>{all_shipping_configs=}")
+        # logger.debug(f"(after de-duplication) <{len(all_shipping_configs)}>{all_shipping_configs=}")
 
         if not all_shipping_configs:
             logger.debug(f'{cart_key=!r}\'s articles have no shop_shipping_config set.')  # TODO: fallback??
@@ -110,11 +110,11 @@ class Shipping(ShopModuleAbstract, List):
             is_applicable, reason = self.shop.shipping_config.is_applicable(
                 shipping["dest"], shipping["rel"], cart_skel=cart_skel,
                 country=country)
-            logger.debug(f"{shipping=} --> {is_applicable=} | {reason=}")
+            # logger.debug(f"{shipping=} --> {is_applicable=} | {reason=}")
             if is_applicable:
                 applicable_shippings.append(shipping)
 
-        logger.debug(f"<{len(applicable_shippings)}>{applicable_shippings=}")
+        # logger.debug(f"<{len(applicable_shippings)}>{applicable_shippings=}")
         if not applicable_shippings:
             logger.error("No suitable shipping found")  # TODO: fallback??
             return []
