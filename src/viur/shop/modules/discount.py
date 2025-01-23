@@ -262,7 +262,7 @@ class Discount(ShopModuleAbstract, List):
                 .fetch(100)
             )
 
-            logger.debug(f"<{len(node_skels)}>{node_skels=}")
+            # logger.debug(f"<{len(node_skels)}>{node_skels=}")
             for node_skel in node_skels:
                 # TODO: remove node, if no custom name, shipping, etc. is set? remove_parent flag?
                 self.shop.cart.cart_update(

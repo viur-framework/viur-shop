@@ -341,5 +341,5 @@ class ScopeArticle(DiscountConditionScope):
             .filter("article.dest.__key__ =", self.condition_skel["scope_article"]["dest"]["key"])
             .fetch()
         )
-        logger.debug(f"<{len(leaf_skels)}>{leaf_skels = }")
+        # logger.debug(f"<{len(leaf_skels)}>{leaf_skels = }")
         return len(leaf_skels) > 0

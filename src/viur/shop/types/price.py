@@ -115,7 +115,7 @@ class Price:
             applicable, dv = discount_module.can_apply(skel, article_skel=article_skel, as_automatically=True)
             # logger.debug(f"{dv=}")
             if not applicable:
-                logger.debug(f"{skel} is NOT applicable")
+                logger.debug(f'{skel["name"]} is NOT applicable')
                 continue
             price = self.apply_discount(skel, article_price)
             if best_discount is None or price < best_discount[0]:

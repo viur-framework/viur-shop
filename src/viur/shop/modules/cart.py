@@ -48,7 +48,6 @@ class Cart(ShopModuleAbstract, Tree):
     def canView(self, skelType: SkelType, skel: SkeletonInstance) -> bool:
         if super().canView(skelType, skel):
             return True
-        logger.debug(f"{skel=}")
         if skelType == "leaf":
             nearest_node_key = skel["parententry"]
         else:
@@ -115,7 +114,6 @@ class Cart(ShopModuleAbstract, Tree):
 
         if user := current.user.get():
             for wishlist in user["wishlist"]:
-                logger.debug(f"{wishlist = }")
                 root_nodes.append({
                     "key": wishlist["key"],
                     "name": wishlist["name"],
@@ -282,7 +280,7 @@ class Cart(ShopModuleAbstract, Tree):
             if not article_skel.fromDB(article_key):
                 raise errors.NotFound(f"Article with key {article_key=} does not exist!")
             if not article_skel["shop_listed"]:
-                logger.debug(f"not listed: {article_skel=}")
+                # logger.debug(f"not listed: {article_skel=}")
                 raise errors.UnprocessableEntity(f"Article is not listed for the shop!")
             # Copy values from the article
             for bone in skel.keys():

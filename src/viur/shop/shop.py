@@ -81,7 +81,7 @@ class Shop(InstancedModule, Module):
         self._add_translations()
 
     def __call__(self, *args, **kwargs) -> t.Self:
-        logger.debug(f"Shop.__call__({args=}, {kwargs=})")
+        # logger.debug(f"Shop.__call__({args=}, {kwargs=})")
         self: Shop = super().__call__(*args, **kwargs)  # noqa
         is_default_renderer = self.modulePath == f"/{self.moduleName}"
 
