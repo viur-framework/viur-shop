@@ -14,7 +14,7 @@ from ..types import CodeType
 
 logger = SHOP_LOGGER.getChild(__name__)
 
-CODE_CHARS = sorted(set(string.ascii_letters + string.digits).difference(set("0OIl1")))
+CODE_CHARS = sorted(set(string.ascii_uppercase + string.digits).difference(set("0OIl1")))
 CODE_LENGTH = 8
 SUFFIX_LENGTH = 6
 
@@ -146,7 +146,7 @@ class DiscountCondition(ShopModuleAbstract, List):
     # --- Apply logic ---------------------------------------------------------
 
     def get_by_code(self, code: str = None) -> t.Iterator[SkeletonInstance]:
-        query = self.viewSkel().all().filter("scope_code =", code)
+        query = self.viewSkel().all().filter("scope_code.idx =", code.lower())
         for cond_skel in query.fetch(100):
             if cond_skel["is_subcode"]:
                 parent_cond_skel = self.viewSkel()

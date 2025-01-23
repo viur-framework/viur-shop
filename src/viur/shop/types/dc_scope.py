@@ -205,7 +205,7 @@ class ScopeCode(DiscountConditionScope):
         ):
             # logger.info(f'scope_code UNIVERSAL not reached ({self.condition_skel["scope_code"]=} != {self.code=})')
             logger.debug(f'scope_code {self.condition_skel["scope_code"]=} =?= {self.code=}')
-            return self.condition_skel["scope_code"] == self.code
+            return self.condition_skel["scope_code"].lower() == self.code.lower()
         elif (
             self.condition_skel["code_type"] == CodeType.INDIVIDUAL
         ):

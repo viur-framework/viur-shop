@@ -672,6 +672,10 @@ TRANSLATIONS = {
         "de": "Geltungsbereich: Code",
         "en": "Scope: code",
     },
+    "viur.shop.skeleton.discountcondition.scope_code.allowed_characters": {
+        "de": "Erlaubte Zeichen: {{chars}}",
+        "en": "Allowed characters: {{chars}}",
+    },
     "viur.shop.skeleton.discountcondition.scope_combinable_low_price": {
         "_hint": "bone scope_combinable_low_price<BooleanBone> in DiscountConditionSkel in viur.shop",
         "de": "Geltungsbereich: kombinierbar mit Dauertiefpreis Artikeln?",

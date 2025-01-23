@@ -1,11 +1,12 @@
 import typing as t  # noqa
 from datetime import datetime as dt
 
-from viur.core import conf
+from viur.core import conf, i18n
 from viur.core.bones import *
 from viur.core.skeleton import Skeleton
 from viur.shop.types import *
 from ..globals import SHOP_LOGGER
+from ..modules.discount_condition import CODE_CHARS
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -112,19 +113,32 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
     )
 
     scope_code = StringBone(
-        # TODO: limit charset
+        # TODO: limit charset on server side
         params={
             "category": "2 – Scope",
-            "visibleIf": 'code_type == "universal"'
+            "visibleIf": 'code_type == "universal"',
+            "pattern": rf'^[{"".join(CODE_CHARS)}]+$',
+            "tooltip": BetterTranslate(
+                "viur.shop.skeleton.discountcondition.scope_code.allowed_characters",
+                defaultText="allowed characters: {{chars}}",
+                default_variables=dict(chars="".join(CODE_CHARS))
+            ),
         },
         unique=UniqueValue(UniqueLockMethod.SameValue, False, "Code exist already"),  # TODO
+        caseSensitive=False,
     )
 
     individual_codes_prefix = StringBone(
-        # TODO: limit charset
+        # TODO: limit charset on server side
         params={
             "category": "2 – Scope",
-            "visibleIf": 'code_type == "individual"'
+            "visibleIf": 'code_type == "individual"',
+            "pattern": rf'^[{"".join(CODE_CHARS)}]+$',
+            "tooltip": BetterTranslate(
+                "viur.shop.skeleton.discountcondition.scope_code.allowed_characters",
+                defaultText="allowed characters: {{chars}}",
+                default_variables=dict(chars="".join(CODE_CHARS))
+            ),
         },
         unique=UniqueValue(UniqueLockMethod.SameValue, False, "Value already taken"),
     )
