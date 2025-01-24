@@ -87,6 +87,7 @@ class Shop(InstancedModule, Module):
 
         # Modify some objects dynamically
         self._set_kind_names()
+        self._extend_cart_node_skeleton()
         self._extend_user_skeleton()
         self._extend_ref_keys()
 
@@ -165,6 +166,17 @@ class Shop(InstancedModule, Module):
 
         # logger.debug(f"AFTER {MetaBaseSkel._skelCache.keys() = }")
         # logger.debug(f"AFTER {MetaBaseSkel._skelCache = }")
+
+    def _extend_cart_node_skeleton(self) -> None:
+        """Extend the CartNodeSkel of the project if wished
+
+        This stock implementation does not change CartNodeSkel.
+
+        TODO: Find a another way to really subclass CartNodeSkel in project
+
+        At this point we are and must be before setSystemInitialized.
+        """
+        pass
 
     def _extend_user_skeleton(self) -> None:
         """Extend the UserSkel of the project
