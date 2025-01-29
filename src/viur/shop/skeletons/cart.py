@@ -117,7 +117,7 @@ def get_vat_for_node(skel: "CartNodeSkel", bone: RecordBone) -> list[dict]:
             country=shipping_country, category=VatRateCategory.STANDARD,
         )
         vat_value = Price.gross_to_vat(shipping["dest"]["shipping_cost"] or 0.0, vat_percentage / 100.0)
-        cat2rate[VatRateCategory.STANDARD] = vat_percentage
+        cat2rate[VatRateCategory.STANDARD] = vat_percentage / 100.0
         cat2value[VatRateCategory.STANDARD] += vat_value
 
     return [
