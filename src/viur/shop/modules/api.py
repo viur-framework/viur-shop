@@ -49,6 +49,7 @@ class Api(ShopModuleAbstract):
         quantity: int = 1,
         quantity_mode: QuantityModeType = "replace",
         parent_cart_key: str | db.Key,
+        **kwargs
     ):
         """Add an article to the cart"""
         article_key = self._normalize_external_key(
@@ -61,7 +62,7 @@ class Api(ShopModuleAbstract):
             raise e.InvalidArgumentException("quantity_mode", quantity_mode)
         # TODO: Could also return self.article_view() or just the cart_node_key...
         return JsonResponse(self.shop.cart.add_or_update_article(
-            article_key, parent_cart_key, quantity, quantity_mode))
+            article_key, parent_cart_key, quantity, quantity_mode, **kwargs))
 
     @exposed
     @force_post

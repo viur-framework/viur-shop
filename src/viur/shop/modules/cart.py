@@ -255,6 +255,7 @@ class Cart(ShopModuleAbstract, Tree):
         parent_cart_key: db.Key,
         quantity: int,
         quantity_mode: QuantityMode,
+        kwargs: dict[str, t.Any],
     ) -> CartItemSkel | None:
         if not isinstance(article_key, db.Key):
             raise TypeError(f"article_key must be an instance of db.Key")
@@ -269,6 +270,10 @@ class Cart(ShopModuleAbstract, Tree):
             logger.info("This is an add")
             skel = self.addSkel("leaf")
             res = skel.setBoneValue("article", article_key)
+            if kwargs:
+                parse_result = skel.fromClient(kwargs, amend=True)
+                if not parse_result:
+                    raise errors.NotAcceptable(str(skel.errors))
             skel["parententry"] = parent_cart_key
             parent_skel = self.viewSkel("node")
             assert parent_skel.fromDB(parent_cart_key)
