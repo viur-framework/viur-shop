@@ -49,7 +49,7 @@ class Api(ShopModuleAbstract):
         quantity: int = 1,
         quantity_mode: QuantityModeType = "replace",
         parent_cart_key: str | db.Key,
-        kwargs
+        additional_data: str = None,
     ):
         """Add an article to the cart"""
         article_key = self._normalize_external_key(
@@ -62,7 +62,7 @@ class Api(ShopModuleAbstract):
             raise e.InvalidArgumentException("quantity_mode", quantity_mode)
         # TODO: Could also return self.article_view() or just the cart_node_key...
         return JsonResponse(self.shop.cart.add_or_update_article(
-            article_key, parent_cart_key, quantity, quantity_mode, kwargs))
+            article_key, parent_cart_key, quantity, quantity_mode, additional_data))
 
     @exposed
     @force_post
@@ -73,6 +73,8 @@ class Api(ShopModuleAbstract):
         quantity: int,
         quantity_mode: QuantityModeType = "replace",
         parent_cart_key: str | db.Key,
+        additional_data: str = None,
+
     ):
         """Update an existing article in the cart"""
         article_key = self._normalize_external_key(
@@ -87,7 +89,7 @@ class Api(ShopModuleAbstract):
             raise errors.NotFound(f"{parent_cart_key} has no article with {article_key=}")
         # TODO: Could also return self.article_view() or just the cart_node_key...
         return JsonResponse(self.shop.cart.add_or_update_article(
-            article_key, parent_cart_key, quantity, quantity_mode))
+            article_key, parent_cart_key, quantity, quantity_mode, additional_data))
 
     @exposed
     @force_post

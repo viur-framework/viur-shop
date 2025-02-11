@@ -1,5 +1,6 @@
+import json
 import typing as t  # noqa
-
+import logging
 from viur.core import conf, current, db, errors, exposed, utils
 from viur.core.bones import BaseBone
 from viur.core.prototypes import Tree
@@ -255,8 +256,10 @@ class Cart(ShopModuleAbstract, Tree):
         parent_cart_key: db.Key,
         quantity: int,
         quantity_mode: QuantityMode,
-        kwargs: str,
+        additional_data: str = None,
     ) -> CartItemSkel | None:
+        logging.debug(f"!"*100)
+
         if not isinstance(article_key, db.Key):
             raise TypeError(f"article_key must be an instance of db.Key")
         if not isinstance(parent_cart_key, db.Key):
@@ -270,11 +273,9 @@ class Cart(ShopModuleAbstract, Tree):
             logger.info("This is an add")
             skel = self.addSkel("leaf")
             res = skel.setBoneValue("article", article_key)
-            if kwargs:
-                json.loads(kwargs)
-                parse_result = skel.fromClient(kwargs, amend=True)
-                if not parse_result:
-                    raise errors.NotAcceptable(str(skel.errors))
+            logging.debug("_"*100)
+
+
             skel["parententry"] = parent_cart_key
             parent_skel = self.viewSkel("node")
             assert parent_skel.fromDB(parent_cart_key)
@@ -302,6 +303,14 @@ class Cart(ShopModuleAbstract, Tree):
                 skel[bone] = value
         else:
             parent_skel = skel.parent_skel
+
+        if additional_data:
+            additional_data = json.loads(additional_data)
+            parse_result = skel.fromClient(additional_data, amend=True)
+            logging.debug(f"{parse_result=}")
+            if not parse_result:
+                raise errors.NotAcceptable(str(skel.errors))
+
         if quantity == 0 and quantity_mode in (QuantityMode.INCREASE, QuantityMode.DECREASE):
             raise e.InvalidArgumentException(
                 "quantity",
