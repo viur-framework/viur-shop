@@ -1,6 +1,7 @@
 import logging
 import time
 import typing as t  # noqa
+import json
 
 from viur import toolkit
 from viur.core import current, db, errors as core_errors, exposed, force_post
@@ -124,6 +125,7 @@ class Order(ShopModuleAbstract, List):
         state_ordered: bool = SENTINEL,
         state_paid: bool = SENTINEL,
         state_rts: bool = SENTINEL,
+        additional_data: str = None,
     ):
         if not isinstance(cart_key, db.Key):
             raise TypeError(f"cart_key must be an instance of db.Key")
@@ -158,6 +160,15 @@ class Order(ShopModuleAbstract, List):
             skel = HOOK_SERVICE.dispatch(Hook.ORDER_ADD_ADDITION)(skel)
         except DispatchError:
             pass
+
+        if additional_data:
+            additional_data = json.loads(additional_data)
+            parse_result = skel.fromClient(additional_data, amend=True)
+            print("_"*100)
+            print(f"{parse_result=}")
+            if not parse_result:
+                raise errors.NotAcceptable(str(skel.errors))
+
         self.onAdd(skel)
         skel.toDB()
         self.current_session_order_key = skel["key"]
@@ -174,6 +185,7 @@ class Order(ShopModuleAbstract, List):
         state_ordered: bool = SENTINEL,
         state_paid: bool = SENTINEL,
         state_rts: bool = SENTINEL,
+        additional_data: str = None,
     ):
         if not isinstance(order_key, db.Key):
             raise TypeError(f"order_key must be an instance of db.Key")
@@ -197,6 +209,14 @@ class Order(ShopModuleAbstract, List):
             skel = HOOK_SERVICE.dispatch(Hook.ORDER_UPDATE_ADDITION)(skel)
         except DispatchError:
             pass
+
+        if additional_data:
+            additional_data = json.loads(additional_data)
+            parse_result = skel.fromClient(additional_data, amend=True)
+            logging.debug(f"{parse_result=}")
+            if not parse_result:
+                raise errors.NotAcceptable(str(skel.errors))
+
         self.onEdit(skel)
         skel.toDB()
         self.onEdited(skel)
