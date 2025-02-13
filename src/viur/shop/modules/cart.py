@@ -11,7 +11,7 @@ from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.types import *
 from viur.shop.types.exceptions import InvalidStateError
 from ..globals import SENTINEL, SHOP_LOGGER
-from ..services import EVENT_SERVICE, Event, EventService
+from ..services import EVENT_SERVICE, Event
 from ..skeletons.cart import CartItemSkel, CartNodeSkel
 from ..skeletons.order import OrderSkel
 
@@ -232,6 +232,7 @@ class Cart(ShopModuleAbstract, Tree):
         self,
         article_key: db.Key,
         parent_cart_key: db.Key,
+        *,
         must_be_listed: bool = True,
     ):
         if not isinstance(article_key, db.Key):
@@ -253,8 +254,10 @@ class Cart(ShopModuleAbstract, Tree):
         self,
         article_key: db.Key,
         parent_cart_key: db.Key,
+        *,
         quantity: int,
         quantity_mode: QuantityMode,
+        **kwargs,
     ) -> CartItemSkel | None:
         if not isinstance(article_key, db.Key):
             raise TypeError(f"article_key must be an instance of db.Key")
@@ -329,6 +332,7 @@ class Cart(ShopModuleAbstract, Tree):
                 "quantity",
                 descr_appendix=f'Quantity of free article cannot be greater than 1! (reached {skel["quantity"]})'
             )
+        skel = self.additional_add_or_update_article(skel, **kwargs)
         key = skel.toDB()
         EVENT_SERVICE.call(Event.ARTICLE_CHANGED, skel=skel, deleted=False)
         self.clear_children_cache()
@@ -373,20 +377,21 @@ class Cart(ShopModuleAbstract, Tree):
                 f"Target cart node is inside a different repo"
             )
         skel["parententry"] = new_parent_cart_key
-        EVENT_SERVICE.call(Event.ARTICLE_CHANGED, skel=skel, deleted=False)
         skel.toDB()
+        EVENT_SERVICE.call(Event.ARTICLE_CHANGED, skel=skel, deleted=False)
         return skel
 
     def cart_add(
         self,
+        *,
         parent_cart_key: str | db.Key = None,
-        cart_type: CartType = None,  # TODO: since we generate basket automatically,
-        #                                    wishlist would be the only acceptable value ...
+        cart_type: CartType = None,
         name: str = SENTINEL,
         customer_comment: str = SENTINEL,
         shipping_address_key: str | db.Key = SENTINEL,
         shipping_key: str | db.Key = SENTINEL,
         discount_key: str | db.Key = SENTINEL,
+        **kwargs,
     ) -> SkeletonInstance | None:
         if not isinstance(parent_cart_key, (db.Key, type(None))):
             raise TypeError(f"parent_cart_key must be an instance of db.Key")
@@ -405,6 +410,7 @@ class Cart(ShopModuleAbstract, Tree):
             shipping_key=shipping_key,
             discount_key=discount_key,
         )
+        skel = self.additional_cart_add(skel, **kwargs)
         skel.toDB()
         EVENT_SERVICE.call(Event.CART_CHANGED, skel=skel, deleted=False)
         self.onAdded("node", skel)
@@ -413,14 +419,15 @@ class Cart(ShopModuleAbstract, Tree):
     def cart_update(
         self,
         cart_key: db.Key,
+        *,
         parent_cart_key: str | db.Key = SENTINEL,
-        cart_type: CartType = None,  # TODO: since we generate basket automatically,
-        #                                    wishlist would be the only acceptable value ...
+        cart_type: CartType = None,
         name: str = SENTINEL,
         customer_comment: str = SENTINEL,
         shipping_address_key: str | db.Key = SENTINEL,
         shipping_key: str | db.Key = SENTINEL,
         discount_key: str | db.Key = SENTINEL,
+        **kwargs,
     ) -> SkeletonInstance | None:
         if not isinstance(cart_key, db.Key):
             raise TypeError(f"cart_key must be an instance of db.Key")
@@ -444,6 +451,7 @@ class Cart(ShopModuleAbstract, Tree):
             shipping_key=shipping_key,
             discount_key=discount_key,
         )
+        self.additional_cart_update(skel, **kwargs)
         skel.toDB()
         EVENT_SERVICE.call(Event.CART_CHANGED, skel=skel, deleted=False)
         return skel
@@ -533,6 +541,77 @@ class Cart(ShopModuleAbstract, Tree):
                 # current.session.get().markChanged()
         skel.delete()
         EVENT_SERVICE.call(Event.CART_CHANGED, skel=skel, deleted=True)
+
+    # --- Hooks ---------------------------------------------------------------
+
+    def additional_add_or_update_article(
+        self,
+        skel: SkeletonInstance_T[CartNodeSkel],
+        /,
+        **kwargs,
+    ) -> SkeletonInstance_T[CartNodeSkel]:
+        """
+        Hook method called by :meth:`add_or_update_article` before the skeleton is saved.
+
+        This method can be overridden in a subclass to implement additional API fields or
+        make further modifications to the cart skeleton (`skel`).
+        By default, it raises an exception if unexpected arguments
+        (``kwargs``) are provided and returns the unchanged `skel`` object.
+
+        :param skel: The current instance of the cart skeleton.
+        :param kwargs: Additional optional arguments for extended implementations.
+        :raises TooManyArgumentsException: If unexpected arguments are passed in ``kwargs``.
+        :return: The (potentially modified) cart skeleton.
+        """
+        if kwargs:
+            raise e.TooManyArgumentsException(f"{self}.add_or_update_article", *kwargs.keys())
+        return skel
+
+    def additional_cart_add(
+        self,
+        skel: SkeletonInstance_T[CartNodeSkel],
+        /,
+        **kwargs,
+    ) -> SkeletonInstance_T[CartNodeSkel]:
+        """
+        Hook method called by :meth:`cart_add` before the skeleton is saved.
+
+        This method can be overridden in a subclass to implement additional API fields or
+        make further modifications to the cart skeleton (`skel`).
+        By default, it raises an exception if unexpected arguments
+        (``kwargs``) are provided and returns the unchanged `skel`` object.
+
+        :param skel: The current instance of the cart skeleton.
+        :param kwargs: Additional optional arguments for extended implementations.
+        :raises TooManyArgumentsException: If unexpected arguments are passed in ``kwargs``.
+        :return: The (potentially modified) cart skeleton.
+        """
+        if kwargs:
+            raise e.TooManyArgumentsException(f"{self}.cart_add", *kwargs.keys())
+        return skel
+
+    def additional_cart_update(
+        self,
+        skel: SkeletonInstance_T[CartNodeSkel],
+        /,
+        **kwargs,
+    ) -> SkeletonInstance_T[CartNodeSkel]:
+        """
+        Hook method called by :meth:`cart_update` before the skeleton is saved.
+
+        This method can be overridden in a subclass to implement additional API fields or
+        make further modifications to the cart skeleton (`skel`).
+        By default, it raises an exception if unexpected arguments
+        (``kwargs``) are provided and returns the unchanged `skel`` object.
+
+        :param skel: The current instance of the cart skeleton.
+        :param kwargs: Additional optional arguments for extended implementations.
+        :raises TooManyArgumentsException: If unexpected arguments are passed in ``kwargs``.
+        :return: The (potentially modified) cart skeleton.
+        """
+        if kwargs:
+            raise e.TooManyArgumentsException(f"{self}.cart_update", *kwargs.keys())
+        return skel
 
     # --- Cart / order calculations -------------------------------------------
 

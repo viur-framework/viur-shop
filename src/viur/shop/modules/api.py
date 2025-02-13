@@ -1,10 +1,10 @@
 import typing as t  # noqa
 
 from google.protobuf.message import DecodeError
-
-import viur.shop.types.exceptions as e
 from viur.core import current, db, errors, exposed, force_post
 from viur.core.render.json.default import DefaultRender as JsonRenderer
+
+import viur.shop.types.exceptions as e
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.skeletons import ShippingSkel
 from viur.shop.types import *
@@ -47,21 +47,23 @@ class Api(ShopModuleAbstract):
         *,
         article_key: str | db.Key,
         quantity: int = 1,
-        quantity_mode: QuantityModeType = "replace",
+        quantity_mode: QuantityMode = QuantityMode.REPLACE,
         parent_cart_key: str | db.Key,
+        **kwargs,
     ):
         """Add an article to the cart"""
         article_key = self._normalize_external_key(
             article_key, "article_key")
         parent_cart_key = self._normalize_external_key(
             parent_cart_key, "parent_cart_key")
-        try:
-            quantity_mode = QuantityMode(quantity_mode)
-        except ValueError:
-            raise e.InvalidArgumentException("quantity_mode", quantity_mode)
-        # TODO: Could also return self.article_view() or just the cart_node_key...
+        assert isinstance(quantity, QuantityMode)
         return JsonResponse(self.shop.cart.add_or_update_article(
-            article_key, parent_cart_key, quantity, quantity_mode))
+            article_key=article_key,
+            parent_cart_key=parent_cart_key,
+            quantity=quantity,
+            quantity_mode=quantity_mode,
+            **kwargs,
+        ))
 
     @exposed
     @force_post
@@ -70,23 +72,25 @@ class Api(ShopModuleAbstract):
         *,
         article_key: str | db.Key,
         quantity: int,
-        quantity_mode: QuantityModeType = "replace",
+        quantity_mode: QuantityMode = QuantityMode.REPLACE,
         parent_cart_key: str | db.Key,
+        **kwargs,
     ):
         """Update an existing article in the cart"""
         article_key = self._normalize_external_key(
             article_key, "article_key")
         parent_cart_key = self._normalize_external_key(
             parent_cart_key, "parent_cart_key")
-        try:
-            quantity_mode = QuantityMode(quantity_mode)
-        except ValueError:
-            raise e.InvalidArgumentException("quantity_mode", quantity_mode)
+        assert isinstance(quantity_mode, QuantityMode)
         if not self.shop.cart.get_article(article_key, parent_cart_key):
             raise errors.NotFound(f"{parent_cart_key} has no article with {article_key=}")
-        # TODO: Could also return self.article_view() or just the cart_node_key...
         return JsonResponse(self.shop.cart.add_or_update_article(
-            article_key, parent_cart_key, quantity, quantity_mode))
+            article_key=article_key,
+            parent_cart_key=parent_cart_key,
+            quantity=quantity,
+            quantity_mode=quantity_mode,
+            **kwargs,
+        ))
 
     @exposed
     @force_post
@@ -95,10 +99,15 @@ class Api(ShopModuleAbstract):
         *,
         article_key: str | db.Key,
         parent_cart_key: str | db.Key,
+        **kwargs,
     ):
         """Remove an article from the cart"""
         return self.article_update(
-            article_key=article_key, quantity=0, parent_cart_key=parent_cart_key)
+            article_key=article_key,
+            quantity=0,
+            parent_cart_key=parent_cart_key,
+            **kwargs,
+        )
 
     @exposed
     @force_post
@@ -125,13 +134,13 @@ class Api(ShopModuleAbstract):
         self,
         *,
         parent_cart_key: str | db.Key = None,
-        cart_type: CartType = None,  # TODO: since we generate basket automatically,
-        #                                    wishlist would be the only acceptable value ...
+        cart_type: CartType = None,
         name: str = None,
         customer_comment: str = None,
         shipping_address_key: str | db.Key = None,
         shipping_key: str | db.Key = None,
         discount_key: str | db.Key = None,
+        **kwargs,
     ):
         """
         Add a new cart node
@@ -167,6 +176,7 @@ class Api(ShopModuleAbstract):
             shipping_address_key=shipping_address_key,
             shipping_key=shipping_key,
             discount_key=discount_key,
+            **kwargs,
         ))
 
     @exposed
@@ -181,6 +191,7 @@ class Api(ShopModuleAbstract):
         shipping_address_key: str | db.Key = None,
         shipping_key: str | db.Key = None,
         discount_key: str | db.Key = None,  # TODO: use sentinel?
+        **kwargs,
     ):
         """
         Update an existing cart node
@@ -211,6 +222,7 @@ class Api(ShopModuleAbstract):
             shipping_address_key=shipping_address_key,
             shipping_key=shipping_key,
             discount_key=discount_key,
+            **kwargs,
         ))
 
     @exposed
@@ -242,7 +254,7 @@ class Api(ShopModuleAbstract):
         :param remove_sub_carts: Remove child leafs, keep nodes
         """
         cart_key = self._normalize_external_key(cart_key, "cart_key")
-        ...
+        raise errors.NotImplemented  # TODO
 
     @exposed
     def basket_list(
@@ -322,14 +334,21 @@ class Api(ShopModuleAbstract):
         state_ordered: bool = SENTINEL,
         state_paid: bool = SENTINEL,
         state_rts: bool = SENTINEL,
+        **kwargs,
     ):
         cart_key = self._normalize_external_key(cart_key, "cart_key")
         billing_address_key = self._normalize_external_key(billing_address_key, "billing_address_key", True)
         customer_key = self._normalize_external_key(customer_key, "customer_key", True)
-        ...
         return JsonResponse(self.shop.order.order_add(
-            cart_key, payment_provider, billing_address_key,
-            customer_key, state_ordered, state_paid, state_rts))
+            cart_key=cart_key,
+            payment_provider=payment_provider,
+            billing_address_key=billing_address_key,
+            customer_key=customer_key,
+            state_ordered=state_ordered,
+            state_paid=state_paid,
+            state_rts=state_rts,
+            **kwargs,
+        ))
 
     @exposed
     @force_post
@@ -343,13 +362,21 @@ class Api(ShopModuleAbstract):
         state_ordered: bool = SENTINEL,
         state_paid: bool = SENTINEL,
         state_rts: bool = SENTINEL,
+        **kwargs,
     ):
         order_key = self._normalize_external_key(order_key, "order_key")
         billing_address_key = self._normalize_external_key(billing_address_key, "billing_address_key", True)
         customer_key = self._normalize_external_key(customer_key, "customer_key", True)
         return JsonResponse(self.shop.order.order_update(
-            order_key, payment_provider, billing_address_key,
-            customer_key, state_ordered, state_paid, state_rts))
+            order_key=order_key,
+            payment_provider=payment_provider,
+            billing_address_key=billing_address_key,
+            customer_key=customer_key,
+            state_ordered=state_ordered,
+            state_paid=state_paid,
+            state_rts=state_rts,
+            **kwargs,
+        ))
 
     @exposed
     @force_post
@@ -358,7 +385,7 @@ class Api(ShopModuleAbstract):
         *,
         order_key: str | db.Key,
     ):
-        ...
+        raise errors.NotImplemented  # TODO
 
     @exposed
     def order_list(

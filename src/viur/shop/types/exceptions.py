@@ -71,3 +71,13 @@ class InvalidKeyException(ViURShopHttpException):
             status=461, name="Invalid Parameter",
             descr=f"The provided key '{key}' (parameter {argument_name}) is not a valid db.Key"
         )
+
+
+class TooManyArgumentsException(ViURShopHttpException):
+    def __init__(self, func_nam: str, *argument_name: str):
+        self.func_nam = func_nam
+        self.argument_names: tuple[str, ...] = argument_name
+        super().__init__(
+            status=462, name="Too Many Arguments",
+            descr=f"{func_nam} got too many (unknown) arguments: {', '.join(argument_name)}"
+        )
