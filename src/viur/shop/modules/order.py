@@ -528,7 +528,7 @@ class Order(ShopModuleAbstract, List):
         :return: The (potentially modified) order skeleton.
         """
         if kwargs:
-            raise e.TooManyArgumentsException(f"{self}.add_or_update_article", *kwargs.keys())
+            raise e.TooManyArgumentsException(f"{self}.order_add", *kwargs.keys())
         return skel
 
     def additional_order_update(
@@ -551,7 +551,7 @@ class Order(ShopModuleAbstract, List):
         :return: The (potentially modified) order skeleton.
         """
         if kwargs:
-            raise e.TooManyArgumentsException(f"{self}.add_or_update_article", *kwargs.keys())
+            raise e.TooManyArgumentsException(f"{self}.order_update", *kwargs.keys())
         return skel
 
     # --- Internal helpers  ----------------------------------------------------
