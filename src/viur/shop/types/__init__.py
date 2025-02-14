@@ -34,7 +34,6 @@ from .enums import (  # noqa
     DiscountType,
     OrderState,
     QuantityMode,
-    QuantityModeType,
     Salutation,
     ShippingStatus,
     VatRateCategory,

@@ -2,9 +2,10 @@ import logging
 import time
 import typing as t  # noqa
 
-from viur import toolkit
 from viur.core import current, db, errors as core_errors, exposed, force_post
 from viur.core.prototypes import List
+
+from viur import toolkit
 from viur.shop.types import *
 from viur.shop.types.results import PaymentProviderResult
 from .abstract import ShopModuleAbstract
@@ -124,6 +125,7 @@ class Order(ShopModuleAbstract, List):
         state_ordered: bool = SENTINEL,
         state_paid: bool = SENTINEL,
         state_rts: bool = SENTINEL,
+        **kwargs,
     ):
         if not isinstance(cart_key, db.Key):
             raise TypeError(f"cart_key must be an instance of db.Key")
@@ -158,6 +160,7 @@ class Order(ShopModuleAbstract, List):
             skel = HOOK_SERVICE.dispatch(Hook.ORDER_ADD_ADDITION)(skel)
         except DispatchError:
             pass
+        skel = self.additional_order_add(skel, **kwargs)
         self.onAdd(skel)
         skel.toDB()
         self.current_session_order_key = skel["key"]
@@ -174,6 +177,7 @@ class Order(ShopModuleAbstract, List):
         state_ordered: bool = SENTINEL,
         state_paid: bool = SENTINEL,
         state_rts: bool = SENTINEL,
+        **kwargs,
     ):
         if not isinstance(order_key, db.Key):
             raise TypeError(f"order_key must be an instance of db.Key")
@@ -197,6 +201,7 @@ class Order(ShopModuleAbstract, List):
             skel = HOOK_SERVICE.dispatch(Hook.ORDER_UPDATE_ADDITION)(skel)
         except DispatchError:
             pass
+        skel = self.additional_order_update(skel, **kwargs)
         self.onEdit(skel)
         skel.toDB()
         self.onEdited(skel)
@@ -500,6 +505,54 @@ class Order(ShopModuleAbstract, List):
         EVENT_SERVICE.call(Event.ORDER_RTS, order_skel=order_skel)
         EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=order_skel, deleted=False)
         return order_skel
+
+    # --- Hooks ---------------------------------------------------------------
+
+    def additional_order_add(
+        self,
+        skel: SkeletonInstance_T[OrderSkel],
+        /,
+        **kwargs,
+    ) -> SkeletonInstance_T[OrderSkel]:
+        """
+        Hook method called by :meth:`order_add` before the skeleton is saved.
+
+        This method can be overridden in a subclass to implement additional API fields or
+        make further modifications to the order skeleton (`skel`).
+        By default, it raises an exception if unexpected arguments
+        (``kwargs``) are provided and returns the unchanged `skel`` object.
+
+        :param skel: The current instance of the order skeleton.
+        :param kwargs: Additional optional arguments for extended implementations.
+        :raises TooManyArgumentsException: If unexpected arguments are passed in ``kwargs``.
+        :return: The (potentially modified) order skeleton.
+        """
+        if kwargs:
+            raise e.TooManyArgumentsException(f"{self}.order_add", *kwargs.keys())
+        return skel
+
+    def additional_order_update(
+        self,
+        skel: SkeletonInstance_T[OrderSkel],
+        /,
+        **kwargs,
+    ) -> SkeletonInstance_T[OrderSkel]:
+        """
+        Hook method called by :meth:`order_update` before the skeleton is saved.
+
+        This method can be overridden in a subclass to implement additional API fields or
+        make further modifications to the order skeleton (`skel`).
+        By default, it raises an exception if unexpected arguments
+        (``kwargs``) are provided and returns the unchanged `skel`` object.
+
+        :param skel: The current instance of the order skeleton.
+        :param kwargs: Additional optional arguments for extended implementations.
+        :raises TooManyArgumentsException: If unexpected arguments are passed in ``kwargs``.
+        :return: The (potentially modified) order skeleton.
+        """
+        if kwargs:
+            raise e.TooManyArgumentsException(f"{self}.order_update", *kwargs.keys())
+        return skel
 
     # --- Internal helpers  ----------------------------------------------------
 

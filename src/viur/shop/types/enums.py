@@ -3,7 +3,6 @@ A lot of enums used for SelectBones in Skeletons
 """
 
 import enum
-import typing as t
 
 
 class ArticleAvailability(enum.Enum):
@@ -129,6 +128,3 @@ class VatRateCategory(enum.StrEnum):
 
     ZERO = "zero"
     """Applies to specific goods and services with no VAT charged, such as exports or essential items."""
-
-
-QuantityModeType = t.Literal["replace", "increase", "decrease"]
