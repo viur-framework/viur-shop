@@ -56,7 +56,7 @@ class Api(ShopModuleAbstract):
             article_key, "article_key")
         parent_cart_key = self._normalize_external_key(
             parent_cart_key, "parent_cart_key")
-        assert isinstance(quantity, QuantityMode)
+        assert isinstance(quantity_mode, QuantityMode)
         return JsonResponse(self.shop.cart.add_or_update_article(
             article_key=article_key,
             parent_cart_key=parent_cart_key,
