@@ -556,12 +556,12 @@ class Cart(ShopModuleAbstract, Tree):
         This method can be overridden in a subclass to implement additional API fields or
         make further modifications to the cart skeleton (`skel`).
         By default, it raises an exception if unexpected arguments
-        (``kwargs``) are provided and returns the unchanged `skel`` object.
+        (``kwargs``) are provided and returns the unchanged `skel` object.
 
-        :param skel: The current instance of the cart skeleton.
+        :param skel: The current instance of the cart item skeleton.
         :param kwargs: Additional optional arguments for extended implementations.
         :raises TooManyArgumentsException: If unexpected arguments are passed in ``kwargs``.
-        :return: The (potentially modified) cart skeleton.
+        :return: The (potentially modified) cart item skeleton.
         """
         if kwargs:
             raise e.TooManyArgumentsException(f"{self}.add_or_update_article", *kwargs.keys())
@@ -579,7 +579,7 @@ class Cart(ShopModuleAbstract, Tree):
         This method can be overridden in a subclass to implement additional API fields or
         make further modifications to the cart skeleton (`skel`).
         By default, it raises an exception if unexpected arguments
-        (``kwargs``) are provided and returns the unchanged `skel`` object.
+        (``kwargs``) are provided and returns the unchanged `skel` object.
 
         :param skel: The current instance of the cart skeleton.
         :param kwargs: Additional optional arguments for extended implementations.
@@ -602,7 +602,7 @@ class Cart(ShopModuleAbstract, Tree):
         This method can be overridden in a subclass to implement additional API fields or
         make further modifications to the cart skeleton (`skel`).
         By default, it raises an exception if unexpected arguments
-        (``kwargs``) are provided and returns the unchanged `skel`` object.
+        (``kwargs``) are provided and returns the unchanged `skel` object.
 
         :param skel: The current instance of the cart skeleton.
         :param kwargs: Additional optional arguments for extended implementations.
