@@ -546,7 +546,7 @@ class Cart(ShopModuleAbstract, Tree):
 
     def additional_add_or_update_article(
         self,
-        skel: SkeletonInstance_T[CartItemSkel],  # this has to be a cart item not a node
+        skel: SkeletonInstance_T[CartItemSkel],
         /,
         **kwargs,
     ) -> SkeletonInstance_T[CartItemSkel]:
