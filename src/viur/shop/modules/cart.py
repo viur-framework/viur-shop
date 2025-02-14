@@ -546,10 +546,10 @@ class Cart(ShopModuleAbstract, Tree):
 
     def additional_add_or_update_article(
         self,
-        skel: SkeletonInstance_T[CartNodeSkel],
+        skel: SkeletonInstance_T[CartItemSkel],  # this has to be a cart item not a node
         /,
         **kwargs,
-    ) -> SkeletonInstance_T[CartNodeSkel]:
+    ) -> SkeletonInstance_T[CartItemSkel]:
         """
         Hook method called by :meth:`add_or_update_article` before the skeleton is saved.
 
