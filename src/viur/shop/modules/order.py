@@ -520,7 +520,7 @@ class Order(ShopModuleAbstract, List):
         This method can be overridden in a subclass to implement additional API fields or
         make further modifications to the order skeleton (`skel`).
         By default, it raises an exception if unexpected arguments
-        (``kwargs``) are provided and returns the unchanged `skel`` object.
+        (``kwargs``) are provided and returns the unchanged `skel` object.
 
         :param skel: The current instance of the order skeleton.
         :param kwargs: Additional optional arguments for extended implementations.
@@ -543,7 +543,7 @@ class Order(ShopModuleAbstract, List):
         This method can be overridden in a subclass to implement additional API fields or
         make further modifications to the order skeleton (`skel`).
         By default, it raises an exception if unexpected arguments
-        (``kwargs``) are provided and returns the unchanged `skel`` object.
+        (``kwargs``) are provided and returns the unchanged `skel` object.
 
         :param skel: The current instance of the order skeleton.
         :param kwargs: Additional optional arguments for extended implementations.
