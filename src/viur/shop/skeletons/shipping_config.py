@@ -26,6 +26,7 @@ class ShippingConfigSkel(Skeleton):  # STATE: Complete (as in model)
             "description",
             "supplier",
             "shipping_cost",
+            "art_no",
             "delivery_time_*",
         },
     )

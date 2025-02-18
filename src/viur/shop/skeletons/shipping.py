@@ -4,6 +4,7 @@ import typing as t  # noqa
 from viur.core.bones import *
 from viur.core.skeleton import Skeleton
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
+from viur.core.i18n import translate
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -36,6 +37,12 @@ class ShippingSkel(Skeleton):  # STATE: Complete (as in model)
 
     description = TextBone(
         validHtml=None,
+        params={
+            "tooltip": translate(
+                "viur.shop.skeleton.shipping.description.tooltip",
+                public=True,
+            ),
+        }
     )
     """
     "Sie brauchen ein DHL-Kundenkonto"
@@ -51,6 +58,9 @@ class ShippingSkel(Skeleton):  # STATE: Complete (as in model)
         isEmptyFunc=is_empty,
     )
     shipping_cost.isEmpty = functools.partial(is_empty, shipping_cost)  # Re-Assign with instance reference
+
+    art_no = StringBone(
+    )
 
     supplier = SelectBone(
         values=get_suppliers,
