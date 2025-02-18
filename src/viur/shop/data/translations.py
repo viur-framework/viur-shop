@@ -846,6 +846,15 @@ TRANSLATIONS = {
         "en": "Shipping costs",
         "fr": "Frais d'expédition",
     },
+    "viur.shop.skeleton.shipping.art_no": {
+        "_hint": "bone art_no<StringBone> in ShippingSkel in viur.shop",
+        "de": "Artikelnummer",
+        "en": "art no",
+    },
+    "viur.shop.skeleton.shipping.description.tooltip": {
+        "de": "Wird auch als Kundenkommentar im Frontend ausgegeben",
+        "en": "Is also displayed as a customer comment in the frontend",
+    },
     "viur.shop.skeleton.shipping.supplier": {
         "_hint": "bone supplier<SelectBone> in ShippingSkel in viur.shop",
         "de": "Lieferant",
