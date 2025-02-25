@@ -246,13 +246,6 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
         # FIXME: What's necessary here?
         parentKeys=["key", "parententry", "article"],
         refKeys=[
-            "shop_name", "shop_description",
-            "shop_price_retail", "shop_price_recommended",
-            "shop_availability", "shop_listed",
-            "shop_image", "shop_art_no_or_gtin",
-            "shop_vat", "shop_shipping_config",
-            "shop_is_weee", "shop_is_low_price",
-            "shop_price_current",
             "shop_*",
         ],
         consistency=RelationalConsistency.CascadeDeletion,
