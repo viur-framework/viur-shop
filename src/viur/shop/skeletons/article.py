@@ -2,8 +2,10 @@ import abc
 import inspect
 import typing as t  # noqa
 
+from viur.core import utils
 from viur.core.bones import *
 from viur.core.skeleton import BaseSkeleton
+
 from viur.shop.types import *
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 from ..types.response import make_json_dumpable
@@ -84,6 +86,15 @@ class ArticleAbstractSkel(BaseSkeleton):
     def shop_is_low_price(self) -> BooleanBone:
         """shop_price_retail != shop_price_recommended"""
         ...
+
+    shop_view_url = RawBone(
+        visible=False,
+        compute=Compute(
+            lambda skel: utils.seoUrlToEntry(skel.kindName, skel),
+            ComputeInterval(ComputeMethod.Always),
+        ),
+    )
+    """URL to the article page (view)"""
 
     @property
     def shop_price_(self) -> Price:
