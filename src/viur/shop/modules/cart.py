@@ -673,6 +673,7 @@ class Cart(ShopModuleAbstract, Tree):
 
 @Session.on_delete
 def delete_guest_cart(session: db.Entity) -> None:
+    """Delete carts from guest sessions to avoid orphaned carts"""
     if session["user"] != Session.GUEST_USER:
         return
     try:
