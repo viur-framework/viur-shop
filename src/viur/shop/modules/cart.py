@@ -527,10 +527,12 @@ class Cart(ShopModuleAbstract, Tree):
         self,
         cart_key: db.Key,
     ) -> None:
-        self.deleteRecursive(cart_key)
         skel = self.editSkel("node")
         if not skel.fromDB(cart_key):
             raise errors.NotFound
+        # This delete could fail if the cart is used by an order
+        skel.delete()
+        self.deleteRecursive(cart_key)
         if skel["parententry"] is None or skel["is_root_node"]:
             logger.info(f"{skel['key']} was a root node!")
             # raise NotImplementedError("Cannot delete root node")
@@ -539,7 +541,6 @@ class Cart(ShopModuleAbstract, Tree):
                 self.detach_session_cart()
                 # del self.session["session_cart_key"]
                 # current.session.get().markChanged()
-        skel.delete()
         EVENT_SERVICE.call(Event.CART_CHANGED, skel=skel, deleted=True)
 
     # --- Hooks ---------------------------------------------------------------
@@ -672,23 +673,11 @@ class Cart(ShopModuleAbstract, Tree):
 
 @Session.on_delete
 def delete_guest_cart(session: db.Entity) -> None:
-    logger.debug(f"Deleted {session=}")
     if session["user"] != Session.GUEST_USER:
-        logger.debug("Ignoring session from known user")
         return
-
     try:
         cart = session["data"]["shop"]["cart"]["session_cart_key"]
     except (KeyError, TypeError):
-        logger.debug(f"Session has no cart key stored")
         return
-
     SHOP_INSTANCE.get().cart.cart_remove(cart)
-    # SHOP_INSTANCE.get().cart.deleteRecursive(cart)
-    # node_skel = SHOP_INSTANCE.get().cart.editSkel("node")
-    # if not node_skel.fromDB(cart):
-    #     logger.debug("Cart does not exist")
-    #     return
-    # node_skel.delete()
-    # logger.debug(f"Deleted {node_skel=} and children")
-    logger.debug(f"Deleted {cart=} and children")
+    logger.debug(f"Deleted {cart=} and children after deleting {session=}")
