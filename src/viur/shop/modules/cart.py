@@ -671,6 +671,15 @@ class Cart(ShopModuleAbstract, Tree):
         return new_parent_skel
 
 
+try:
+    Session.on_delete
+except AttributeError:  # backward compatibility for viur-core
+    from viur.core.version import __version__
+
+    logger.warning(f"viur-core {__version__} has no Session.on_delete")
+    Session.on_delete = lambda *_, **__: None
+
+
 @Session.on_delete
 def delete_guest_cart(session: db.Entity) -> None:
     """Delete carts from guest sessions to avoid orphaned carts"""
