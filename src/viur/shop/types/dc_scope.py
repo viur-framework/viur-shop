@@ -2,8 +2,6 @@ import abc
 import typing as t  # noqa
 
 from viur.core import current, utils
-from viur.core.skeleton import Skeleton, skeletonByKind
-
 from .enums import *
 from .exceptions import InvalidStateError
 from ..globals import SENTINEL, SHOP_INSTANCE, SHOP_LOGGER, Sentinel
@@ -331,15 +329,20 @@ class ScopeArticle(DiscountConditionScope):
     def precondition(self) -> bool:
         return (
             self.condition_skel["scope_article"] is not None
-            # and self.cart_skel is not None
+            and not (self.cart_skel is None and self.cart_skel is None)  # needs a context to verify
         )
 
     def __call__(self) -> bool:
-        leaf_skels = (
-            SHOP_INSTANCE.get().cart.viewSkel("leaf").all()
-            .filter("parentrepo =", self.cart_skel["key"])
-            .filter("article.dest.__key__ =", self.condition_skel["scope_article"]["dest"]["key"])
-            .fetch()
-        )
-        # logger.debug(f"<{len(leaf_skels)}>{leaf_skels = }")
-        return len(leaf_skels) > 0
+        if self.cart_skel is not None:
+            leaf_skels = (
+                SHOP_INSTANCE.get().cart.viewSkel("leaf").all()
+                .filter("parentrepo =", self.cart_skel["key"])
+                .filter("article.dest.__key__ =", self.condition_skel["scope_article"]["dest"]["key"])
+                .fetch()
+            )
+            # logger.debug(f"<{len(leaf_skels)}>{leaf_skels = }")
+            return len(leaf_skels) > 0
+        elif self.article_skel is not None:
+            return self.article_skel["key"] == self.condition_skel["scope_article"]["dest"]["key"]
+        else:
+            raise InvalidStateError
