@@ -1,16 +1,16 @@
 import typing as t  # noqa
 
+import viur.shop.types.exceptions as e
 from viur.core import conf, current, db, errors, exposed, utils
 from viur.core.bones import BaseBone
 from viur.core.prototypes import Tree
 from viur.core.prototypes.tree import SkelType
+from viur.core.session import Session
 from viur.core.skeleton import Skeleton, SkeletonInstance
-
-import viur.shop.types.exceptions as e
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.types import *
 from viur.shop.types.exceptions import InvalidStateError
-from ..globals import SENTINEL, SHOP_LOGGER
+from ..globals import SENTINEL, SHOP_INSTANCE, SHOP_LOGGER
 from ..services import EVENT_SERVICE, Event
 from ..skeletons.cart import CartItemSkel, CartNodeSkel
 from ..skeletons.order import OrderSkel
@@ -668,3 +668,27 @@ class Cart(ShopModuleAbstract, Tree):
         leaf_skel.toDB()
         EVENT_SERVICE.call(Event.ARTICLE_CHANGED, skel=leaf_skel, deleted=False)
         return new_parent_skel
+
+
+@Session.on_delete
+def delete_guest_cart(session: db.Entity) -> None:
+    logger.debug(f"Deleted {session=}")
+    if session["user"] != Session.GUEST_USER:
+        logger.debug("Ignoring session from known user")
+        return
+
+    try:
+        cart = session["data"]["shop"]["cart"]["session_cart_key"]
+    except (KeyError, TypeError):
+        logger.debug(f"Session has no cart key stored")
+        return
+
+    SHOP_INSTANCE.get().cart.cart_remove(cart)
+    # SHOP_INSTANCE.get().cart.deleteRecursive(cart)
+    # node_skel = SHOP_INSTANCE.get().cart.editSkel("node")
+    # if not node_skel.fromDB(cart):
+    #     logger.debug("Cart does not exist")
+    #     return
+    # node_skel.delete()
+    # logger.debug(f"Deleted {node_skel=} and children")
+    logger.debug(f"Deleted {cart=} and children")
