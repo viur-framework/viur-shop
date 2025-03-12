@@ -51,7 +51,15 @@ class Api(ShopModuleAbstract):
         parent_cart_key: str | db.Key | t.Literal["BASKET"] = SENTINEL,
         **kwargs,
     ):
-        """Add an article to the cart"""
+        """Add an article to the cart
+
+        :param article_key: Key of the article to add.
+        :param quantity: Quantity of the article to add.
+        :param quantity_mode: Behavior of the quantity: absolute or relative valuation
+        :param parent_cart_key: Key of the (sub) cart (node) to which
+            this leaf will be added as a child.
+            Use "BASKET" as key to use the basket of the current session.
+        """
         article_key = self._normalize_external_key(
             article_key, "article_key")
         if parent_cart_key == "BASKET":
@@ -78,7 +86,16 @@ class Api(ShopModuleAbstract):
         parent_cart_key: str | db.Key | t.Literal["BASKET"] = SENTINEL,
         **kwargs,
     ):
-        """Update an existing article in the cart"""
+        """Update an existing article in the cart
+
+        :param article_key: Key of the article to update.
+            Note: This is not the key of the leaf skel!
+        :param quantity: Quantity of the article to update.
+        :param quantity_mode: Behavior of the quantity: absolute or relative valuation
+        :param parent_cart_key: Optional. Key of the (sub) cart (node) to which
+            this leaf will be moved to as a child.
+            Use "BASKET" as key to use the basket of the current session.
+        """
         article_key = self._normalize_external_key(
             article_key, "article_key")
         if parent_cart_key == "BASKET":
