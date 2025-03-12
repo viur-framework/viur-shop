@@ -58,7 +58,7 @@ class Cart(ShopModuleAbstract, Tree):
 
     @property
     def current_session_cart_key(self) -> db.Key | None:
-        return self.get_current_session_cart_key()
+        return self.get_current_session_cart_key(create_if_missing=False)
 
     def get_current_session_cart_key(self, *, create_if_missing: bool = False) -> db.Key | None:
         if user := current.user.get():

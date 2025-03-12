@@ -541,6 +541,8 @@ class Api(ShopModuleAbstract):
             return None
         elif not external_key:
             raise InvalidKeyException(external_key, parameter_name)
+        if isinstance(external_key, db.Key):
+            return external_key
         try:
             return db.Key.from_legacy_urlsafe(external_key)
         except (ValueError, DecodeError):  # yes, the exception really comes from protobuf...
