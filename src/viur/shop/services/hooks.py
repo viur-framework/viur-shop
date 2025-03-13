@@ -33,19 +33,19 @@ class Hook(enum.IntEnum):
 
     ORDER_ADD_ADDITION = enum.auto()
     """Do some additional modifications on the OrderSkel on order_add action.
-    Called in :meth:`viur.shop.modules.order.Order.order_add` before saving with :meth:`Skeleton.toDB`.
+    Called in :meth:`viur.shop.modules.order.Order.order_add` before saving with :meth:`Skeleton.write`.
     type: (order_skel: SkeletonInstance_T[OrderSkel]) -> SkeletonInstance_T[OrderSkel]
     """
 
     ORDER_UPDATE_ADDITION = enum.auto()
     """Do some additional modifications on the OrderSkel on order_update action.
-    Called in :meth:`viur.shop.modules.order.Order.order_update` before saving with :meth:`Skeleton.toDB`.
+    Called in :meth:`viur.shop.modules.order.Order.order_update` before saving with :meth:`Skeleton.write`.
     type: (order_skel: SkeletonInstance_T[OrderSkel]) -> SkeletonInstance_T[OrderSkel]
     """
 
     ORDER_CHECKOUT_START_ADDITION = enum.auto()
     """Do some additional modifications on the OrderSkel on checkout_start action.
-    Called in :meth:`viur.shop.modules.order.Order.checkout_start` before saving with :meth:`Skeleton.toDB`.
+    Called in :meth:`viur.shop.modules.order.Order.checkout_start` before saving with :meth:`Skeleton.write`.
     type: (order_skel: SkeletonInstance_T[OrderSkel]) -> SkeletonInstance_T[OrderSkel]
     """
 

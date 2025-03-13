@@ -108,7 +108,7 @@ class Order(ShopModuleAbstract, List):
         if not isinstance(order_key, db.Key):
             raise TypeError(f"order_key must be an instance of db.Key")
         skel = self.viewSkel()
-        if not skel.fromDB(order_key):
+        if not skel.read(order_key):
             logger.debug(f"Order {order_key} does not exist")
             return None
         if not self.canView(skel):
@@ -137,7 +137,7 @@ class Order(ShopModuleAbstract, List):
         cart_skel = self.shop.cart.viewSkel("node")
         if not self.shop.cart.is_valid_node(cart_key, root_node=True):
             raise ValueError(f"Invalid {cart_key=}!")
-        assert cart_skel.fromDB(cart_key)
+        assert cart_skel.read(cart_key)
         skel.setBoneValue("cart", cart_key)
         skel["total"] = cart_skel["total"]
         if user := current.user.get():
@@ -162,7 +162,7 @@ class Order(ShopModuleAbstract, List):
             pass
         skel = self.additional_order_add(skel, **kwargs)
         self.onAdd(skel)
-        skel.toDB()
+        skel.write()
         self.current_session_order_key = skel["key"]
         self.onAdded(skel)
         EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=skel, deleted=False)
@@ -186,7 +186,7 @@ class Order(ShopModuleAbstract, List):
         if customer_key is not SENTINEL and not isinstance(customer_key, (db.Key, type(None))):
             raise TypeError(f"customer_key must be an instance of db.Key")
         skel = self.editSkel()
-        if not skel.fromDB(order_key):
+        if not skel.read(order_key):
             raise core_errors.NotFound
         skel = self._order_set_values(
             skel,
@@ -203,7 +203,7 @@ class Order(ShopModuleAbstract, List):
             pass
         skel = self.additional_order_update(skel, **kwargs)
         self.onEdit(skel)
-        skel.toDB()
+        skel.write()
         self.onEdited(skel)
         EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=skel, deleted=False)
         return skel
@@ -287,7 +287,7 @@ class Order(ShopModuleAbstract, List):
         if not isinstance(order_key, db.Key):
             raise TypeError(f"order_key must be an instance of db.Key")
         order_skel = self.editSkel()
-        if not order_skel.fromDB(order_key):
+        if not order_skel.read(order_key):
             raise core_errors.NotFound()
         order_skel.refresh()  # TODO: cart.shipping_address relation seems not be updated by the core
         if ClientError.has_failing_error(errors := self.can_checkout(order_skel)):
@@ -306,7 +306,7 @@ class Order(ShopModuleAbstract, List):
             order_skel = HOOK_SERVICE.dispatch(Hook.ORDER_CHECKOUT_START_ADDITION)(order_skel)
         except DispatchError:
             pass
-        order_skel.toDB()
+        order_skel.write()
         self.set_checkout_in_progress(order_skel)
         EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=order_skel, deleted=False)
         return JsonResponse({
@@ -343,14 +343,14 @@ class Order(ShopModuleAbstract, List):
         self.shop.cart.freeze_cart(order_skel["cart"]["dest"]["key"], order_skel)
 
         cart_skel = self.shop.cart.viewSkel("node")
-        assert cart_skel.fromDB(order_skel["cart"]["dest"]["key"])
+        assert cart_skel.read(order_skel["cart"]["dest"]["key"])
         order_skel["total"] = cart_skel["total"]
 
         # Clone the address, so in case the user edits the address, existing orders wouldn't be affected by this
         # TODO: Can we do this copy-on-write instead; clone if an address is edited and replace on used order skels?
         ba_skel = self.shop.address.editSkel()
         ba_key = order_skel["billing_address"]["dest"]["key"]
-        assert ba_skel.fromDB(ba_key)
+        assert ba_skel.read(ba_key)
         # Remove the key to clone it #  TODO: why does this not work?
         # ba_skel.dbEntity.key = None
         # ba_skel.accessedValues.pop("key", None)
@@ -364,12 +364,12 @@ class Order(ShopModuleAbstract, List):
             ba_skel[name] = value
         ba_skel.setBoneValue("cloned_from", ba_key)
         # logger.debug(f"{order_skel = }")
-        key = ba_skel.toDB()
+        key = ba_skel.write()
         # logger.debug(f"{key = } // {ba_skel = }")
         assert ba_skel["key"] != ba_key, \
             f'{ba_skel["key"]} != {ba_key}'
         order_skel.setBoneValue("billing_address", ba_skel["key"])
-        order_skel.toDB()
+        order_skel.write()
         EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=order_skel, deleted=False)
 
         return order_skel
@@ -409,7 +409,7 @@ class Order(ShopModuleAbstract, List):
         if not isinstance(order_key, db.Key):
             raise TypeError(f"order_key must be an instance of db.Key")
         order_skel = self.editSkel()
-        if not order_skel.fromDB(order_key):
+        if not order_skel.read(order_key):
             raise core_errors.NotFound()
 
         if ClientError.has_failing_error(errors := self.can_order(order_skel)):

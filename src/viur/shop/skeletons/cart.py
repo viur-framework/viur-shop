@@ -313,7 +313,7 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
         # TODO: Cache this property
         # logger.debug(f'Reading article_skel_full {self.article_skel["key"]=}')
         skel = SHOP_INSTANCE.get().article_skel()
-        assert skel.fromDB(self.article_skel["key"])
+        assert skel.read(self.article_skel["key"])
         return skel
 
     @property
@@ -321,7 +321,7 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
         if not (pk := self["parententry"]):
             return None
         skel = SHOP_INSTANCE.get().cart.viewSkel("node")
-        assert skel.fromDB(pk)
+        assert skel.read(pk)
         return skel
 
     @property
@@ -343,5 +343,5 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     shipping.type = JsonBone.type
 
     @classmethod
-    def toDB(cls, skelValues: SkeletonInstance, update_relations: bool = True, **kwargs) -> db.Key:
-        return super().toDB(skelValues, update_relations, **kwargs)
+    def write(cls, skelValues: SkeletonInstance, update_relations: bool = True, **kwargs) -> db.Key:
+        return super().write(skelValues, update_relations, **kwargs)

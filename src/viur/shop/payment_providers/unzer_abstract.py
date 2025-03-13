@@ -179,7 +179,7 @@ class UnzerAbstract(PaymentProviderAbstract):
     ) -> t.Any:
         order_key = self.shop.api._normalize_external_key(order_key, "order_key")
         order_skel = self.shop.order.viewSkel()
-        if not order_skel.fromDB(order_key):
+        if not order_skel.read(order_key):
             raise errors.NotFound
         is_paid, payment = self.check_payment_state(order_skel)
         charges = payment.getChargedTransactions()
@@ -209,7 +209,7 @@ class UnzerAbstract(PaymentProviderAbstract):
     ):
         order_key = self.shop.api._normalize_external_key(order_key, "order_key")
         order_skel = self.shop.order.editSkel()
-        if not order_skel.fromDB(order_key):
+        if not order_skel.read(order_key):
             raise errors.NotFound
 
         order_skel = self._append_payment_to_order_skel(

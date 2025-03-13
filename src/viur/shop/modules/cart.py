@@ -41,9 +41,9 @@ class Cart(ShopModuleAbstract, Tree):
         if sub_skel is None:
             return cls()  # noqa
         if isinstance(sub_skel, list):
-            return cls.subSkel(*sub_skel)
+            return cls.subskel(*sub_skel)
         else:
-            return cls.subSkel(sub_skel)
+            return cls.subskel(sub_skel)
 
     def canView(self, skelType: SkelType, skel: SkeletonInstance) -> bool:
         if super().canView(skelType, skel):
@@ -61,7 +61,7 @@ class Cart(ShopModuleAbstract, Tree):
     def current_session_cart_key(self):
         if user := current.user.get():
             user_skel = conf.main_app.vi.user.viewSkel()
-            user_skel.fromDB(user["key"])
+            user_skel.read(user["key"])
             if user_skel["basket"]:
                 self.session["session_cart_key"] = user_skel["basket"]["dest"]["key"]
                 current.session.get().markChanged()
@@ -71,7 +71,7 @@ class Cart(ShopModuleAbstract, Tree):
     @property
     def current_session_cart(self):  # TODO: Caching
         skel = self.viewSkel("node")
-        if not skel.fromDB(self.current_session_cart_key):
+        if not skel.read(self.current_session_cart_key):
             logger.critical(f"Invalid session_cart_key {self.current_session_cart_key} ?! Not in DB!")
             self.detach_session_cart()
             return self.current_session_cart
@@ -85,7 +85,7 @@ class Cart(ShopModuleAbstract, Tree):
             root_node["is_root_node"] = True
             root_node["name"] = f"Session Cart of {user} created at {utils.utcNow()}"
             root_node["cart_type"] = CartType.BASKET
-            key = root_node.toDB()
+            key = root_node.write()
             self.session["session_cart_key"] = key
             current.session.get().markChanged()
             # Store basket at the user skel, it will be shared over multiple sessions / devices
@@ -104,9 +104,9 @@ class Cart(ShopModuleAbstract, Tree):
     @staticmethod
     def _set_basket_txn(user_key: db.Key, basket_key: db.Key | None) -> SkeletonInstance:
         user_skel = conf.main_app.vi.user.editSkel()
-        user_skel.fromDB(user_key)
+        user_skel.read(user_key)
         user_skel.setBoneValue("basket", basket_key)
-        user_skel.toDB()
+        user_skel.write()
         return user_skel
 
     def get_available_root_nodes(self, *args, **kwargs) -> list[dict[t.Literal["name", "key"], str]]:
@@ -156,7 +156,7 @@ class Cart(ShopModuleAbstract, Tree):
         """
         # TODO: return (okay_status, reason, skel) tuple/Dataclass?
         skel = self.viewSkel("node")
-        if not skel.fromDB(node_key):
+        if not skel.read(node_key):
             logger.debug(f"fail reason: 404")
             return False
         logger.debug(f'{skel=}')
@@ -220,7 +220,7 @@ class Cart(ShopModuleAbstract, Tree):
         if not isinstance(cart_key, db.Key):
             raise TypeError(f"cart_key must be an instance of db.Key")
         skel = self.viewSkel(skel_type)
-        if not skel.fromDB(cart_key):
+        if not skel.read(cart_key):
             logger.debug(f"Cart {cart_key} does not exist")
             return None
         if not self.canView(skel_type, skel):
@@ -274,13 +274,13 @@ class Cart(ShopModuleAbstract, Tree):
             res = skel.setBoneValue("article", article_key)
             skel["parententry"] = parent_cart_key
             parent_skel = self.viewSkel("node")
-            assert parent_skel.fromDB(parent_cart_key)
+            assert parent_skel.read(parent_cart_key)
             if parent_skel["is_root_node"]:
                 skel["parentrepo"] = parent_skel["key"]
             else:
                 skel["parentrepo"] = parent_skel["parentrepo"]
             article_skel: SkeletonInstance = self.shop.article_skel()
-            if not article_skel.fromDB(article_key):
+            if not article_skel.read(article_key):
                 raise errors.NotFound(f"Article with key {article_key=} does not exist!")
             if not article_skel["shop_listed"]:
                 # logger.debug(f"not listed: {article_skel=}")
@@ -333,7 +333,7 @@ class Cart(ShopModuleAbstract, Tree):
                 descr_appendix=f'Quantity of free article cannot be greater than 1! (reached {skel["quantity"]})'
             )
         skel = self.additional_add_or_update_article(skel, **kwargs)
-        key = skel.toDB()
+        key = skel.write()
         EVENT_SERVICE.call(Event.ARTICLE_CHANGED, skel=skel, deleted=False)
         self.clear_children_cache()
         # TODO: Validate quantity with hook (stock availability)
@@ -342,7 +342,7 @@ class Cart(ShopModuleAbstract, Tree):
                 skel=parent_skel
             )
             EVENT_SERVICE.call(Event.CART_CHANGED, skel=parent_skel, deleted=False)
-            parent_skel.toDB()
+            parent_skel.write()
 
         return skel
 
@@ -366,7 +366,7 @@ class Cart(ShopModuleAbstract, Tree):
         parent_skel = self.viewSkel("node")
         if not self.is_valid_node(new_parent_cart_key):
             raise e.InvalidArgumentException("parent_cart_key", parent_cart_key)
-        if not parent_skel.fromDB(new_parent_cart_key):
+        if not parent_skel.read(new_parent_cart_key):
             raise e.InvalidArgumentException(
                 "new_parent_cart_key", new_parent_cart_key,
                 f"Target cart node does not exist"
@@ -377,7 +377,7 @@ class Cart(ShopModuleAbstract, Tree):
                 f"Target cart node is inside a different repo"
             )
         skel["parententry"] = new_parent_cart_key
-        skel.toDB()
+        skel.write()
         EVENT_SERVICE.call(Event.ARTICLE_CHANGED, skel=skel, deleted=False)
         return skel
 
@@ -411,7 +411,7 @@ class Cart(ShopModuleAbstract, Tree):
             discount_key=discount_key,
         )
         skel = self.additional_cart_add(skel, **kwargs)
-        skel.toDB()
+        skel.write()
         EVENT_SERVICE.call(Event.CART_CHANGED, skel=skel, deleted=False)
         self.onAdded("node", skel)
         return skel
@@ -441,7 +441,7 @@ class Cart(ShopModuleAbstract, Tree):
         # TODO: must be inside a own root node ...
         # if not self.canEdit(skel):
         #     raise errors.Forbidden
-        assert skel.fromDB(cart_key)
+        assert skel.read(cart_key)
         skel = self._cart_set_values(
             skel=skel,
             parent_cart_key=parent_cart_key,
@@ -452,7 +452,7 @@ class Cart(ShopModuleAbstract, Tree):
             discount_key=discount_key,
         )
         self.additional_cart_update(skel, **kwargs)
-        skel.toDB()
+        skel.write()
         EVENT_SERVICE.call(Event.CART_CHANGED, skel=skel, deleted=False)
         return skel
 
@@ -478,7 +478,7 @@ class Cart(ShopModuleAbstract, Tree):
                 if not self.is_valid_node(parent_cart_key):
                     raise e.InvalidArgumentException("parent_cart_key", parent_cart_key)
                 parent_skel = self.viewSkel("node")
-                assert parent_skel.fromDB(parent_cart_key)
+                assert parent_skel.read(parent_cart_key)
                 if parent_skel["is_root_node"]:
                     skel["parentrepo"] = parent_skel["key"]
                 else:
@@ -529,7 +529,7 @@ class Cart(ShopModuleAbstract, Tree):
     ) -> None:
         self.deleteRecursive(cart_key)
         skel = self.editSkel("node")
-        if not skel.fromDB(cart_key):
+        if not skel.read(cart_key):
             raise errors.NotFound
         if skel["parententry"] is None or skel["is_root_node"]:
             logger.info(f"{skel['key']} was a root node!")
@@ -625,14 +625,14 @@ class Cart(ShopModuleAbstract, Tree):
         #   ensure each article still exists and shop_listed is True
         return NotImplemented
         cart_skel = self.editSkel("node")
-        assert cart_skel.fromDB(cart_key)
+        assert cart_skel.read(cart_key)
         """
         skel["shop_vat_rate_value"] = self.shop.vat_rate.get_vat_rate_for_country(
             country=order_skel["billing_address"]["dest"]["country"],
             category=article_skel["shop_vat_rate_category"],
         )
         """
-        cart_skel.toDB()
+        cart_skel.write()
 
     # -------------------------------------------------------------------------
 
@@ -642,13 +642,13 @@ class Cart(ShopModuleAbstract, Tree):
     ) -> list[SkeletonInstance]:
         if isinstance(leaf_key_or_skel, db.Key):
             skel = self.viewSkel("leaf")
-            skel.fromDB(leaf_key_or_skel)
+            skel.read(leaf_key_or_skel)
         else:
             skel = leaf_key_or_skel
         discounts = []
         while (pk := skel["parententry"]):
             skel = self.viewSkel("node", sub_skel="discount")
-            if not skel.fromDB(pk):
+            if not skel.read(pk):
                 raise InvalidStateError(f"{pk=} doesn't exist!")
             if discount := skel["discount"]:
                 discounts.append(discount["dest"])
@@ -661,10 +661,10 @@ class Cart(ShopModuleAbstract, Tree):
         for key, value in kwargs.items():
             new_parent_skel[key] = value  # TODO: use .setBoneValue?
         self.onAdd("node", new_parent_skel)
-        new_parent_skel.toDB()
+        new_parent_skel.write()
         self.onAdded("node", new_parent_skel)
         EVENT_SERVICE.call(Event.CART_CHANGED, skel=new_parent_skel, deleted=False)
         leaf_skel["parententry"] = new_parent_skel["key"]
-        leaf_skel.toDB()
+        leaf_skel.write()
         EVENT_SERVICE.call(Event.ARTICLE_CHANGED, skel=leaf_skel, deleted=False)
         return new_parent_skel
