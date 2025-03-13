@@ -364,7 +364,7 @@ class Order(ShopModuleAbstract, List):
             ba_skel[name] = value
         ba_skel.setBoneValue("cloned_from", ba_key)
         # logger.debug(f"{order_skel = }")
-        key = ba_skel.write()
+        ba_skel.write()
         # logger.debug(f"{key = } // {ba_skel = }")
         assert ba_skel["key"] != ba_key, \
             f'{ba_skel["key"]} != {ba_key}'

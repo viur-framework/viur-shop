@@ -1,12 +1,11 @@
 import collections
 import typing as t  # noqa
 
+from viur import toolkit
 from viur.core import db
 from viur.core.bones import *
 from viur.core.prototypes.tree import TreeSkel
 from viur.core.skeleton import SkeletonInstance
-
-from viur import toolkit
 from viur.shop.types import *
 from .vat import VatIncludedSkel
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
@@ -341,7 +340,3 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
             ComputeInterval(ComputeMethod.Always)),
     )
     shipping.type = JsonBone.type
-
-    @classmethod
-    def write(cls, skelValues: SkeletonInstance, update_relations: bool = True, **kwargs) -> db.Key:
-        return super().write(skelValues, update_relations, **kwargs)

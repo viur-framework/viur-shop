@@ -85,8 +85,8 @@ class Cart(ShopModuleAbstract, Tree):
             root_node["is_root_node"] = True
             root_node["name"] = f"Session Cart of {user} created at {utils.utcNow()}"
             root_node["cart_type"] = CartType.BASKET
-            key = root_node.write()
-            self.session["session_cart_key"] = key
+            root_node.write()
+            self.session["session_cart_key"] = root_node["key"]
             current.session.get().markChanged()
             # Store basket at the user skel, it will be shared over multiple sessions / devices
             if user := current.user.get():
@@ -333,7 +333,7 @@ class Cart(ShopModuleAbstract, Tree):
                 descr_appendix=f'Quantity of free article cannot be greater than 1! (reached {skel["quantity"]})'
             )
         skel = self.additional_add_or_update_article(skel, **kwargs)
-        key = skel.write()
+        skel.write()
         EVENT_SERVICE.call(Event.ARTICLE_CHANGED, skel=skel, deleted=False)
         self.clear_children_cache()
         # TODO: Validate quantity with hook (stock availability)
