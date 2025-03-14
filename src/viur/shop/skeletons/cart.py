@@ -196,8 +196,8 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
 
     name = StringBone(
         defaultValue=lambda skel, bone: (
-            f"Session Cart of {current.user.get() and current.user.get()["name"] or "__guest__"}"
-            f" created at {utils.utcNow()}"
+            f'Session Cart of {current.user.get() and current.user.get()["name"] or "__guest__"}'
+            f' created at {utils.utcNow()}'
         )
     )
 
