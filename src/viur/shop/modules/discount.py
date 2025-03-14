@@ -79,6 +79,8 @@ class Discount(ShopModuleAbstract, List):
         if not bool(code) ^ bool(discount_key):
             raise ValueError(f"Need code xor discount_code")
         cart_key = self.shop.cart.current_session_cart_key  # TODO: parameter?
+        if cart_key is None:
+            raise errors.PreconditionFailed("No basket created yet for this session")
 
         skels = self.search(code, discount_key)
         # logger.debug(f"{skels = }")

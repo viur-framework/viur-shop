@@ -58,32 +58,35 @@ class Cart(ShopModuleAbstract, Tree):
     # --- Session -------------------------------------------------------------
 
     @property
-    def current_session_cart_key(self):
+    def current_session_cart_key(self) -> db.Key | None:
+        return self.get_current_session_cart_key(create_if_missing=False)
+
+    def get_current_session_cart_key(self, *, create_if_missing: bool = False) -> db.Key | None:
         if user := current.user.get():
             user_skel = conf.main_app.vi.user.viewSkel()
             user_skel.read(user["key"])
             if user_skel["basket"]:
                 self.session["session_cart_key"] = user_skel["basket"]["dest"]["key"]
                 current.session.get().markChanged()
-        self._ensure_current_session_cart()
+        if create_if_missing:
+            self._ensure_current_session_cart()
         return self.session.get("session_cart_key")
 
     @property
-    def current_session_cart(self):  # TODO: Caching
+    def current_session_cart(self) -> SkeletonInstance_T[CartNodeSkel]:  # TODO: Caching
         skel = self.viewSkel("node")
-        if not skel.read(self.current_session_cart_key):
+        if not skel.read(self.get_current_session_cart_key(create_if_missing=True)):
             logger.critical(f"Invalid session_cart_key {self.current_session_cart_key} ?! Not in DB!")
             self.detach_session_cart()
             return self.current_session_cart
             raise InvalidStateError(f"Invalid session_cart_key {self.current_session_cart_key} ?! Not in DB!")
-        return skel
+        return skel  # type: ignore
 
-    def _ensure_current_session_cart(self):
+    def _ensure_current_session_cart(self) -> db.Key:
         if not self.session.get("session_cart_key"):
             root_node = self.addSkel("node")
-            user = current.user.get() and current.user.get()["name"] or "__guest__"
             root_node["is_root_node"] = True
-            root_node["name"] = f"Session Cart of {user} created at {utils.utcNow()}"
+            root_node["name"] = root_node.name.getDefaultValue(root_node)
             root_node["cart_type"] = CartType.BASKET
             root_node.write()
             self.session["session_cart_key"] = root_node["key"]
@@ -110,7 +113,9 @@ class Cart(ShopModuleAbstract, Tree):
         return user_skel
 
     def get_available_root_nodes(self, *args, **kwargs) -> list[dict[t.Literal["name", "key"], str]]:
-        root_nodes = [self.current_session_cart]
+        root_nodes = []
+        if self.current_session_cart_key is not None:
+            root_nodes.append(self.current_session_cart)
 
         if user := current.user.get():
             for wishlist in user["wishlist"]:

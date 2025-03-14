@@ -1,10 +1,10 @@
 import typing as t  # noqa
 
 from google.protobuf.message import DecodeError
-from viur.core import current, db, errors, exposed, force_post
-from viur.core.render.json.default import DefaultRender as JsonRenderer
 
 import viur.shop.types.exceptions as e
+from viur.core import current, db, errors, exposed, force_post
+from viur.core.render.json.default import DefaultRender as JsonRenderer
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.skeletons import ShippingSkel
 from viur.shop.types import *
@@ -48,12 +48,22 @@ class Api(ShopModuleAbstract):
         article_key: str | db.Key,
         quantity: int = 1,
         quantity_mode: QuantityMode = QuantityMode.REPLACE,
-        parent_cart_key: str | db.Key,
+        parent_cart_key: str | db.Key | t.Literal["BASKET"] = SENTINEL,
         **kwargs,
     ):
-        """Add an article to the cart"""
+        """Add an article to the cart
+
+        :param article_key: Key of the article to add.
+        :param quantity: Quantity of the article to add.
+        :param quantity_mode: Behavior of the quantity: absolute or relative valuation
+        :param parent_cart_key: Key of the (sub) cart (node) to which
+            this leaf will be added as a child.
+            Use "BASKET" as key to use the basket of the current session.
+        """
         article_key = self._normalize_external_key(
             article_key, "article_key")
+        if parent_cart_key == "BASKET":
+            parent_cart_key = self.shop.cart.get_current_session_cart_key(create_if_missing=True)
         parent_cart_key = self._normalize_external_key(
             parent_cart_key, "parent_cart_key")
         assert isinstance(quantity_mode, QuantityMode)
@@ -73,12 +83,23 @@ class Api(ShopModuleAbstract):
         article_key: str | db.Key,
         quantity: int,
         quantity_mode: QuantityMode = QuantityMode.REPLACE,
-        parent_cart_key: str | db.Key,
+        parent_cart_key: str | db.Key | t.Literal["BASKET"] = SENTINEL,
         **kwargs,
     ):
-        """Update an existing article in the cart"""
+        """Update an existing article in the cart
+
+        :param article_key: Key of the article to update.
+            Note: This is not the key of the leaf skel!
+        :param quantity: Quantity of the article to update.
+        :param quantity_mode: Behavior of the quantity: absolute or relative valuation
+        :param parent_cart_key: Optional. Key of the (sub) cart (node) to which
+            this leaf will be moved to as a child.
+            Use "BASKET" as key to use the basket of the current session.
+        """
         article_key = self._normalize_external_key(
             article_key, "article_key")
+        if parent_cart_key == "BASKET":
+            parent_cart_key = self.shop.cart.get_current_session_cart_key(create_if_missing=True)
         parent_cart_key = self._normalize_external_key(
             parent_cart_key, "parent_cart_key")
         assert isinstance(quantity_mode, QuantityMode)
@@ -260,19 +281,33 @@ class Api(ShopModuleAbstract):
     def basket_list(
         self,
     ):
-        """List the children of the basket (the cart stored in the session)"""
+        """List the children of the basket (the cart stored in the session)
+
+        :raises errors.PreconditionFailed: If no basket created yet for this session
+        """
+        if self.shop.cart.current_session_cart_key is None:
+            raise errors.PreconditionFailed("No basket created yet for this session")  # TODO(discuss): explicit?
+            return []  # TODO(discuss): implicit?
         return self.cart_list(cart_key=self.shop.cart.current_session_cart_key)
 
     @exposed
     def basket_view(
         self,
+        *,
+        create_if_missing: bool = False,
     ):
         """View the basket (the cart stored in the session) itself
 
+        :param create_if_missing: Create the basket if not already created for this session
+        :raises errors.PreconditionFailed: If no basket created yet for this session (and it should not be created)
+
         See also :meth:`basket_view` to view any cart.
         """
+        cart_key = self.shop.cart.get_current_session_cart_key(create_if_missing=create_if_missing)
+        if cart_key is None:
+            raise errors.PreconditionFailed("No basket created yet for this session")
         return JsonResponse(self.shop.cart.cart_get(
-            cart_key=self.shop.cart.current_session_cart_key, skel_type="node",
+            cart_key=cart_key, skel_type="node",
         ))
 
     @exposed
@@ -506,6 +541,8 @@ class Api(ShopModuleAbstract):
             return None
         elif not external_key:
             raise InvalidKeyException(external_key, parameter_name)
+        if isinstance(external_key, db.Key):
+            return external_key
         try:
             return db.Key.from_legacy_urlsafe(external_key)
         except (ValueError, DecodeError):  # yes, the exception really comes from protobuf...

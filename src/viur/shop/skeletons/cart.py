@@ -2,7 +2,7 @@ import collections
 import typing as t  # noqa
 
 from viur import toolkit
-from viur.core import db
+from viur.core import current, db, utils
 from viur.core.bones import *
 from viur.core.prototypes.tree import TreeSkel
 from viur.core.skeleton import SkeletonInstance
@@ -195,6 +195,10 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     )
 
     name = StringBone(
+        defaultValue=lambda skel, bone: (
+            f"Session Cart of {current.user.get() and current.user.get()["name"] or "__guest__"}"
+            f" created at {utils.utcNow()}"
+        )
     )
 
     cart_type = SelectBone(
