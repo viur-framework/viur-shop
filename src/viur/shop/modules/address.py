@@ -82,7 +82,7 @@ class Address(ShopModuleAbstract, List):
         for other_skel in query.fetch(100):
             if skel["key"] != other_skel["key"]:
                 other_skel["is_default"] = False
-                other_skel.toDB()
+                other_skel.write()
 
 
 Address.json = True

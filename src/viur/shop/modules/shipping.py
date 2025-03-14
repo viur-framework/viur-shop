@@ -77,7 +77,7 @@ class Shipping(ShopModuleAbstract, List):
         :return: A list of :class:`SkeletonInstance`s for the :class:`ShippingSkel`.
         """
         cart_skel = self.shop.cart.viewSkel("node")
-        if not cart_skel.fromDB(cart_key):
+        if not cart_skel.read(cart_key):
             raise errors.NotFound
 
         all_shipping_configs: list[RefSkel] = []

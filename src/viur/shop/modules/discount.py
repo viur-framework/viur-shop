@@ -51,7 +51,7 @@ class Discount(ShopModuleAbstract, List):
 
         skel = self.viewSkel()
         if discount_key is not None:
-            if not skel.fromDB(discount_key):
+            if not skel.read(discount_key):
                 raise errors.NotFound
             return [skel]
         elif code is not None:
@@ -152,7 +152,7 @@ class Discount(ShopModuleAbstract, List):
                     for leaf_skel in leaf_skels:
                         # Assign discount on new parent node for the leaf where the article is
                         parent_skel = self.shop.cart.viewSkel("node")
-                        assert parent_skel.fromDB(leaf_skel["parententry"])
+                        assert parent_skel.read(leaf_skel["parententry"])
                         if parent_skel["discount"] and parent_skel["discount"]["dest"]["key"] == discount_skel["key"]:
                             logger.info("Parent has already this discount key")
                             continue
@@ -189,7 +189,7 @@ class Discount(ShopModuleAbstract, List):
             cart = None
         else:
             cart = self.shop.cart.viewSkel("node")
-            if not cart.fromDB(cart_key):
+            if not cart.read(cart_key):
                 raise errors.NotFound
 
         if not as_automatically and skel["activate_automatically"]:
@@ -224,7 +224,7 @@ class Discount(ShopModuleAbstract, List):
 
         discount_skel = self.viewSkel()
 
-        if not discount_skel.fromDB(discount_key):
+        if not discount_skel.read(discount_key):
             raise errors.NotFound
         try:
             # Todo what we do when we have more than more condition
