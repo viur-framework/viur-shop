@@ -217,7 +217,7 @@ class Shop(InstancedModule, Module):
                     logger.info(f"Update existing translation {key}")
                     logger.debug(f'{old_translations} --> {skel["translations"], skel["default_text"], skel["hint"]}')
                     try:
-                        skel.toDB()
+                        skel.write()
                     except Exception as exc:
                         logger.exception(f"Failed to write updated translation {skel=} :: {exc}")
                 continue
@@ -230,7 +230,7 @@ class Shop(InstancedModule, Module):
             skel["creator"] = Creator.VIUR
             skel["public"] = True
             try:
-                skel.toDB()
+                skel.write()
             except Exception as exc:
                 logger.exception(f"Failed to write added translation {skel=} :: {exc}")
 

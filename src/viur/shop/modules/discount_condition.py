@@ -100,7 +100,7 @@ class DiscountCondition(ShopModuleAbstract, List):
         # logger.debug(pprint.pformat(skel, width=120))
         skel_old = self.viewSkel()
         if skel["key"] is not None:  # not on add
-            skel_old.fromDB(skel["key"])
+            skel_old.read(skel["key"])
         current.request_data.get()[f'shop_skel_{skel["key"]}'] = skel_old
 
     def on_changed(self, skel, event: str):
@@ -119,7 +119,7 @@ class DiscountCondition(ShopModuleAbstract, List):
         """Generate subcodes for a parent individual code."""
         chunk_amount = amount
         while chunk_amount > 0:
-            skel = self.addSkel()  # .subSkel("individual")
+            skel = self.addSkel()  # .subskel("individual")
             skel["is_subcode"] = True
             skel["quantity_volume"] = 1
             skel.setBoneValue("parent_code", parent_key)
@@ -131,7 +131,7 @@ class DiscountCondition(ShopModuleAbstract, List):
 
                 try:
                     self.onAdd(skel)
-                    skel.toDB()
+                    skel.write()
                     self.onAdded(skel)
                     break
                 except ValueError as e:
@@ -164,7 +164,7 @@ class DiscountCondition(ShopModuleAbstract, List):
     def _get_skel(key: db.Key, ttl_hash: int | None = None) -> SkeletonInstance_T["DiscountConditionSkel"] | None:
         # logger.debug(f"_get_skel({key=}, {ttl_hash=})")
         skel = SHOP_INSTANCE.get().discount_condition.viewSkel()
-        if not skel.fromDB(key):
+        if not skel.read(key):
             return None
         return skel  # type: ignore
 
@@ -175,7 +175,7 @@ class DiscountCondition(ShopModuleAbstract, List):
         for cond_skel in query.fetch(100):
             if cond_skel["is_subcode"]:
                 parent_cond_skel = self.viewSkel()
-                assert parent_cond_skel.fromDB(cond_skel["parent_code"]["dest"]["key"])
+                assert parent_cond_skel.read(cond_skel["parent_code"]["dest"]["key"])
                 yield parent_cond_skel
                 # yield cond_skel["parent_code"]["dest"]
             else:
@@ -202,7 +202,7 @@ class DiscountCondition(ShopModuleAbstract, List):
 
         for discount in discounts:
             d_skel = self.shop.discount.viewSkel()
-            d_skel.fromDB(discount)
+            d_skel.read(discount)
             for condition in d_skel["condition"]:
                 # TODO: Increase only "active" conditions in case of OR operator
                 # cond_skel = toolkit.get_full_skel_from_ref_skel(condition["dest"])
