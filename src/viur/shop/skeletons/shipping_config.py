@@ -32,9 +32,9 @@ class ShippingConfigSkel(Skeleton):  # STATE: Complete (as in model)
     )
 
     @classmethod
-    def fromDB(cls, skel: SkeletonInstance, key: db.Key | int | str) -> bool:
+    def read(cls, skel: SkeletonInstance, *args, **kwargs) -> bool:
         # Migration after renaming
-        res = super().fromDB(skel, key)
+        res = super().read(skel, *args, **kwargs)
         if not skel.dbEntity.get("shipping"):
             skel.dbEntity["shipping"] = skel.dbEntity.get("shipping_skel")
         return res

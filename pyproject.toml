@@ -9,9 +9,10 @@ build-backend = "setuptools.build_meta"
 name = "viur-shop"
 dynamic = ["version"]
 dependencies = [
-    "viur-toolkit>=0.1.0.dev4"
+    "viur-toolkit>=0.2.0",
+    "viur-core>=3.7.0"
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 authors = [
     { name = "Sven Eberth", email = "se@mausbrand.de" },
 ]
@@ -23,11 +24,10 @@ readme = "README.md"
 license = { file = "LICENSE" }
 keywords = ["viur", "plugin", "backend", "shop"]
 classifiers = [
-    "Development Status :: 1 - Planning",
+    "Development Status :: 2 - Pre-Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Libraries :: Python Modules",
