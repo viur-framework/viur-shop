@@ -1,16 +1,16 @@
 import typing as t  # noqa
 
+import viur.shop.types.exceptions as e
 from viur.core import conf, current, db, errors, exposed, utils
 from viur.core.bones import BaseBone
 from viur.core.prototypes import Tree
 from viur.core.prototypes.tree import SkelType
+from viur.core.session import Session
 from viur.core.skeleton import Skeleton, SkeletonInstance
-
-import viur.shop.types.exceptions as e
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.types import *
 from viur.shop.types.exceptions import InvalidStateError
-from ..globals import SENTINEL, SHOP_LOGGER
+from ..globals import SENTINEL, SHOP_INSTANCE, SHOP_LOGGER
 from ..services import EVENT_SERVICE, Event
 from ..skeletons.cart import CartItemSkel, CartNodeSkel
 from ..skeletons.order import OrderSkel
@@ -527,10 +527,12 @@ class Cart(ShopModuleAbstract, Tree):
         self,
         cart_key: db.Key,
     ) -> None:
-        self.deleteRecursive(cart_key)
         skel = self.editSkel("node")
         if not skel.read(cart_key):
             raise errors.NotFound
+        # This delete could fail if the cart is used by an order
+        skel.delete()
+        self.deleteRecursive(cart_key)
         if skel["parententry"] is None or skel["is_root_node"]:
             logger.info(f"{skel['key']} was a root node!")
             # raise NotImplementedError("Cannot delete root node")
@@ -539,7 +541,6 @@ class Cart(ShopModuleAbstract, Tree):
                 self.detach_session_cart()
                 # del self.session["session_cart_key"]
                 # current.session.get().markChanged()
-        skel.delete()
         EVENT_SERVICE.call(Event.CART_CHANGED, skel=skel, deleted=True)
 
     # --- Hooks ---------------------------------------------------------------
@@ -668,3 +669,25 @@ class Cart(ShopModuleAbstract, Tree):
         leaf_skel.write()
         EVENT_SERVICE.call(Event.ARTICLE_CHANGED, skel=leaf_skel, deleted=False)
         return new_parent_skel
+
+
+try:
+    Session.on_delete
+except AttributeError:  # backward compatibility for viur-core
+    from viur.core.version import __version__
+
+    logger.warning(f"viur-core {__version__} has no Session.on_delete")
+    Session.on_delete = lambda *_, **__: None
+
+
+@Session.on_delete
+def delete_guest_cart(session: db.Entity) -> None:
+    """Delete carts from guest sessions to avoid orphaned carts"""
+    if session["user"] != Session.GUEST_USER:
+        return
+    try:
+        cart = session["data"]["shop"]["cart"]["session_cart_key"]
+    except (KeyError, TypeError):
+        return
+    SHOP_INSTANCE.get().cart.cart_remove(cart)
+    logger.debug(f"Deleted {cart=} and children after deleting {session=}")
