@@ -2,10 +2,9 @@ import functools
 import json
 import typing as t  # noqa
 
+from viur import toolkit
 from viur.core import current, db, utils
 from viur.core.skeleton import SkeletonInstance
-
-from viur import toolkit
 from .enums import ApplicationDomain, ConditionOperator, DiscountType
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 from ..types import ConfigurationError
@@ -15,9 +14,12 @@ if t.TYPE_CHECKING:
 
 logger = SHOP_LOGGER.getChild(__name__)
 
-
 # TODO: Use decimal package instead of floats?
 #       -> decimal mode in NumericBone?
+
+PRICE_PRECISION: t.Final[int] = 2
+"""Precision, how many digits are used to round prices"""
+
 
 class Price:
     cart_discounts: list[SkeletonInstance] = []
@@ -60,7 +62,7 @@ class Price:
 
     @property
     def retail_net(self) -> float:
-        return toolkit.round_decimal(self.gross_to_net(self.retail, self.vat_rate_percentage), 2)
+        return toolkit.round_decimal(self.gross_to_net(self.retail, self.vat_rate_percentage), PRICE_PRECISION)
 
     @property
     def recommended(self) -> float:
@@ -68,22 +70,22 @@ class Price:
 
     @property
     def recommended_net(self) -> float:
-        return toolkit.round_decimal(self.gross_to_net(self.recommended, self.vat_rate_percentage), 2)
+        return toolkit.round_decimal(self.gross_to_net(self.recommended, self.vat_rate_percentage), PRICE_PRECISION)
 
     @property
     def saved(self) -> float:
         if self.retail is None or self.current is None:
             return 0
-        return toolkit.round_decimal(self.retail - self.current, 2)
+        return toolkit.round_decimal(self.retail - self.current, PRICE_PRECISION)
 
     @property
     def saved_net(self) -> float:
-        return toolkit.round_decimal(self.gross_to_net(self.saved, self.vat_rate_percentage), 2)
+        return toolkit.round_decimal(self.gross_to_net(self.saved, self.vat_rate_percentage), PRICE_PRECISION)
 
     @property
     def saved_percentage(self) -> float:
         try:
-            return toolkit.round_decimal(self.saved / self.current, 2 or 4)  # TODO
+            return toolkit.round_decimal(self.saved / self.current, PRICE_PRECISION)
         except (ZeroDivisionError, TypeError):  # One value is None
             return 0.0
 
@@ -92,21 +94,21 @@ class Price:
     def current(self) -> float:
         if (not self.is_in_cart or not self.cart_discounts) and self.article_discount:
             # only the article_discount is applicable
-            return toolkit.round_decimal(self.apply_discount(self.article_discount, self.retail), 2)
+            return toolkit.round_decimal(self.apply_discount(self.article_discount, self.retail), PRICE_PRECISION)
         if self.is_in_cart and self.cart_discounts:
             # TODO: if self.article_discount:
             best_price, best_discounts = self.choose_best_discount_set()
-            return toolkit.round_decimal(best_price, 2)
+            return toolkit.round_decimal(best_price, PRICE_PRECISION)
         return self.retail
 
     @property
     def current_net(self) -> float:
-        return toolkit.round_decimal(self.gross_to_net(self.current, self.vat_rate_percentage), 2)
+        return toolkit.round_decimal(self.gross_to_net(self.current, self.vat_rate_percentage), PRICE_PRECISION)
 
     def shop_current_discount(self, article_skel: SkeletonInstance) -> None | tuple[float, "SkeletonInstance"]:
         """Best permanent discount campaign for article"""
         best_discount = None
-        article_price = self.retail or 0.0  # FIXME: how to handle None prices?
+        article_price = self.retail or 0.0  # FIXME(discuss): how to handle None prices?
         if not article_price:
             return None
         discount_module: "Discount" = SHOP_INSTANCE.get().discount
@@ -186,7 +188,7 @@ class Price:
     def vat_included(self) -> float:
         """Calculate the included vat value based on current price and vat rate"""
         try:
-            return toolkit.round_decimal(self.gross_to_vat(self.current, self.vat_rate_percentage), 2)
+            return toolkit.round_decimal(self.gross_to_vat(self.current, self.vat_rate_percentage), PRICE_PRECISION)
         except TypeError:  # One value is None
             return 0.0
 

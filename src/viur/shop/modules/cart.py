@@ -138,9 +138,6 @@ class Cart(ShopModuleAbstract, Tree):
 
         :returns: The rendered representation of the available root-nodes.
         """
-        if utils.string.is_prefix(self.render.kind, "json"):
-            # TODO: add in viur-core
-            current.request.get().response.headers["Content-Type"] = "application/json"
         return self.render.listRootNodes([
             self.render.renderSkelValues(skel)
             for skel in self.getAvailableRootNodes(*args, **kwargs)

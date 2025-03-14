@@ -29,12 +29,6 @@ if SHOP_LOGGER.level == logging.NOTSET:
 
 
 class Shop(InstancedModule, Module):
-    @exposed
-    def hello(self):
-        # logger.debug(f"{SHOP_INSTANCE.get().render=}")
-        # logger.debug(f"{SHOP_INSTANCE_VI.get().render=}")
-        return f"Welcome to the {self.name} Shop!"
-
     def __init__(
         self,
         *,

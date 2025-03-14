@@ -241,12 +241,10 @@ class Order(ShopModuleAbstract, List):
                 raise e.InvalidArgumentException("customer_key")
             skel.setBoneValue("customer", customer_key)
 
-        # TODO(discussion): Do we really want to set this by the frontend?
-        #  Or what are the pre conditions?
         if state_ordered != SENTINEL or state_paid != SENTINEL or state_rts != SENTINEL:
             # any of these values should be set
             if not self.canEdit(skel):
-                raise core_errors.Forbidden("You are not allowed to change a sate")
+                raise core_errors.Forbidden("You are not allowed to change a state")
             logger.debug("Can change states")
         if state_ordered is not SENTINEL:
             skel["state_ordered"] = state_ordered

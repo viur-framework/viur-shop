@@ -58,11 +58,7 @@ class ShopModuleAbstract(Module):
         if session is None:
             logger.warning(f"Session is None!")
             return None
-        # TODO: custom session name
-        # TODO: Implement .setdefault() in viur.core.Session
-        if "shop" not in session:
-            session["shop"] = {}
-        session_shop = session["shop"]
+        session_shop = session.setdefault("shop", {})
         if self.moduleName not in session_shop:
             session_shop[self.moduleName] = {}
             session.markChanged()
