@@ -1,4 +1,5 @@
 <div align="center">
+    <img src="https://github.com/viur-framework/viur-artwork/raw/main/icons/icon-shop.svg" height="196" alt="A hexagonal logo of Shop" title="Shop logo"/>
     <h1>viur-shop (WIP)</h1>
     <a href="https://pypi.org/project/viur-shop/">
         <img alt="Badge showing current PyPI version" title="PyPI" src="https://img.shields.io/pypi/v/viur-shop">
