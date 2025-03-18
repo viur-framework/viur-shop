@@ -29,7 +29,7 @@ if SHOP_LOGGER.level == logging.NOTSET:
 
 
 class Shop(InstancedModule, Module):
-    _is_registered_for: set[str] = set()
+    _is_registered_for: t.ClassVar[set[str]] = set()
 
     def __init__(
         self,
