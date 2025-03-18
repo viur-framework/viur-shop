@@ -252,11 +252,11 @@ class Shop(InstancedModule, Module):
     def __repr__(self) -> str:
         cls = type(self)
         return (
-            f"<{cls.__module__}.{cls.__qualname__} object"
-            f"with moduleName={getattr(self, "moduleName", "NOT_SET")}, "
-            f"modulePath={getattr(self, "modulePath", "NOT_SET")}, "
-            f"render={getattr(self, "render", "NOT_SET")}"
-            f"at {hex(id(self))}>"
+            f'<{cls.__module__}.{cls.__qualname__} object'
+            f'with moduleName={getattr(self, "moduleName", "NOT_SET")}, '
+            f'modulePath={getattr(self, "modulePath", "NOT_SET")}, '
+            f'render={getattr(self, "render", "NOT_SET")}'
+            f'at {hex(id(self))}>'
         )
 
 
