@@ -29,7 +29,7 @@ if SHOP_LOGGER.level == logging.NOTSET:
 
 
 class Shop(InstancedModule, Module):
-    _is_registered_for : set[str] = set()
+    _is_registered_for: set[str] = set()
 
     def __init__(
         self,
@@ -52,7 +52,7 @@ class Shop(InstancedModule, Module):
         #
         **kwargs: t.Any,
     ):
-        logger.debug(f"{self.__class__.__name__}<Shop>.__init__()")
+        # logger.debug(f"{self.__class__.__name__}<Shop>.__init__()")
         super().__init__()
         self.hooks = HOOK_SERVICE
 
@@ -131,17 +131,11 @@ class Shop(InstancedModule, Module):
         The modules have an `shop` root/parent reference, but this should
         not again be discovered by :meth:`register`.
         """
-        logging.debug(f"{self.__class__.__name__}<Shop>.register() {self.moduleName=} {self.modulePath=} {id(target)=} {render=} {self._is_registered_for=}")
-        logger.debug(self.render.__class__.__name__)
-        logger.debug((render.__class__.__module__, render.__class__.__name__, render.__class__.__qualname__, ))
-        import traceback
-        traceback.print_stack()
-        # if self._is_registered_for:
-        if (render_name := f"{render.__class__.__module__}.{render.__class__.__qualname__}") in Shop._is_registered_for:
-            logger.warning("is registered")
+        # logging.debug(f"{self.__class__.__name__}.register() {self.moduleName=} {self.modulePath=} "
+        #               f"{id(target)=} {render=} {self._is_registered_for=}")
+        if (render_name := f"{type(render).__module__}.{type(render).__qualname__}") in Shop._is_registered_for:
             return
         Shop._is_registered_for.add(render_name)
-        # self._is_registered_for = True
         return super().register(target, render)
 
     def _set_kind_names(self) -> None:
@@ -255,12 +249,16 @@ class Shop(InstancedModule, Module):
             except Exception as exc:
                 logger.exception(f"Failed to write added translation {skel=} :: {exc}")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         cls = type(self)
-        return (f"<{cls.__module__}.{cls.__qualname__} object at {hex(id(self))}"
-                f"with moduleName={getattr(self, "moduleName", "NOT_SET")}, "
-                f"with modulePath={getattr(self, "modulePath", "NOT_SET")}, "
-                f"with render={getattr(self, "render", "NOT_SET")}>")
+        return (
+            f"<{cls.__module__}.{cls.__qualname__} object"
+            f"with moduleName={getattr(self, "moduleName", "NOT_SET")}, "
+            f"modulePath={getattr(self, "modulePath", "NOT_SET")}, "
+            f"render={getattr(self, "render", "NOT_SET")}"
+            f"at {hex(id(self))}>"
+        )
+
 
 Shop.html = True
 Shop.vi = True
