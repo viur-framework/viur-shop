@@ -61,10 +61,12 @@ class DiscountSkel(Skeleton):  # STATE: Complete (as in model)
     ]
 
     name = StringBone(
+        searchable=True,
     )
 
     description = TextBone(
         validHtml=None,
+        searchable=True,
     )
 
     discount_type = SelectBone(

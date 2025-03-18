@@ -1,4 +1,4 @@
-from viur.core import conf, current, i18n
+from viur.core import conf, current
 from viur.core.bones import *
 from viur.core.skeleton import Skeleton
 from viur.shop.types import *
@@ -18,6 +18,7 @@ class AddressSkel(Skeleton):  # STATE: Complete (as in model)
             lambda skel: f'{skel["salutation"]} {skel["firstname"]} {skel["lastname"]}'.strip(),
             ComputeInterval(ComputeMethod.OnWrite),
         ),
+        searchable=True,
     )
 
     customer_type = SelectBone(
@@ -36,30 +37,36 @@ class AddressSkel(Skeleton):  # STATE: Complete (as in model)
 
     company_name = StringBone(
         params={"group": "Customer Info"},
+        searchable=True,
     )
 
     firstname = StringBone(
         params={"group": "Customer Info"},
         required=True,
+        searchable=True,
     )
 
     lastname = StringBone(
         params={"group": "Customer Info"},
         required=True,
+        searchable=True,
     )
 
     street_name = StringBone(
         params={"group": "Customer Address"},
         required=True,
+        searchable=True,
     )
 
     street_number = StringBone(
         params={"group": "Customer Address"},
         required=True,
+        searchable=True,
     )
 
     address_addition = StringBone(
         params={"group": "Customer Address"},
+        searchable=True,
     )
 
     zip_code = StringBone(
@@ -75,16 +82,19 @@ class AddressSkel(Skeleton):  # STATE: Complete (as in model)
                 public=True,
             ),
         },
+        searchable=True,
     )
 
     city = StringBone(
         params={"group": "Customer Address"},
         required=True,
+        searchable=True,
     )
 
     country = SelectCountryBone(
         params={"group": "Customer Address"},
         required=True,
+        searchable=True,
     )
 
     customer = RelationalBone(
@@ -106,6 +116,7 @@ class AddressSkel(Skeleton):  # STATE: Complete (as in model)
                 public=True,
             ),
         },
+        searchable=True,
     )
     """Kopieren von User oder Eingabe von Nutzer bei Gast"""
 
@@ -122,6 +133,7 @@ class AddressSkel(Skeleton):  # STATE: Complete (as in model)
                 public=True,
             ),
         },
+        searchable=True,
     )
 
     # FIXME: What happens if an AddressSkel has both address_types and is_default

@@ -1,6 +1,5 @@
 import typing as t  # noqa
 
-from viur.core import db
 from viur.core.bones import *
 from viur.core.skeleton import Skeleton, SkeletonInstance
 from .shipping_precondition import ShippingPreconditionRelSkel
@@ -13,6 +12,7 @@ class ShippingConfigSkel(Skeleton):  # STATE: Complete (as in model)
     kindName = "{{viur_shop_modulename}}_shipping_config"
 
     name = StringBone(
+        searchable=True,
     )
 
     shipping = RelationalBone(
@@ -29,6 +29,7 @@ class ShippingConfigSkel(Skeleton):  # STATE: Complete (as in model)
             "art_no",
             "delivery_time_*",
         },
+        searchable=True,
     )
 
     @classmethod
