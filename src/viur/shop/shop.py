@@ -3,7 +3,6 @@ import typing as t
 
 from viur.core import conf, logging
 from viur.core.bones import RelationalBone
-from viur.core.decorators import exposed
 from viur.core.module import Module
 from viur.core.modules.translation import Creator, TranslationSkel
 from viur.core.modules.user import UserSkel
@@ -18,6 +17,7 @@ from .services.hooks import HOOK_SERVICE
 from .skeletons.discount import DiscountSkel
 from .skeletons.discount_condition import DiscountConditionSkel
 from .types import Supplier, exceptions
+from ..core.render.abstract import AbstractRenderer
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -51,6 +51,7 @@ class Shop(InstancedModule, Module):
         **kwargs: t.Any,
     ):
         super().__init__()
+        self._is_registered = True
         self.hooks = HOOK_SERVICE
 
         # Store arguments
@@ -116,6 +117,19 @@ class Shop(InstancedModule, Module):
         elif self.modulePath == f"/vi/{self.moduleName}":
             SHOP_INSTANCE_VI.set(self)
         return self
+
+    def register(self, target: dict, render: AbstractRenderer) -> None:
+        """
+        Overwritten to avoid loops.
+        The modules have an `shop` root/parent reference, but this should
+        not again be discovered by :meth:`register`.
+        """
+        if self._is_registered:
+            logger.debug(f"[DENY] Shop.register() @ {self} | {self.modulePath}")
+            return
+        logger.debug(f"Shop.register() @ {self} | {self.modulePath}")
+        self._is_registered = True
+        return super().register(target, render)
 
     def _set_kind_names(self) -> None:
         """Set kindname of bones where the kind name can be dynamically

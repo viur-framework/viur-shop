@@ -6,6 +6,7 @@ from viur.core.prototypes.tree import SkelType
 from viur.core.skeleton import SkeletonInstance
 
 from ..globals import SHOP_LOGGER
+from ...core.render.abstract import AbstractRenderer
 
 if t.TYPE_CHECKING:
     from viur.shop import Shop
@@ -38,6 +39,7 @@ class ShopModuleAbstract(Module):
         *args, **kwargs
     ):
         # logger.debug(f"{self.__class__.__name__}<ShopModuleAbstract>.__init__()")
+        self._is_registered = False
         if shop is None:
             raise ValueError("Missing shop argument!")
         if moduleName is None:
@@ -50,6 +52,29 @@ class ShopModuleAbstract(Module):
             pass
         super().__init__(moduleName, modulePath, *args, **kwargs)
         self.shop: "Shop" = shop
+
+
+    def register(self, target: dict, render: AbstractRenderer) -> None:
+        """
+        Overwritten to avoid loops.
+        The modules have an `shop` root/parent reference, but this should
+        not again be discovered by :meth:`register`.
+
+        Furthermore, this creates a new renderer instance just for this module
+        (with the `parent` reference), which does usually the viur-core in
+        :meth:`core.__build_app`. Otherwise, every module would use the same
+        shop renderer.
+        """
+        if self._is_registered:
+            logger.debug(f"[DENY] Shop.register() @ {self} | {self.modulePath}")
+            return
+        logger.debug(f"Shop.register() @ {self} | {self.modulePath}")
+        self._is_registered = True
+        # c = getattr(self, f"_count_register", 0)
+        # logger.debug(f"Shop.register() @ {self} | {self.modulePath} | {c=}")
+        # self._count_register = c + 1
+        render = type(render)(parent=self)  # Create a new renderer instance for this module
+        return super().register(target, render)
 
     @property
     def session(self) -> dict:
