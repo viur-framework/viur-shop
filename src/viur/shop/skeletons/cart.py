@@ -192,13 +192,15 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
 
     customer_comment = TextBone(
         validHtml=None,
+        searchable=True,
     )
 
     name = StringBone(
         defaultValue=lambda skel, bone: (
             f'Session Cart of {current.user.get() and current.user.get()["name"] or "__guest__"}'
             f' created at {utils.utcNow()}'
-        )
+        ),
+        searchable=True,
     )
 
     cart_type = SelectBone(
@@ -265,6 +267,7 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     # --- Bones to store a frozen copy of the article values: -----------------
 
     shop_name = StringBone(
+        searchable=True,
     )
 
     shop_description = TextBone(

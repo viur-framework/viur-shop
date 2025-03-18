@@ -19,6 +19,7 @@ class VatRateSkel(Skeleton):
             )),
             ComputeInterval(ComputeMethod.OnWrite)
         ),
+        searchable=True,
     )
 
     country = SelectCountryBone(

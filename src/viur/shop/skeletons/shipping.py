@@ -2,9 +2,9 @@ import functools
 import typing as t  # noqa
 
 from viur.core.bones import *
+from viur.core.i18n import translate
 from viur.core.skeleton import Skeleton
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
-from viur.core.i18n import translate
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -32,6 +32,7 @@ class ShippingSkel(Skeleton):  # STATE: Complete (as in model)
     kindName = "{{viur_shop_modulename}}_shipping"
 
     name = StringBone(
+        searchable=True,
     )
     """DHL Standard, DHL Express, DPD-Shop, ..."""
 
@@ -42,7 +43,8 @@ class ShippingSkel(Skeleton):  # STATE: Complete (as in model)
                 "viur.shop.skeleton.shipping.description.tooltip",
                 public=True,
             ),
-        }
+        },
+        searchable=True,
     )
     """
     "Sie brauchen ein DHL-Kundenkonto"

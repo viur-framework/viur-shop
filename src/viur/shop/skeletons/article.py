@@ -5,7 +5,6 @@ import typing as t  # noqa
 from viur.core import utils
 from viur.core.bones import *
 from viur.core.skeleton import BaseSkeleton
-
 from viur.shop.types import *
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 from ..types.response import make_json_dumpable

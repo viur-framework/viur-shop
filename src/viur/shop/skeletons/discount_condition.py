@@ -1,7 +1,7 @@
 import typing as t  # noqa
 from datetime import datetime as dt
 
-from viur.core import conf, i18n
+from viur.core import conf
 from viur.core.bones import *
 from viur.core.skeleton import Skeleton
 from viur.shop.types import *
@@ -53,6 +53,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
         params={
             "category": "1 – General",
         },
+        searchable=True,
     )
 
     description = TextBone(
@@ -60,6 +61,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
         params={
             "category": "1 – General",
         },
+        searchable=True,
     )
 
     code_type = SelectBone(
@@ -126,6 +128,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
         },
         unique=UniqueValue(UniqueLockMethod.SameValue, False, "Code exist already"),  # TODO
         caseSensitive=False,
+        searchable=True,
     )
 
     individual_codes_prefix = StringBone(
@@ -141,6 +144,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
             ),
         },
         unique=UniqueValue(UniqueLockMethod.SameValue, False, "Value already taken"),
+        searchable=True,
     )
 
     scope_minimum_order_value = NumericBone(

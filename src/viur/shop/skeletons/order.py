@@ -5,7 +5,6 @@ from viur.core.bones import *
 from viur.core.skeleton import Skeleton
 from viur.shop.types import *
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
-from deprecated import deprecated
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -31,10 +30,12 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
             "email", "phone",
             "is_default", "address_type",
         ],
+        searchable=True,
     )
 
     customer = RelationalBone(
         kind="user",
+        searchable=True,
     )
 
     cart = TreeNodeBone(
@@ -55,7 +56,8 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
             "context": {
                 "skelType": "node",
             },
-        }
+        },
+        searchable=True,
     )
 
     total = NumericBone(
@@ -66,7 +68,8 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
     """Kopie der total vom gesamten Warenkorb"""
 
     order_uid = StringBone(
-        unique=UniqueValue(UniqueLockMethod.SameValue, False, "UID must be unique")
+        unique=UniqueValue(UniqueLockMethod.SameValue, False, "UID must be unique"),
+        searchable=True,
         # TODO: UidBone
     )
     """Bestellnummer"""

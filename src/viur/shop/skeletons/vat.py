@@ -1,4 +1,3 @@
-from calendar import c
 import typing as t  # noqa
 
 from viur.core.bones import *
@@ -27,7 +26,6 @@ class VatSkel(RelSkel):
 
 
 class VatIncludedSkel(VatSkel):
-
     value = NumericBone(
         required=True,
         precision=2,
