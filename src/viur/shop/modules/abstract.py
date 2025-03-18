@@ -3,10 +3,9 @@ import typing as t
 from viur.core import Module, current, translate
 from viur.core.prototypes import List, Tree
 from viur.core.prototypes.tree import SkelType
+from viur.core.render.abstract import AbstractRenderer
 from viur.core.skeleton import SkeletonInstance
-
 from ..globals import SHOP_LOGGER
-from ...core.render.abstract import AbstractRenderer
 
 if t.TYPE_CHECKING:
     from viur.shop import Shop
@@ -53,7 +52,6 @@ class ShopModuleAbstract(Module):
         super().__init__(moduleName, modulePath, *args, **kwargs)
         self.shop: "Shop" = shop
 
-
     def register(self, target: dict, render: AbstractRenderer) -> None:
         """
         Overwritten to avoid loops.
@@ -66,13 +64,8 @@ class ShopModuleAbstract(Module):
         shop renderer.
         """
         if self._is_registered:
-            logger.debug(f"[DENY] Shop.register() @ {self} | {self.modulePath}")
             return
-        logger.debug(f"Shop.register() @ {self} | {self.modulePath}")
         self._is_registered = True
-        # c = getattr(self, f"_count_register", 0)
-        # logger.debug(f"Shop.register() @ {self} | {self.modulePath} | {c=}")
-        # self._count_register = c + 1
         render = type(render)(parent=self)  # Create a new renderer instance for this module
         return super().register(target, render)
 

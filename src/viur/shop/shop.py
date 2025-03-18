@@ -7,6 +7,7 @@ from viur.core.module import Module
 from viur.core.modules.translation import Creator, TranslationSkel
 from viur.core.modules.user import UserSkel
 from viur.core.prototypes.instanced_module import InstancedModule
+from viur.core.render.abstract import AbstractRenderer
 from viur.core.skeleton import MetaSkel, skeletonByKind
 from viur.shop.data.translations import TRANSLATIONS
 from viur.shop.skeletons.article import ArticleAbstractSkel
@@ -17,7 +18,6 @@ from .services.hooks import HOOK_SERVICE
 from .skeletons.discount import DiscountSkel
 from .skeletons.discount_condition import DiscountConditionSkel
 from .types import Supplier, exceptions
-from ..core.render.abstract import AbstractRenderer
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -125,9 +125,7 @@ class Shop(InstancedModule, Module):
         not again be discovered by :meth:`register`.
         """
         if self._is_registered:
-            logger.debug(f"[DENY] Shop.register() @ {self} | {self.modulePath}")
             return
-        logger.debug(f"Shop.register() @ {self} | {self.modulePath}")
         self._is_registered = True
         return super().register(target, render)
 
