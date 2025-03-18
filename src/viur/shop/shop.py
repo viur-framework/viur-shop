@@ -3,11 +3,11 @@ import typing as t
 
 from viur.core import conf, logging
 from viur.core.bones import RelationalBone
-from viur.core.decorators import exposed
 from viur.core.module import Module
 from viur.core.modules.translation import Creator, TranslationSkel
 from viur.core.modules.user import UserSkel
 from viur.core.prototypes.instanced_module import InstancedModule
+from viur.core.render.abstract import AbstractRenderer
 from viur.core.skeleton import MetaSkel, skeletonByKind
 from viur.shop.data.translations import TRANSLATIONS
 from viur.shop.skeletons.article import ArticleAbstractSkel
@@ -29,6 +29,8 @@ if SHOP_LOGGER.level == logging.NOTSET:
 
 
 class Shop(InstancedModule, Module):
+    _is_registered_for: t.ClassVar[set[str]] = set()
+
     def __init__(
         self,
         *,
@@ -50,6 +52,7 @@ class Shop(InstancedModule, Module):
         #
         **kwargs: t.Any,
     ):
+        # logger.debug(f"{self.__class__.__name__}<Shop>.__init__()")
         super().__init__()
         self.hooks = HOOK_SERVICE
 
@@ -115,7 +118,25 @@ class Shop(InstancedModule, Module):
             SHOP_INSTANCE.set(self)
         elif self.modulePath == f"/vi/{self.moduleName}":
             SHOP_INSTANCE_VI.set(self)
+
+        import renders
+
+        logger.debug(dir(renders))
+
         return self
+
+    def register(self, target: dict, render: AbstractRenderer) -> None:
+        """
+        Overwritten to avoid loops.
+        The modules have an `shop` root/parent reference, but this should
+        not again be discovered by :meth:`register`.
+        """
+        # logging.debug(f"{self.__class__.__name__}.register() {self.moduleName=} {self.modulePath=} "
+        #               f"{id(target)=} {render=} {self._is_registered_for=}")
+        if (render_name := f"{type(render).__module__}.{type(render).__qualname__}") in Shop._is_registered_for:
+            return
+        Shop._is_registered_for.add(render_name)
+        return super().register(target, render)
 
     def _set_kind_names(self) -> None:
         """Set kindname of bones where the kind name can be dynamically
@@ -227,6 +248,16 @@ class Shop(InstancedModule, Module):
                 skel.write()
             except Exception as exc:
                 logger.exception(f"Failed to write added translation {skel=} :: {exc}")
+
+    def __repr__(self) -> str:
+        cls = type(self)
+        return (
+            f"<{cls.__module__}.{cls.__qualname__} object"
+            f"with moduleName={getattr(self, "moduleName", "NOT_SET")}, "
+            f"modulePath={getattr(self, "modulePath", "NOT_SET")}, "
+            f"render={getattr(self, "render", "NOT_SET")}"
+            f"at {hex(id(self))}>"
+        )
 
 
 Shop.html = True
