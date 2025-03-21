@@ -119,10 +119,6 @@ class Shop(InstancedModule, Module):
         elif self.modulePath == f"/vi/{self.moduleName}":
             SHOP_INSTANCE_VI.set(self)
 
-        import renders
-
-        logger.debug(dir(renders))
-
         return self
 
     def register(self, target: dict, render: AbstractRenderer) -> None:
