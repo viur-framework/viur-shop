@@ -93,7 +93,7 @@ class Cart(ShopModuleAbstract, Tree):
             current.session.get().markChanged()
             # Store basket at the user skel, it will be shared over multiple sessions / devices
             if user := current.user.get():
-                db.RunInTransaction(self._set_basket_txn, user_key=user["key"], basket_key=key)
+                db.RunInTransaction(self._set_basket_txn, user_key=user["key"], basket_key=root_node["key"])
         return self.session["session_cart_key"]
 
     def detach_session_cart(self) -> db.Key:
