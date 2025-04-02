@@ -32,6 +32,7 @@ from .enums import (  # noqa
     CustomerGroup,
     CustomerType,
     DiscountType,
+    DicountValidationContext,
     OrderState,
     QuantityMode,
     Salutation,

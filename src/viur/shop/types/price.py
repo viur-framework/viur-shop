@@ -5,9 +5,10 @@ import typing as t  # noqa
 from viur import toolkit
 from viur.core import current, db, utils
 from viur.core.skeleton import SkeletonInstance
+
 from .enums import ApplicationDomain, ConditionOperator, DiscountType
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
-from ..types import ConfigurationError
+from ..types import ConfigurationError, DicountValidationContext
 
 if t.TYPE_CHECKING:
     from ..modules import Discount
@@ -85,7 +86,7 @@ class Price:
     @property
     def saved_percentage(self) -> float:
         try:
-            return toolkit.round_decimal(self.saved / self.current, PRICE_PRECISION)
+            return toolkit.round_decimal(self.saved / self.retail, PRICE_PRECISION)
         except (ZeroDivisionError, TypeError):  # One value is None
             return 0.0
 
@@ -113,8 +114,10 @@ class Price:
             return None
         discount_module: "Discount" = SHOP_INSTANCE.get().discount
         for skel in SHOP_INSTANCE.get().discount.current_automatically_discounts:
-            # TODO: if can apply (article range, lang, ...)
-            applicable, dv = discount_module.can_apply(skel, article_skel=article_skel, as_automatically=True)
+            applicable, dv = discount_module.can_apply(
+                skel, article_skel=article_skel,
+                context=DicountValidationContext.AUTOMATICALLY_LIVE
+            )
             # logger.debug(f"{dv=}")
             if not applicable:
                 logger.debug(f'{skel["name"]} is NOT applicable')

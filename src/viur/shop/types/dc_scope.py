@@ -1,7 +1,25 @@
+"""
+This modules does the discount validation
+
+The structure of validators is:
+    DiscountValidator
+    ├─ ConditionValidator
+    │  ├─ DiscountConditionScope
+    │  ├─ DiscountConditionScope
+    │  └─ ...
+    ├─ ConditionValidator
+    │  ├─ DiscountConditionScope
+    │  ├─ DiscountConditionScope
+    │  └─ ...
+    └─ ...
+"""
+
 import abc
 import typing as t  # noqa
+from datetime import timedelta as td
 
 from viur.core import current, utils
+
 from .enums import *
 from .exceptions import InvalidStateError
 from ..globals import SENTINEL, SHOP_INSTANCE, SHOP_LOGGER, Sentinel
@@ -25,15 +43,23 @@ class DiscountConditionScope:
         discount_skel: SkeletonInstance_T["DiscountSkel"] | None | Sentinel = SENTINEL,
         code: str | None | Sentinel = SENTINEL,
         condition_skel: SkeletonInstance_T["DiscountConditionSkel"],
+        context: DicountValidationContext,
     ):
         self.cart_skel = cart_skel
         self.article_skel = article_skel
         self.discount_skel = discount_skel
         self.condition_skel = condition_skel
         self.code = code
+        self.context = context
 
     def precondition(self) -> bool:
         return True
+
+    allowed_contexts: t.Final[list[DicountValidationContext]] = [
+        DicountValidationContext.NORMAL,
+        DicountValidationContext.AUTOMATICALLY_LIVE,
+    ]
+    """contexts in which this scope should be checked"""
 
     @abc.abstractmethod
     def __call__(self) -> bool:
@@ -69,6 +95,7 @@ class ConditionValidator:
         self.article_skel = None
         self.discount_skel = None
         self.condition_skel = None
+        self.context = None
 
     def __call__(
         self,
@@ -78,11 +105,14 @@ class ConditionValidator:
         discount_skel: SkeletonInstance_T["DiscountSkel"] | None | Sentinel = SENTINEL,
         code: str | None | Sentinel = SENTINEL,
         condition_skel: SkeletonInstance_T["DiscountConditionSkel"],
+        context: DicountValidationContext,
     ) -> t.Self:
         self.cart_skel = cart_skel
         self.discount_skel = discount_skel
         self.condition_skel = condition_skel
         self.code = code
+        self.context = context
+
         for Scope in ConditionValidator.scopes:
             scope = Scope(
                 cart_skel=cart_skel,
@@ -90,6 +120,7 @@ class ConditionValidator:
                 discount_skel=discount_skel,
                 condition_skel=condition_skel,
                 code=code,
+                context=context,
             )
             self.scope_instances.append(scope)
         # logger.debug(f"{self.scope_instances = }")
@@ -97,8 +128,10 @@ class ConditionValidator:
 
     @property
     def applicable_scopes(self) -> list[DiscountConditionScope]:
-        return [scope for scope in self.scope_instances
-                if scope.is_applicable]
+        return [
+            scope for scope in self.scope_instances
+            if scope.is_applicable and self.context in scope.allowed_contexts
+        ]
 
     @property
     def is_fulfilled(self) -> bool:
@@ -126,6 +159,7 @@ class DiscountValidator:
         self.article_skel = None
         self.discount_skel = None
         self.condition_skels = []
+        self.context = None
 
     def __call__(
         self,
@@ -134,11 +168,13 @@ class DiscountValidator:
         article_skel: SkeletonInstance_T["ArticleAbstractSkel"] | None | Sentinel = SENTINEL,
         discount_skel: SkeletonInstance_T["DiscountSkel"] | None | Sentinel = SENTINEL,
         code: str | None | Sentinel = SENTINEL,
+        context: DicountValidationContext = SENTINEL,
     ) -> t.Self:
         self.cart_skel = cart_skel
         self.article_skel = article_skel
         self.discount_skel = discount_skel
         self.code = discount_skel
+        self.context = context
 
         # We need the full skel with all bones (otherwise the refSkel would be to large)
         for condition in discount_skel["condition"]:
@@ -154,6 +190,7 @@ class DiscountValidator:
                 discount_skel=discount_skel,
                 condition_skel=condition_skel,
                 code=code,
+                context=context,
             )
             self.condition_skels.append(condition_skel)
             self.condition_validator_instances.append(cv)
@@ -241,7 +278,36 @@ class ScopeDateStart(DiscountConditionScope):
 
 
 @ConditionValidator.register
+class ScopeDateStartPrevalidation(DiscountConditionScope):
+    """
+    Start date prevalidation for automatically discounts
+
+    For prevalitation a offset of 7 days will be added,
+    so entries that will be active soon are already in the cache,
+    but entries in the distant future are filtered out.
+    """
+
+    allowed_contexts = [
+        DicountValidationContext.AUTOMATICALLY_LIVE,
+    ]
+
+    def precondition(self) -> bool:
+        return self.condition_skel["scope_date_start"] is not None
+
+    def __call__(self) -> bool:
+        return self.condition_skel["scope_date_start"] <= utils.utcNow() + td(days=7)
+
+
+@ConditionValidator.register
 class ScopeDateEnd(DiscountConditionScope):
+    prevalidate_for_automatically = True
+
+    allowed_contexts: t.Final[list[DicountValidationContext]] = [
+        DicountValidationContext.NORMAL,
+        DicountValidationContext.AUTOMATICALLY_PREVALIDATE,
+        DicountValidationContext.AUTOMATICALLY_LIVE,
+    ]
+
     def precondition(self) -> bool:
         return self.condition_skel["scope_date_end"] is not None
 

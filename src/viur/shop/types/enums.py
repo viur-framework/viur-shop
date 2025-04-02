@@ -117,6 +117,7 @@ class VatRateCategory(enum.StrEnum):
     """
     Enumeration for VAT rate categories in the EU.
     """
+
     STANDARD = "standard"
     """Applies to most goods and services, with a minimum rate of 15% mandated by the EU."""
 
@@ -128,3 +129,17 @@ class VatRateCategory(enum.StrEnum):
 
     ZERO = "zero"
     """Applies to specific goods and services with no VAT charged, such as exports or essential items."""
+
+
+class DicountValidationContext(enum.IntEnum):
+    """Context in which a :class:`DiscountConditionScope` can be checked"""
+
+    NORMAL = enum.auto()
+    """Normal context, in real time e.g. for an article"""
+
+    AUTOMATICALLY_PREVALIDATE = enum.auto()
+    """Pre-Validate automatically discount for caching"""
+
+    AUTOMATICALLY_LIVE = enum.auto()
+    """Validate automatically discount in real time"""
+
