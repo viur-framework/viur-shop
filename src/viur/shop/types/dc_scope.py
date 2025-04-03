@@ -20,6 +20,7 @@ Each validator refers to a layer of the model
 """
 
 import abc
+import pprint
 import typing as t  # noqa
 from datetime import timedelta as td
 
@@ -34,6 +35,12 @@ if t.TYPE_CHECKING:
     from ..skeletons import ArticleAbstractSkel, CartNodeSkel, DiscountConditionSkel, DiscountSkel
 
 logger = SHOP_LOGGER.getChild(__name__)
+
+
+def _skel_repr(skel: SkeletonInstance_T | None) -> str:
+    if skel is None:
+        return "None"
+    return f'<SkeletonInstance of {skel.skeletonCls.__name__} with key={skel["key"]} and name={skel["key"]}>'
 
 
 class DiscountConditionScope:
@@ -95,7 +102,7 @@ class ConditionValidator:
     def __init__(self):
         super().__init__()
         self._is_fulfilled = None
-        self.scope_instances = []
+        self.scope_instances: list[DiscountConditionScope] = []
         self.cart_skel = None
         self.article_skel = None
         self.discount_skel = None
@@ -145,8 +152,13 @@ class ConditionValidator:
         return self._is_fulfilled
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} with {self.is_fulfilled=} for {self.condition_skel=} using {self.applicable_scopes=}>"
-        return f"<{self.__class__.__name__} with {self.is_fulfilled=} for {self.discount_skel=}, {self.condition_skel=}, {self.cart_skel=} using {self.applicable_scopes=}>"
+        return (
+            f"<{self.__class__.__name__} with {self.is_fulfilled=} "
+            f"for {self.discount_skel=}, {_skel_repr(self.condition_skel)}, "
+            f"cart_skel={_skel_repr(self.cart_skel)}, "
+            f"article_skel={_skel_repr(self.article_skel)}"
+            f"using {self.applicable_scopes=}>"
+        )
 
     @classmethod
     def register(cls, scope: t.Type[DiscountConditionScope]):
@@ -210,7 +222,9 @@ class DiscountValidator:
                 self._is_fulfilled = any(cv.is_fulfilled for cv in self.condition_validator_instances)
             elif self.discount_skel["condition_operator"] == ConditionOperator.ALL:
                 logger.debug("Checking for all")
-                # pprint.pprint(self.condition_validator_instances)
+                logger.debug(f"{self.condition_validator_instances=}")
+
+                pprint.pprint(self.condition_validator_instances)
                 self._is_fulfilled = all(cv.is_fulfilled for cv in self.condition_validator_instances)
             else:
                 raise InvalidStateError(f'Invalid condition operator: {self.discount_skel["condition_operator"]}')
@@ -225,7 +239,13 @@ class DiscountValidator:
         return domains.pop()
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} with {self.is_fulfilled=} for {self.discount_skel=}, {self.cart_skel=} using {self.condition_validator_instances=}>"
+        return (
+            f"<{self.__class__.__name__} with {self.is_fulfilled=} "
+            f"for {_skel_repr(self.discount_skel)}, "
+            f"cart_skel={_skel_repr(self.cart_skel)}, "
+            f"article_skel={_skel_repr(self.article_skel)}"
+            f"using {self.condition_validator_instances=}>"
+        )
 
 
 @ConditionValidator.register
@@ -388,7 +408,7 @@ class ScopeCombinableLowPrice(DiscountConditionScope):
         # logger.debug(f"ScopeCombinableLowPrice :: {self.cart_skel=} | {self.article_skel=}")
         return (
             self.condition_skel["scope_combinable_low_price"] is not None
-            and self.article_skel
+            and self.article_skel is not None
         )
 
     def __call__(self) -> bool:
@@ -400,7 +420,7 @@ class ScopeArticle(DiscountConditionScope):
     def precondition(self) -> bool:
         return (
             self.condition_skel["scope_article"] is not None
-            and not (self.cart_skel is None and self.cart_skel is None)  # needs a context to verify
+            and not (self.article_skel is None and self.cart_skel is None)  # needs a context to verify
         )
 
     def __call__(self) -> bool:

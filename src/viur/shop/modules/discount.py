@@ -1,12 +1,12 @@
 import functools
 import typing as t  # noqa
-from datetime import timedelta as td
-import cachetools
 
 from viur.core import db, errors
 from viur.core.prototypes import List
 from viur.core.skeleton import SkeletonInstance
+from viur.shop import DEBUG_DISCOUNTS
 from viur.shop.types import *
+
 from .abstract import ShopModuleAbstract
 from ..globals import SHOP_LOGGER
 from ..skeletons import DiscountSkel
@@ -205,6 +205,17 @@ class Discount(ShopModuleAbstract, List):
             context=context,
         )
         # logger.debug(f"{dv.is_fulfilled=} | {dv=}")
+
+        if DEBUG_DISCOUNTS.get():
+            print(f'Checking {skel["key"]!r} {skel["name"]}')
+            for cv in dv.condition_validator_instances:
+                code = f"{'+' if cv.is_fulfilled else '-'}"
+                print(f"  {code} {dv.__class__.__name__} : {cv.condition_skel["key"]!r} {cv.condition_skel["name"]}")
+                for s in cv.scope_instances:
+                    code = f"{'+' if s.is_applicable else '-'}/{'+' if s.is_fulfilled else '-'}"
+                    print(f"    {code} {s.__class__.__name__} : {s.is_applicable=} | {s.is_fulfilled=}")
+            print(f">>> {dv.is_fulfilled=}")
+
         return dv.is_fulfilled, dv
 
     @property
