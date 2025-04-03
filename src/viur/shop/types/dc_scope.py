@@ -48,7 +48,7 @@ class DiscountConditionScope:
         discount_skel: SkeletonInstance_T["DiscountSkel"] | None | Sentinel = SENTINEL,
         code: str | None | Sentinel = SENTINEL,
         condition_skel: SkeletonInstance_T["DiscountConditionSkel"],
-        context: DicountValidationContext,
+        context: DiscountValidationContext,
     ):
         self.cart_skel = cart_skel
         self.article_skel = article_skel
@@ -60,9 +60,9 @@ class DiscountConditionScope:
     def precondition(self) -> bool:
         return True
 
-    allowed_contexts: t.Final[list[DicountValidationContext]] = [
-        DicountValidationContext.NORMAL,
-        DicountValidationContext.AUTOMATICALLY_LIVE,
+    allowed_contexts: t.Final[list[DiscountValidationContext]] = [
+        DiscountValidationContext.NORMAL,
+        DiscountValidationContext.AUTOMATICALLY_LIVE,
     ]
     """contexts in which this scope should be checked"""
 
@@ -110,7 +110,7 @@ class ConditionValidator:
         discount_skel: SkeletonInstance_T["DiscountSkel"] | None | Sentinel = SENTINEL,
         code: str | None | Sentinel = SENTINEL,
         condition_skel: SkeletonInstance_T["DiscountConditionSkel"],
-        context: DicountValidationContext,
+        context: DiscountValidationContext,
     ) -> t.Self:
         self.cart_skel = cart_skel
         self.discount_skel = discount_skel
@@ -173,12 +173,12 @@ class DiscountValidator:
         article_skel: SkeletonInstance_T["ArticleAbstractSkel"] | None | Sentinel = SENTINEL,
         discount_skel: SkeletonInstance_T["DiscountSkel"] | None | Sentinel = SENTINEL,
         code: str | None | Sentinel = SENTINEL,
-        context: DicountValidationContext = SENTINEL,
+        context: DiscountValidationContext = SENTINEL,
     ) -> t.Self:
         self.cart_skel = cart_skel
         self.article_skel = article_skel
         self.discount_skel = discount_skel
-        self.code = discount_skel
+        self.code = code
         self.context = context
 
         # We need the full skel with all bones (otherwise the refSkel would be to large)
@@ -293,7 +293,7 @@ class ScopeDateStartPrevalidation(DiscountConditionScope):
     """
 
     allowed_contexts = [
-        DicountValidationContext.AUTOMATICALLY_LIVE,
+        DiscountValidationContext.AUTOMATICALLY_LIVE,
     ]
 
     def precondition(self) -> bool:
@@ -307,10 +307,10 @@ class ScopeDateStartPrevalidation(DiscountConditionScope):
 class ScopeDateEnd(DiscountConditionScope):
     prevalidate_for_automatically = True
 
-    allowed_contexts: t.Final[list[DicountValidationContext]] = [
-        DicountValidationContext.NORMAL,
-        DicountValidationContext.AUTOMATICALLY_PREVALIDATE,
-        DicountValidationContext.AUTOMATICALLY_LIVE,
+    allowed_contexts: t.Final[list[DiscountValidationContext]] = [
+        DiscountValidationContext.NORMAL,
+        DiscountValidationContext.AUTOMATICALLY_PREVALIDATE,
+        DiscountValidationContext.AUTOMATICALLY_LIVE,
     ]
 
     def precondition(self) -> bool:

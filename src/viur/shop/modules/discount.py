@@ -182,7 +182,7 @@ class Discount(ShopModuleAbstract, List):
         cart_key: db.Key | None = None,
         article_skel: SkeletonInstance | None = None,
         code: str | None = None,
-        context: DicountValidationContext = DicountValidationContext.NORMAL,
+        context: DiscountValidationContext = DiscountValidationContext.NORMAL,
     ) -> tuple[bool, DiscountValidator | None]:
         logger.debug(f"--- Calling can_apply() ---")
         logger.debug(f'{skel["name"] = } // {skel["description"] = }')
@@ -195,7 +195,7 @@ class Discount(ShopModuleAbstract, List):
             if not cart.read(cart_key):
                 raise errors.NotFound
 
-        if context == DicountValidationContext.NORMAL and skel["activate_automatically"]:
+        if context == DiscountValidationContext.NORMAL and skel["activate_automatically"]:
             logger.info(f"looking for not automatically, but is automatically discount")
             return False, None
 
@@ -213,7 +213,7 @@ class Discount(ShopModuleAbstract, List):
         query = self.viewSkel().all().filter("activate_automatically =", True)
         discounts = []
         for skel in query.fetch(100):
-            if not self.can_apply(skel, context=DicountValidationContext.AUTOMATICALLY_PREVALIDATE)[0]:
+            if not self.can_apply(skel, context=DiscountValidationContext.AUTOMATICALLY_PREVALIDATE)[0]:
                 logger.debug(f'Skipping discount {skel["key"]} {skel["name"]} for current_automatically_discounts')
                 continue
             discounts.append(skel)

@@ -8,7 +8,7 @@ from viur.core.skeleton import SkeletonInstance
 
 from .enums import ApplicationDomain, ConditionOperator, DiscountType
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
-from ..types import ConfigurationError, DicountValidationContext
+from ..types import ConfigurationError, DiscountValidationContext
 
 if t.TYPE_CHECKING:
     from ..modules import Discount
@@ -116,7 +116,7 @@ class Price:
         for skel in SHOP_INSTANCE.get().discount.current_automatically_discounts:
             applicable, dv = discount_module.can_apply(
                 skel, article_skel=article_skel,
-                context=DicountValidationContext.AUTOMATICALLY_LIVE
+                context=DiscountValidationContext.AUTOMATICALLY_LIVE
             )
             # logger.debug(f"{dv=}")
             if not applicable:
