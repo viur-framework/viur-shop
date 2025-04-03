@@ -131,7 +131,7 @@ class VatRateCategory(enum.StrEnum):
     """Applies to specific goods and services with no VAT charged, such as exports or essential items."""
 
 
-class DicountValidationContext(enum.IntEnum):
+class DiscountValidationContext(enum.IntEnum):
     """Context in which a :class:`DiscountConditionScope` can be checked"""
 
     NORMAL = enum.auto()
