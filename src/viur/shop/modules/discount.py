@@ -1,4 +1,5 @@
 import functools
+import io
 import typing as t  # noqa
 
 from viur.core import db, errors
@@ -207,14 +208,18 @@ class Discount(ShopModuleAbstract, List):
         # logger.debug(f"{dv.is_fulfilled=} | {dv=}")
 
         if DEBUG_DISCOUNTS.get():
-            print(f'Checking {skel["key"]!r} {skel["name"]}')
+            # Use a buffer to make sure we write it on-block
+            buffer = io.StringIO()
+            print(f'Checking {skel["key"]!r} {skel["name"]}', file=buffer)
             for cv in dv.condition_validator_instances:
                 code = f"{'+' if cv.is_fulfilled else '-'}"
-                print(f"  {code} {dv.__class__.__name__} : {cv.condition_skel["key"]!r} {cv.condition_skel["name"]}")
+                print(f"  {code} {dv.__class__.__name__} : "
+                      f"{cv.condition_skel["key"]!r} {cv.condition_skel["name"]}", file=buffer)
                 for s in cv.scope_instances:
                     code = f"{'+' if s.is_applicable else '-'}/{'+' if s.is_fulfilled else '-'}"
-                    print(f"    {code} {s.__class__.__name__} : {s.is_applicable=} | {s.is_fulfilled=}")
-            print(f">>> {dv.is_fulfilled=}")
+                    print(f"    {code} {s.__class__.__name__} : {s.is_applicable=} | {s.is_fulfilled=}", file=buffer)
+            print(f">>> {dv.is_fulfilled=}", file=buffer)
+            print(buffer.getvalue(), end="", flush=True)
 
         return dv.is_fulfilled, dv
 
