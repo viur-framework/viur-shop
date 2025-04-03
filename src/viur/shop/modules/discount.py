@@ -1,11 +1,11 @@
-import functools
 import typing as t  # noqa
 
+import cachetools
 from viur.core import db, errors
 from viur.core.prototypes import List
 from viur.core.skeleton import SkeletonInstance
-
 from viur.shop.types import *
+
 from .abstract import ShopModuleAbstract
 from ..globals import SHOP_LOGGER
 from ..skeletons import DiscountSkel
