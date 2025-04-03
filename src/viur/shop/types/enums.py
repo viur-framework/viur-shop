@@ -142,4 +142,3 @@ class DiscountValidationContext(enum.IntEnum):
 
     AUTOMATICALLY_LIVE = enum.auto()
     """Validate automatically discount in real time"""
-
