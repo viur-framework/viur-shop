@@ -307,7 +307,7 @@ class ScopeDateStartPrevalidation(DiscountConditionScope):
     """
     Start date prevalidation for automatically discounts
 
-    For prevalitation a offset of 7 days will be added,
+    For prevalidation a offset of 7 days will be added,
     so entries that will be active soon are already in the cache,
     but entries in the distant future are filtered out.
     """
