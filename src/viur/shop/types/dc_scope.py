@@ -313,7 +313,7 @@ class ScopeDateStartPrevalidation(DiscountConditionScope):
     """
 
     allowed_contexts = [
-        DiscountValidationContext.AUTOMATICALLY_LIVE,
+        DiscountValidationContext.AUTOMATICALLY_PREVALIDATE,
     ]
 
     def precondition(self) -> bool:
