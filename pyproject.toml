@@ -10,7 +10,8 @@ name = "viur-shop"
 dynamic = ["version"]
 dependencies = [
     "viur-toolkit>=0.2.0",
-    "viur-core>=3.7.0"
+    "viur-core>=3.7.0",
+    "cachetools>=5.0"
 ]
 requires-python = ">=3.11"
 authors = [
