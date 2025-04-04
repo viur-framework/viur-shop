@@ -20,3 +20,6 @@ class Sentinel:
 
 
 SENTINEL: t.Final[Sentinel] = Sentinel()
+
+DEBUG_DISCOUNTS = ContextVar("DEBUG_DISCOUNTS", default=False)
+"""Print detailed discount evaluation for debugging"""

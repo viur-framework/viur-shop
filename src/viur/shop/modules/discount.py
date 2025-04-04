@@ -1,9 +1,11 @@
+import io
 import typing as t  # noqa
 
 import cachetools
 from viur.core import db, errors
 from viur.core.prototypes import List
 from viur.core.skeleton import SkeletonInstance
+from viur.shop import DEBUG_DISCOUNTS
 from viur.shop.types import *
 
 from .abstract import ShopModuleAbstract
@@ -181,7 +183,7 @@ class Discount(ShopModuleAbstract, List):
         cart_key: db.Key | None = None,
         article_skel: SkeletonInstance | None = None,
         code: str | None = None,
-        as_automatically: bool = False,
+        context: DiscountValidationContext = DiscountValidationContext.NORMAL,
     ) -> tuple[bool, DiscountValidator | None]:
         logger.debug(f"--- Calling can_apply() ---")
         logger.debug(f'{skel["name"] = } // {skel["description"] = }')
@@ -194,12 +196,31 @@ class Discount(ShopModuleAbstract, List):
             if not cart.read(cart_key):
                 raise errors.NotFound
 
-        if not as_automatically and skel["activate_automatically"]:
-            logger.info(f"looking for as_automatically")
+        if context == DiscountValidationContext.NORMAL and skel["activate_automatically"]:
+            logger.info(f"looking for not automatically, but is automatically discount")
             return False, None
 
-        dv = DiscountValidator()(cart_skel=cart, article_skel=article_skel, discount_skel=skel, code=code)
+        dv = DiscountValidator()(
+            cart_skel=cart, article_skel=article_skel,
+            discount_skel=skel, code=code,
+            context=context,
+        )
         # logger.debug(f"{dv.is_fulfilled=} | {dv=}")
+
+        if DEBUG_DISCOUNTS.get():
+            # Use a buffer to make sure we write it on-block
+            buffer = io.StringIO()
+            print(f'Checking {skel["key"]!r} {skel["name"]}', file=buffer)
+            for cv in dv.condition_validator_instances:
+                code = f"{'+' if cv.is_fulfilled else '-'}"
+                print(f'  {code} {dv.__class__.__name__} : '
+                      f'{cv.condition_skel["key"]!r} {cv.condition_skel["name"]}', file=buffer)
+                for s in cv.scope_instances:
+                    code = f"{'+' if s.is_applicable else '-'}/{'+' if s.is_fulfilled else '-'}"
+                    print(f"    {code} {s.__class__.__name__} : {s.is_applicable=} | {s.is_fulfilled=}", file=buffer)
+            print(f">>> {dv.is_fulfilled=}", file=buffer)
+            print(buffer.getvalue(), end="", flush=True)
+
         return dv.is_fulfilled, dv
 
     @property
@@ -208,9 +229,8 @@ class Discount(ShopModuleAbstract, List):
         query = self.viewSkel().all().filter("activate_automatically =", True)
         discounts = []
         for skel in query.fetch(100):
-            if not self.can_apply(skel, as_automatically=True)[0]:
-                # TODO: this can_apply must be limited (check only active state, time range, ... but not lang)
-                logger.debug(f'Skipping discount {skel["key"]} {skel["name"]}')
+            if not self.can_apply(skel, context=DiscountValidationContext.AUTOMATICALLY_PREVALIDATE)[0]:
+                logger.debug(f'Skipping discount {skel["key"]} {skel["name"]} for current_automatically_discounts')
                 continue
             discounts.append(skel)
         logger.debug(f'current_automatically_discounts {discounts=}')
