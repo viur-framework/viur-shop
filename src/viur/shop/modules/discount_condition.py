@@ -1,14 +1,13 @@
-import functools
-import pprint
 import random
 import string
-import time
 import typing as t
 
+import cachetools
 from viur import toolkit
 from viur.core import current, db, tasks
 from viur.core.prototypes import List
 from viur.core.skeleton import SkeletonInstance
+
 from .abstract import ShopModuleAbstract
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 from ..services import Event, on_event
@@ -22,11 +21,6 @@ logger = SHOP_LOGGER.getChild(__name__)
 CODE_CHARS = sorted(set(string.ascii_uppercase + string.digits).difference(set("0OIl1")))
 CODE_LENGTH = 8
 SUFFIX_LENGTH = 6
-
-
-def get_ttl_hash(seconds: int = 3600) -> int:
-    """Return the same value withing `seconds` time period"""
-    return round(time.time() / seconds)
 
 
 class DiscountCondition(ShopModuleAbstract, List):
@@ -156,13 +150,9 @@ class DiscountCondition(ShopModuleAbstract, List):
     # --- Helpers  ------------------------------------------------------------
 
     @classmethod
-    def get_skel(cls, key: db.Key, expires: int = 3600) -> SkeletonInstance_T["DiscountConditionSkel"] | None:
-        return cls._get_skel(key, ttl_hash=get_ttl_hash(expires))
-
-    @staticmethod
-    @functools.lru_cache()
-    def _get_skel(key: db.Key, ttl_hash: int | None = None) -> SkeletonInstance_T["DiscountConditionSkel"] | None:
-        # logger.debug(f"_get_skel({key=}, {ttl_hash=})")
+    @cachetools.cached(cache=cachetools.TTLCache(maxsize=1024, ttl=3600))
+    def get_skel(cls, key: db.Key) -> SkeletonInstance_T["DiscountConditionSkel"] | None:
+        # logger.debug(f"get_skel({key=})")
         skel = SHOP_INSTANCE.get().discount_condition.viewSkel()
         if not skel.read(key):
             return None

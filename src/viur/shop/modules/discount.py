@@ -1,7 +1,7 @@
-import functools
 import io
 import typing as t  # noqa
 
+import cachetools
 from viur.core import db, errors
 from viur.core.prototypes import List
 from viur.core.skeleton import SkeletonInstance
@@ -224,7 +224,7 @@ class Discount(ShopModuleAbstract, List):
         return dv.is_fulfilled, dv
 
     @property
-    @functools.cache
+    @cachetools.cached(cache=cachetools.TTLCache(maxsize=1024, ttl=3600))
     def current_automatically_discounts(self) -> list[SkeletonInstance_T[DiscountSkel]]:
         query = self.viewSkel().all().filter("activate_automatically =", True)
         discounts = []
