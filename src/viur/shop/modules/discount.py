@@ -213,8 +213,8 @@ class Discount(ShopModuleAbstract, List):
             print(f'Checking {skel["key"]!r} {skel["name"]}', file=buffer)
             for cv in dv.condition_validator_instances:
                 code = f"{'+' if cv.is_fulfilled else '-'}"
-                print(f"  {code} {dv.__class__.__name__} : "
-                      f"{cv.condition_skel["key"]!r} {cv.condition_skel["name"]}", file=buffer)
+                print(f'  {code} {dv.__class__.__name__} : '
+                      f'{cv.condition_skel["key"]!r} {cv.condition_skel["name"]}', file=buffer)
                 for s in cv.scope_instances:
                     code = f"{'+' if s.is_applicable else '-'}/{'+' if s.is_fulfilled else '-'}"
                     print(f"    {code} {s.__class__.__name__} : {s.is_applicable=} | {s.is_fulfilled=}", file=buffer)
