@@ -30,7 +30,6 @@ from .exceptions import DispatchError, InvalidStateError
 from ..globals import SENTINEL, SHOP_INSTANCE, SHOP_LOGGER, Sentinel
 from ..services import HOOK_SERVICE, Hook
 from ..types import SkeletonInstance_T
-from ... import toolkit
 
 if t.TYPE_CHECKING:
     from ..skeletons import ArticleAbstractSkel, CartNodeSkel, DiscountConditionSkel, DiscountSkel
