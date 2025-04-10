@@ -125,7 +125,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
                 default_variables=dict(chars="".join(CODE_CHARS))
             ),
         },
-        vfunc=StringBone.v_func_valid_chars(CODE_CHARS),
+        vfunc=StringBone.v_func_valid_chars(f'{("".join(CODE_CHARS)).lower()}{("".join(CODE_CHARS)).upper()}'),
         unique=UniqueValue(UniqueLockMethod.SameValue, False, "Code exist already"),  # TODO
         caseSensitive=False,
         searchable=True,
@@ -142,7 +142,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
                 default_variables=dict(chars="".join(CODE_CHARS))
             ),
         },
-        vfunc=StringBone.v_func_valid_chars(CODE_CHARS),
+        vfunc=StringBone.v_func_valid_chars(f'{("".join(CODE_CHARS)).lower()}{("".join(CODE_CHARS)).upper()}'),
         unique=UniqueValue(UniqueLockMethod.SameValue, False, "Value already taken"),
         searchable=True,
     )
