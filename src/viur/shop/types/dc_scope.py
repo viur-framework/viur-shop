@@ -30,6 +30,7 @@ from .exceptions import DispatchError, InvalidStateError
 from ..globals import SENTINEL, SHOP_INSTANCE, SHOP_LOGGER, Sentinel
 from ..services import HOOK_SERVICE, Hook
 from ..types import SkeletonInstance_T
+from ... import toolkit
 
 if t.TYPE_CHECKING:
     from ..skeletons import ArticleAbstractSkel, CartNodeSkel, DiscountConditionSkel, DiscountSkel
@@ -428,7 +429,11 @@ class ScopeArticle(DiscountConditionScope):
     def precondition(self) -> bool:
         return (
             bool(self.condition_skel["scope_article"])
-            and self.article_skel is not None  # needs a context to verify
+            and (  # needs a context to verify
+                self.article_skel is not None
+                or (self.cart_skel is not None
+                    and self.condition_skel["application_domain"] == ApplicationDomain.BASKET)
+            )
         )
 
     def __call__(self) -> bool:
