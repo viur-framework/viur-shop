@@ -435,6 +435,23 @@ class ScopeArticle(DiscountConditionScope):
         if self.article_skel is None:
             raise InvalidStateError("Missing context article")
 
+        if self.cart_skel is not None and self.condition_skel["application_domain"] == ApplicationDomain.BASKET:
+            # In this case the discount should be applied on the basket,
+            # the scope_article must be inside of it.
+            leaf_skels = (
+                SHOP_INSTANCE.get().cart.viewSkel("leaf").all()
+                .filter("parentrepo =", self.cart_skel["key"])
+                .filter(
+                    "article.dest.__key__ IN",
+                    [article["dest"]["key"] for article in self.condition_skel["scope_article"]]
+                )
+                .fetch()
+            )
+            # logger.debug(f"<{len(leaf_skels)}>{leaf_skels = }")
+            return len(leaf_skels) > 0
+
+        # In this case the discount should be applied only on specific articles,
+        # the current article must be in scope_article.
         return any(
             self.article_skel["key"] == article["dest"]["key"]
             for article in self.condition_skel["scope_article"]
