@@ -139,13 +139,17 @@ class Discount(ShopModuleAbstract, List):
                     "discount_skel": discount_skel,
                 }
         elif application_domain == ApplicationDomain.ARTICLE:
+            # In this case we use scope_article to find the article on which this discount should be applied
             all_leafs = []
             for cv in dv.condition_validator_instances:
-                if cv.is_fulfilled and cv.condition_skel["scope_article"] is not None:
+                if cv.is_fulfilled and cv.condition_skel["scope_article"]:
                     leaf_skels = (
                         self.shop.cart.viewSkel("leaf").all()
                         .filter("parentrepo =", cart_key)
-                        .filter("article.dest.__key__ =", cv.condition_skel["scope_article"]["dest"]["key"])
+                        .filter(
+                            "article.dest.__key__ IN",
+                            [article["dest"]["key"] for article in cv.condition_skel["scope_article"]]
+                        )
                         .fetch()
                     )
                     logger.debug(f"<{len(leaf_skels)}>{leaf_skels = }")

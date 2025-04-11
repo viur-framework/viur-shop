@@ -115,7 +115,6 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
     )
 
     scope_code = StringBone(
-        # TODO: limit charset on server side
         params={
             "category": "2 – Scope",
             "visibleIf": 'code_type == "universal"',
@@ -126,13 +125,13 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
                 default_variables=dict(chars="".join(CODE_CHARS))
             ),
         },
+        vfunc=StringBone.v_func_valid_chars(f'{("".join(CODE_CHARS)).lower()}{("".join(CODE_CHARS)).upper()}'),
         unique=UniqueValue(UniqueLockMethod.SameValue, False, "Code exist already"),  # TODO
         caseSensitive=False,
         searchable=True,
     )
 
     individual_codes_prefix = StringBone(
-        # TODO: limit charset on server side
         params={
             "category": "2 – Scope",
             "visibleIf": 'code_type == "individual"',
@@ -143,6 +142,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
                 default_variables=dict(chars="".join(CODE_CHARS))
             ),
         },
+        vfunc=StringBone.v_func_valid_chars(f'{("".join(CODE_CHARS)).lower()}{("".join(CODE_CHARS)).upper()}'),
         unique=UniqueValue(UniqueLockMethod.SameValue, False, "Value already taken"),
         searchable=True,
     )
@@ -175,14 +175,14 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
         params={
             "category": "2 – Scope",
         },
-        # TODO: multiple=True, ???
+        multiple=True,
     )
 
     scope_country = SelectCountryBone(
         params={
             "category": "2 – Scope",
         },
-        # TODO: multiple=True, ???
+        multiple=True,
     )
 
     scope_minimum_quantity = NumericBone(
@@ -233,6 +233,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
         },
         refKeys=["name", "shop_name", "shop_*"],
         format="$(dest.shop_name) | $(dest.shop_shop_art_no_or_gtin) | $(dest.shop_price_retail) €",
+        multiple=True,
     )
 
     is_subcode = BooleanBone(

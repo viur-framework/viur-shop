@@ -25,10 +25,10 @@ import typing as t  # noqa
 from datetime import timedelta as td
 
 from viur.core import current, utils
-
 from .enums import *
-from .exceptions import InvalidStateError
+from .exceptions import DispatchError, InvalidStateError
 from ..globals import SENTINEL, SHOP_INSTANCE, SHOP_LOGGER, Sentinel
+from ..services import HOOK_SERVICE, Hook
 from ..types import SkeletonInstance_T
 
 if t.TYPE_CHECKING:
@@ -343,23 +343,31 @@ class ScopeDateEnd(DiscountConditionScope):
 @ConditionValidator.register
 class ScopeLanguage(DiscountConditionScope):
     def precondition(self) -> bool:
-        return self.condition_skel["scope_language"] is not None
+        return bool(self.condition_skel["scope_language"])
 
     def __call__(self) -> bool:
-        return self.condition_skel["scope_language"] == current.language.get()
+        return current.language.get() in self.condition_skel["scope_language"]
 
 
 @ConditionValidator.register
 class ScopeCountry(DiscountConditionScope):
     def precondition(self) -> bool:
-        return (
-            self.condition_skel["scope_country"] is not None
-            and self.cart_skel is not None
-            and self.cart_skel["shipping_address"] is not None
-        )
+        return bool(self.condition_skel["scope_country"])
 
     def __call__(self) -> bool:
-        return self.condition_skel["scope_country"] == self.cart_skel["shipping_address"]["dest"]["country"]
+        if (
+            self.cart_skel is not None
+            and self.cart_skel["shipping_address"] is not None
+        ):
+            return self.cart_skel["shipping_address"]["dest"]["country"] in self.condition_skel["scope_country"]
+
+        try:
+            use_country = HOOK_SERVICE.dispatch(Hook.CURRENT_COUNTRY)("article")
+        except DispatchError:
+            logger.info("NOTE: This error can be eliminated by providing "
+                        "a `Hook.CURRENT_COUNTRY` customization.")
+            return False
+        return use_country in self.condition_skel["scope_country"]
 
 
 @ConditionValidator.register
@@ -419,21 +427,36 @@ class ScopeCombinableLowPrice(DiscountConditionScope):
 class ScopeArticle(DiscountConditionScope):
     def precondition(self) -> bool:
         return (
-            self.condition_skel["scope_article"] is not None
-            and not (self.article_skel is None and self.cart_skel is None)  # needs a context to verify
+            bool(self.condition_skel["scope_article"])
+            and (  # needs a context to verify
+                self.article_skel is not None
+                or (self.cart_skel is not None
+                    and self.condition_skel["application_domain"] == ApplicationDomain.BASKET)
+            )
         )
 
     def __call__(self) -> bool:
-        if self.cart_skel is not None:
+        if self.cart_skel is not None and self.condition_skel["application_domain"] == ApplicationDomain.BASKET:
+            # In this case the discount should be applied on the basket,
+            # the scope_article must be inside of it.
             leaf_skels = (
                 SHOP_INSTANCE.get().cart.viewSkel("leaf").all()
                 .filter("parentrepo =", self.cart_skel["key"])
-                .filter("article.dest.__key__ =", self.condition_skel["scope_article"]["dest"]["key"])
+                .filter(
+                    "article.dest.__key__ IN",
+                    [article["dest"]["key"] for article in self.condition_skel["scope_article"]]
+                )
                 .fetch()
             )
             # logger.debug(f"<{len(leaf_skels)}>{leaf_skels = }")
             return len(leaf_skels) > 0
-        elif self.article_skel is not None:
-            return self.article_skel["key"] == self.condition_skel["scope_article"]["dest"]["key"]
-        else:
-            raise InvalidStateError
+
+        if self.article_skel is None:
+            raise InvalidStateError("Missing context article")
+
+        # In this case the discount should be applied only on specific articles,
+        # the current article must be in scope_article.
+        return any(
+            self.article_skel["key"] == article["dest"]["key"]
+            for article in self.condition_skel["scope_article"]
+        )
