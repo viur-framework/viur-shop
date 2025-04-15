@@ -300,7 +300,7 @@ class ScopeMinimumOrderValue(DiscountConditionScope):
         if self.article_skel is None:
             raise InvalidStateError("Missing context article")
 
-        # In this case the discount should be applied only on specific articles,
+        # In this case the discount should be applied only on a specific article,
         # the current article must have at least this price.
         # FIXME: nested discounts are not considered
         return self.condition_skel["scope_minimum_order_value"] <= self.article_skel["shop_price_retail"]
