@@ -53,6 +53,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
         params={
             "category": "1 – General",
         },
+        escape_html=False,
         searchable=True,
     )
 
@@ -127,6 +128,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
         },
         vfunc=StringBone.v_func_valid_chars(f'{("".join(CODE_CHARS)).lower()}{("".join(CODE_CHARS)).upper()}'),
         unique=UniqueValue(UniqueLockMethod.SameValue, False, "Code exist already"),  # TODO
+        escape_html=False,
         caseSensitive=False,
         searchable=True,
     )
@@ -144,6 +146,7 @@ class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
         },
         vfunc=StringBone.v_func_valid_chars(f'{("".join(CODE_CHARS)).lower()}{("".join(CODE_CHARS)).upper()}'),
         unique=UniqueValue(UniqueLockMethod.SameValue, False, "Value already taken"),
+        escape_html=False,
         searchable=True,
     )
 

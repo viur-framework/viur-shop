@@ -33,6 +33,7 @@ class ShippingSkel(Skeleton):  # STATE: Complete (as in model)
 
     name = StringBone(
         searchable=True,
+        escape_html=False,
     )
     """DHL Standard, DHL Express, DPD-Shop, ..."""
 
@@ -62,6 +63,7 @@ class ShippingSkel(Skeleton):  # STATE: Complete (as in model)
     shipping_cost.isEmpty = functools.partial(is_empty, shipping_cost)  # Re-Assign with instance reference
 
     art_no = StringBone(
+        escape_html=False,
     )
 
     supplier = SelectBone(
@@ -84,4 +86,5 @@ class ShippingSkel(Skeleton):  # STATE: Complete (as in model)
         compute=Compute(lambda skel: (str(skel["delivery_time_min"])
                                       if skel["delivery_time_min"] == skel["delivery_time_max"]
                                       else f'{skel["delivery_time_min"]} - {skel["delivery_time_max"]}')),
+        escape_html=False,
     )

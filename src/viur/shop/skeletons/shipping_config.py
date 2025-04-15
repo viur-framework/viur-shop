@@ -13,6 +13,7 @@ class ShippingConfigSkel(Skeleton):  # STATE: Complete (as in model)
 
     name = StringBone(
         searchable=True,
+        escape_html=False,
     )
 
     shipping = RelationalBone(
