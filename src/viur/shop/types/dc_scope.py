@@ -284,13 +284,26 @@ class ScopeMinimumOrderValue(DiscountConditionScope):
     def precondition(self) -> bool:
         return (
             self.condition_skel["scope_minimum_order_value"] is not None
-            and self.cart_skel is not None
+            and (  # needs a context to verify
+                self.article_skel is not None
+                or (self.cart_skel is not None
+                    and self.condition_skel["application_domain"] == ApplicationDomain.BASKET)
+            )
         )
 
     def __call__(self) -> bool:
-        return (
-            self.condition_skel["scope_minimum_order_value"] <= self.cart_skel["total"]
-        )
+        if self.cart_skel is not None and self.condition_skel["application_domain"] == ApplicationDomain.BASKET:
+            # In this case the discount should be applied on the basket.
+            # FIXME: The wrapped sub-cart must be checked, not the entire cart.
+            return self.condition_skel["scope_minimum_order_value"] <= self.cart_skel["total"]
+
+        if self.article_skel is None:
+            raise InvalidStateError("Missing context article")
+
+        # In this case the discount should be applied only on a specific article,
+        # the current article must have at least this price.
+        # FIXME: nested discounts are not considered
+        return self.condition_skel["scope_minimum_order_value"] <= self.article_skel["shop_price_retail"]
 
 
 @ConditionValidator.register
@@ -307,7 +320,7 @@ class ScopeDateStartPrevalidation(DiscountConditionScope):
     """
     Start date prevalidation for automatically discounts
 
-    For prevalidation a offset of 7 days will be added,
+    For prevalidation an offset of 7 days will be added,
     so entries that will be active soon are already in the cache,
     but entries in the distant future are filtered out.
     """
