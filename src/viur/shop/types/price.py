@@ -37,7 +37,7 @@ class Price:
         if isinstance(src_object, SkeletonInstance) and issubclass(src_object.skeletonCls, shop.cart.leafSkelCls):
             self.is_in_cart = True
             self.cart_leaf = src_object
-            self.article_skel = src_object.article_skel_full
+            self.article_skel = toolkit.without_render_preparation(src_object.article_skel_full)
             try:
                 self.cart_discounts = shop.cart.get_discount_for_leaf(src_object)
             except Exception as exc:  # FIXME: some entities are broken?
@@ -46,7 +46,7 @@ class Price:
             self.cart_discounts = [toolkit.get_full_skel_from_ref_skel(d) for d in self.cart_discounts]
         elif isinstance(src_object, SkeletonInstance) and issubclass(src_object.skeletonCls, shop.article_skel):
             self.is_in_cart = False
-            self.article_skel = src_object
+            self.article_skel = toolkit.without_render_preparation(src_object)
         else:
             raise TypeError(f"Unsupported type {type(src_object)}")
 
