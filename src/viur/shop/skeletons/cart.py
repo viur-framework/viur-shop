@@ -201,6 +201,7 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
             f' created at {utils.utcNow()}'
         ),
         searchable=True,
+        escape_html=False,
     )
 
     cart_type = SelectBone(
@@ -248,7 +249,6 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     article = RelationalBone(
         kind="...",  # will be set in Shop._set_kind_names()
         module="...",  # will be set in Shop._set_kind_names()
-        # FIXME: What's necessary here?
         parentKeys=["key", "parententry", "article"],
         refKeys=[
             "shop_*",
@@ -268,6 +268,7 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
 
     shop_name = StringBone(
         searchable=True,
+        escape_html=False,
     )
 
     shop_description = TextBone(
@@ -291,6 +292,7 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     )
 
     shop_art_no_or_gtin = StringBone(
+        escape_html=False,
     )
 
     shop_vat_rate_category = SelectBone(

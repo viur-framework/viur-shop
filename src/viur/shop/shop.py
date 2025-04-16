@@ -213,7 +213,9 @@ class Shop(InstancedModule, Module):
         for key, tr_dict in TRANSLATIONS.items():
             # Ensure lowercase key
             key = key.lower()
-            skel = TranslationSkel().all().filter("tr_key =", key).getSkel()
+            skel = TranslationSkel().all().filter("name =", key).getSkel()
+            if skel is None:
+                skel = TranslationSkel().all().filter("tr_key =", key).getSkel()  # TODO: legacy viur-core
             if skel is not None:
                 old_translations = copy.deepcopy(
                     (skel["translations"], skel["default_text"], skel["hint"], skel["public"])
@@ -234,7 +236,8 @@ class Shop(InstancedModule, Module):
                 continue
             logger.info(f"Add missing translation {key}")
             skel = TranslationSkel()
-            skel["tr_key"] = key
+            skel["tr_key"] = key  # TODO: legacy viur-core
+            skel["name"] = key
             skel["translations"] = tr_dict
             skel["default_text"] = tr_dict.get("_default_text") or None
             skel["hint"] = tr_dict.get("_hint") or None

@@ -69,6 +69,7 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
 
     order_uid = StringBone(
         unique=UniqueValue(UniqueLockMethod.SameValue, False, "UID must be unique"),
+        escape_html=False,
         searchable=True,
         # TODO: UidBone
     )

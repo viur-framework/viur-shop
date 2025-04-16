@@ -19,4 +19,5 @@ class ShippingPreconditionRelSkel(RelSkel):  # STATE: Complete (as in model)
 
     zip_code = StringBone(
         multiple=True,
+        escape_html=False,
     )

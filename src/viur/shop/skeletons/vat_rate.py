@@ -19,6 +19,7 @@ class VatRateSkel(Skeleton):
             )),
             ComputeInterval(ComputeMethod.OnWrite)
         ),
+        escape_html=False,
         searchable=True,
     )
 
