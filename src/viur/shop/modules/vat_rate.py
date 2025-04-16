@@ -50,6 +50,8 @@ class VatRate(ShopModuleAbstract, List):
         category: VatRateCategory,
     ) -> float:
         """Get the configured vat rate percentage for a country."""
+        if not isinstance(category, VatRateCategory):
+            raise TypeError(f"{category!r} is not a VatRateCategory")
         if country is None:
             country = HOOK_SERVICE.dispatch(Hook.CURRENT_COUNTRY)("vat_rate")
         if country not in self._vat_skel.country.values:

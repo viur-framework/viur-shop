@@ -5,8 +5,8 @@ import typing as t  # noqa
 from viur import toolkit
 from viur.core import current, db, utils
 from viur.core.skeleton import SkeletonInstance
-
 from .enums import ApplicationDomain, ConditionOperator, DiscountType
+from .exceptions import InvalidStateError
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 from ..types import ConfigurationError, DiscountValidationContext
 
@@ -37,7 +37,7 @@ class Price:
         if isinstance(src_object, SkeletonInstance) and issubclass(src_object.skeletonCls, shop.cart.leafSkelCls):
             self.is_in_cart = True
             self.cart_leaf = src_object
-            self.article_skel = src_object.article_skel_full
+            self.article_skel = toolkit.without_render_preparation(src_object.article_skel_full)
             try:
                 self.cart_discounts = shop.cart.get_discount_for_leaf(src_object)
             except Exception as exc:  # FIXME: some entities are broken?
@@ -46,11 +46,14 @@ class Price:
             self.cart_discounts = [toolkit.get_full_skel_from_ref_skel(d) for d in self.cart_discounts]
         elif isinstance(src_object, SkeletonInstance) and issubclass(src_object.skeletonCls, shop.article_skel):
             self.is_in_cart = False
-            self.article_skel = src_object
+            self.article_skel = toolkit.without_render_preparation(src_object)
         else:
             raise TypeError(f"Unsupported type {type(src_object)}")
 
         # logger.debug(f"{self.article_skel = }")
+        # logger.debug(f"{self.article_skel.renderPreparation=} | {hex(id(self.article_skel))}")
+        if self.article_skel.renderPreparation is not None:
+            raise InvalidStateError("ArticleSkel must not have renderPreparation")
 
         if (best_discount := self.shop_current_discount(self.article_skel)) is not None:
             price, skel = best_discount
@@ -179,8 +182,11 @@ class Price:
         :returns: value as float (0.0 <= value <= 1.0)
         """
         try:
+            # FIXME: self.article_skel has here sometimes renderPreparation set,
+            #        but toolkit.without_render_preparation is already called in __init__
+            #        What's going on here?
             vat_rate = SHOP_INSTANCE.get().vat_rate.get_vat_rate_for_country(
-                category=self.article_skel["shop_vat_rate_category"],
+                category=toolkit.without_render_preparation(self.article_skel)["shop_vat_rate_category"],
             )
         except ConfigurationError as e:  # TODO(discussion): Or re-raise or implement fallback?
             logger.warning(f"No vat rate for article :: {e}")
