@@ -10,7 +10,7 @@ click==8.1.7; python_version >= "3.7" --hash=sha256:ae74fb96c20a0277a1d615f1e4d7
 colorama==0.4.6; python_version >= "2.7" and python_version not in "3.0, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6" --hash=sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44 --hash=sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6
 docutils==0.21.2; python_version >= "3.9" --hash=sha256:3a6b18732edf182daa3cd12775bbb338cf5691468f91eeeb109deff6ebfa986f --hash=sha256:dafca5b9e384f0e419294eb4d2ff9fa826435bf15f15b7bd45723e8ad76811b2
 furo==2024.4.27; python_version >= "3.8" --hash=sha256:15a9b65269038def2cefafb86c71c6616e3969b8f07ba231f588c10c4aee6d88 --hash=sha256:f7eb1b2c2204fd9cbd4af42e027289a67f17a98a4e14f4f9e2f17b96d61bb020
-h11==0.14.0; python_version >= "3.7" --hash=sha256:8f19fbbe99e72420ff35c00b27a34cb9937e902a8b810e2c88300c6f0a3b699d --hash=sha256:e3fe4ac4b851c468cc8363d500db52c2ead036020723024a109d37346efaa761
+h11==0.16.0; python_version >= "3.7" --hash=sha256:4e35b956cf45792e4caa5885e69fba00bdbc6ffafbfa020300e549b208ee5ff1 --hash=sha256:63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86
 idna==3.7; python_version >= "3.5" --hash=sha256:028ff3aadf0609c1fd278d8ea3089299412a7a8b9bd005dd08b9f8285bcb5cfc --hash=sha256:82fee1fc78add43492d3a1898bfa6d8a904cc97d8427f683ed8e798d07761aa0
 imagesize==1.4.1; python_version >= "2.7" and python_version not in "3.0, 3.1, 3.2, 3.3" --hash=sha256:0d8d18d08f840c19d0ee7ca1fd82490fdc3729b7ac93f49870406ddde8ef8d8b --hash=sha256:69150444affb9cb0d5cc5a92b3676f0b2fb7cd9ae39e947a5e11a36b4497cd4a
 jinja2==3.1.3; python_version >= "3.7" --hash=sha256:7d6d50dd97d52cbc355597bd845fabfbac3f551e1f99619e39a35ce8c370b5fa --hash=sha256:ac8bd6544d4bb2c9792bf3a159e80bba8fda7f07e81bc3aed565432d5925ba90
