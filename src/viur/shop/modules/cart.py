@@ -14,6 +14,7 @@ from ..globals import SENTINEL, SHOP_INSTANCE, SHOP_LOGGER
 from ..services import EVENT_SERVICE, Event
 from ..skeletons.cart import CartItemSkel, CartNodeSkel
 from ..skeletons.order import OrderSkel
+from viur import toolkit
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -202,7 +203,7 @@ class Cart(ShopModuleAbstract, Tree):
     ) -> list[SkeletonInstance]:
         cache = current.request_data.get().setdefault("shop_cache_cart_children", {})
         try:
-            return cache[parent_cart_key]
+            return [toolkit.without_render_preparation(s) for s in cache[parent_cart_key]]
         except KeyError:
             pass
         children = list(self.get_children(parent_cart_key))
