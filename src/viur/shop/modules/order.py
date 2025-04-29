@@ -114,6 +114,7 @@ class Order(ShopModuleAbstract, List):
         if not self.canView(skel):
             logger.debug(f"Order {order_key} is forbidden by canView")
             return None
+        skel.refresh()  # TODO: cart.shipping_address relation seems not be updated by the core
         return skel
 
     def order_add(
