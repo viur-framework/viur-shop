@@ -191,7 +191,7 @@ class UnzerAbstract(PaymentProviderAbstract):
             self.shop.order.set_paid(order_skel)
         else:
             raise errors.NotImplemented("Order not paid")
-        return "OKAY, paid"
+        return "OKAY, paid"  # TODO
 
     @exposed
     def webhook(self):
