@@ -136,7 +136,7 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
         try:
             skel.cart.refresh(skel, skel.cart.name)
         except Exception as exc:
-            logger.debug(f"Failed to refresh cart on order {skel["key"]!r}: {exc}")
+            logger.debug(f'Failed to refresh cart on order {skel["key"]!r}: {exc}')
         return skel
 
     @classmethod
