@@ -1,14 +1,17 @@
 import abc
+import json
 import typing as t  # noqa
 
 import unzer
 from unzer.model import PaymentType
 from unzer.model.customer import Salutation as UnzerSalutation
 from unzer.model.payment import PaymentState
+from unzer.model.webhook import Events, IP_ADDRESS
 
 from viur import toolkit
-from viur.core import current, db, errors, exposed
+from viur.core import CallDeferred, current, db, errors, exposed, force_post
 from viur.core.skeleton import SkeletonInstance
+from viur.shop.skeletons import OrderSkel
 from viur.shop.types import *
 from . import PaymentProviderAbstract
 from ..globals import SHOP_LOGGER
@@ -152,6 +155,31 @@ class UnzerAbstract(PaymentProviderAbstract):
     def charge(self):
         raise errors.NotImplemented()
 
+    def get_order_by_pay_id(self, payment_id, public_key, *args, **kwargs):
+        """Helper method to get the order skel for a payment-id.
+
+        :param payment_id: The payment id. (ex: s-pay-1).
+        :param public_key: Public key of the key pair.
+
+        :return: The order-skel if the key seems to be valid. None otherwise.
+        :rtype: OrderSkel | None
+        """
+        logger.debug(f"get_order_by_pay_id({payment_id=} | {public_key=})")
+
+        if public_key != self.client.public_key:
+            logger.error(f"Got {public_key=}, expected {self.client.public_key}")
+            raise PermissionError(f"Public key {public_key} does not match with the current client configuration")
+
+        payment = self.client.getPayment(payment_id)
+        logger.debug(f"Found {payment=!r}")
+
+        order_skel = self.shop.order.skel()
+        if not order_skel.read(payment.orderId):
+            logger.warning(f"Cannot load order skel with {payment.orderId=}. Not from us?")
+            return None
+
+        return order_skel
+
     def check_payment_state(
         self,
         order_skel: SkeletonInstance,
@@ -195,8 +223,51 @@ class UnzerAbstract(PaymentProviderAbstract):
         return HOOK_SERVICE.dispatch(Hook.PAYMENT_RETURN_HANDLER_SUCCESS)(order_skel, payment)
 
     @exposed
-    def webhook(self):
-        raise errors.NotImplemented()
+    @force_post
+    def webhook(self, *args, **kwargs):
+        """Webhook for unzer.
+
+        Listens to all events, but handle payment-complete as backup currently only.
+        """
+        try:
+            payload = json.loads(current.request.get().request.body)
+        except ValueError:
+            raise errors.BadRequest("Invalid payload")
+        logger.info(f"Received request via webhook. {args=}, {kwargs=}")
+        logger.info(f"{payload=}")
+        logger.info(f"headers={current.request.get().request.headers!r}")
+
+        ip = current.request.get().request.remote_addr
+        logger.info(f"{ip=}")
+        if ip not in IP_ADDRESS:
+            logger.warning(f"Unallowed IP address {ip}")
+            raise errors.Forbidden
+
+        if payload.get("event") == Events.PAYMENT_COMPLETED:
+            order_skel = self.get_order_by_pay_id(payload["paymentId"], payload["publicKey"])
+            if not order_skel:
+                raise errors.BadRequest("Unknown order")
+            # Do this with a delay, otherwise there may be an interference with the return_hook
+            logger.info(f'Check payment for {order_skel["key"]!r} deferred')
+            self.check_payment_deferred(order_skel["key"], _countdown=60)
+
+        current.request.get().response.status = "204 No Content"
+        return ""
+
+    @CallDeferred
+    def check_payment_deferred(self, order_key: db.Key) -> None:
+        """Check the status for an unzer payment deferred"""
+        order_skel = self.shop.order.skel().read(order_key)
+        is_paid, payment = self.check_payment_state(order_skel)
+        charges = payment.getChargedTransactions()
+        logger.debug(f"{charges=}")
+        if is_paid and order_skel["is_paid"]:
+            logger.info(f'Order {order_skel["key"]!r} already marked as paid. Nothing to do.')
+        elif is_paid:
+            logger.info(f'Mark order {order_skel["key"]!r} as paid')
+            self.shop.order.set_paid(order_skel)
+        else:
+            logger.info(f'Order {order_skel["key"]!r} is not paid')
 
     @exposed
     def get_debug_information(self):
@@ -216,6 +287,7 @@ class UnzerAbstract(PaymentProviderAbstract):
         order_skel = self._append_payment_to_order_skel(
             order_skel,
             {
+                "public_key": self.public_key,
                 "type_id": type_id,
                 "charged": False,
                 "aborted": False,
