@@ -12,6 +12,7 @@ from viur.core.skeleton import SkeletonInstance
 from viur.shop.types import *
 from . import PaymentProviderAbstract
 from ..globals import SHOP_LOGGER
+from ..services import HOOK_SERVICE, Hook
 from ..types import exceptions as e
 
 logger = SHOP_LOGGER.getChild(__name__)
@@ -188,10 +189,10 @@ class UnzerAbstract(PaymentProviderAbstract):
             logger.info(f'Order {order_skel["key"]} already marked as paid. Nothing to do.')
         elif is_paid:
             logger.info(f'Mark order {order_skel["key"]} as paid')
-            self.shop.order.set_paid(order_skel)
+            order_skel = self.shop.order.set_paid(order_skel)
         else:
-            raise errors.NotImplemented("Order not paid")
-        return "OKAY, paid"  # TODO
+            return HOOK_SERVICE.dispatch(Hook.PAYMENT_RETURN_HANDLER_ERROR)(order_skel, payment)
+        return HOOK_SERVICE.dispatch(Hook.PAYMENT_RETURN_HANDLER_SUCCESS)(order_skel, payment)
 
     @exposed
     def webhook(self):

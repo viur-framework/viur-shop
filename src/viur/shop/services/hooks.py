@@ -49,6 +49,22 @@ class Hook(enum.IntEnum):
     type: (order_skel: SkeletonInstance_T[OrderSkel]) -> SkeletonInstance_T[OrderSkel]
     """
 
+    PAYMENT_RETURN_HANDLER_SUCCESS = enum.auto()
+    """
+    The action that is executed after the customer has returned
+    from the payment provider and the payment has been successful.
+    This can be, for example, a rendered template or a redirect to another page.
+    type: (order_skel: SkeletonInstance_T[OrderSkel], payment_data: t.Any) -> t.Any
+    """
+
+    PAYMENT_RETURN_HANDLER_ERROR = enum.auto()
+    """
+    The action that is executed after the customer has returned
+    from the payment provider and the payment has failed.
+    This can be, for example, a rendered template or a redirect to another page.
+    type: (order_skel: SkeletonInstance_T[OrderSkel], payment_data: t.Any) -> t.Any
+    """
+
 
 class Customization(abc.ABC):
     """Abstract base class for own implementations."""
