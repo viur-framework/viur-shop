@@ -248,7 +248,7 @@ class UnzerAbstract(PaymentProviderAbstract):
             if not order_skel:
                 raise errors.BadRequest("Unknown order")
             # Do this with a delay, otherwise there may be an interference with the return_hook
-            logger.info(f"Check payment for {order_skel["key"]!r} deferred")
+            logger.info(f'Check payment for {order_skel["key"]!r} deferred')
             self.check_payment_deferred(order_skel["key"], _countdown=60)
 
         current.request.get().response.status = "204 No Content"
