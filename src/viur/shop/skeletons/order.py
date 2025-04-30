@@ -2,7 +2,7 @@ import typing as t  # noqa
 
 from viur.core import translate
 from viur.core.bones import *
-from viur.core.skeleton import Skeleton
+from viur.core.skeleton import Skeleton, SkeletonInstance
 from viur.shop.types import *
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 
@@ -125,3 +125,22 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
     payment = JsonBone(
         defaultValue=lambda skel, self: {},
     )
+
+    @classmethod
+    def refresh_cart(cls, skel: SkeletonInstance) -> SkeletonInstance:
+        """
+        Shorthand to refresh the cart of an OrderSkel
+        Due to race-condition and timing issues, the dest values are not always
+        set correctly. This refresh fixes this.
+        """
+        try:
+            skel.cart.refresh(skel, skel.cart.name)
+        except Exception as exc:
+            logger.debug(f'Failed to refresh cart on order {skel["key"]!r}: {exc}')
+        return skel
+
+    @classmethod
+    def read(cls, skel: SkeletonInstance, *args, **kwargs) -> t.Optional[SkeletonInstance]:
+        if res := super().read(skel, *args, **kwargs):
+            cls.refresh_cart(skel)
+        return res

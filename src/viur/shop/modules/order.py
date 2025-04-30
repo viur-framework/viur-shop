@@ -2,10 +2,9 @@ import logging
 import time
 import typing as t  # noqa
 
+from viur import toolkit
 from viur.core import current, db, errors as core_errors, exposed, force_post
 from viur.core.prototypes import List
-
-from viur import toolkit
 from viur.shop.types import *
 from viur.shop.types.results import PaymentProviderResult
 from .abstract import ShopModuleAbstract
@@ -114,7 +113,6 @@ class Order(ShopModuleAbstract, List):
         if not self.canView(skel):
             logger.debug(f"Order {order_key} is forbidden by canView")
             return None
-        skel.refresh()  # TODO: cart.shipping_address relation seems not be updated by the core
         return skel
 
     def order_add(
@@ -203,6 +201,7 @@ class Order(ShopModuleAbstract, List):
         except DispatchError:
             pass
         skel = self.additional_order_update(skel, **kwargs)
+        OrderSkel.refresh_cart(skel)
         self.onEdit(skel)
         skel.write()
         self.onEdited(skel)
