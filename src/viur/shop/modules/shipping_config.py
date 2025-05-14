@@ -1,3 +1,5 @@
+import logging
+
 from viur.core.prototypes import List
 from viur.core.skeleton import RefSkel, RelSkel
 from viur.shop.skeletons import ArticleAbstractSkel, CartNodeSkel
@@ -36,8 +38,10 @@ class ShippingConfig(ShopModuleAbstract, List):
 
         :param country: If provided, check if the shipping configuration is applicable for this country.
         """
-        logger.debug(f'is_applicable({dest=}, {rel=}, {article_skel and article_skel["key"]=!r}, {cart_skel=}, '
-                     f'{country=})')
+        if logger.getEffectiveLevel() <= logging.DEBUG:
+            logger.debug(f'is_applicable({dest=}, {rel=}, '
+                         f'{article_skel and article_skel["key"]=!r}, '
+                         f'{cart_skel=}, {country=})')
 
         if not ((article_skel is None) ^ (cart_skel is None)):
             raise ValueError("You must supply article_skel or cart_skel")
@@ -47,7 +51,7 @@ class ShippingConfig(ShopModuleAbstract, List):
                 if (article_skel.shop_price_.current or 0) < rel["minimum_order_value"]:
                     return False, "< minimum_order_value [article]"
             else:
-                if cart_skel["total"] < rel["minimum_order_value"]:
+                if cart_skel["total_raw"] < rel["minimum_order_value"]:
                     return False, "< minimum_order_value [cart]"
 
         shipping_address = cart_skel and cart_skel["shipping_address"] and cart_skel["shipping_address"]["dest"]
