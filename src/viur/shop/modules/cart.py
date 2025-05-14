@@ -340,13 +340,6 @@ class Cart(ShopModuleAbstract, Tree):
         EVENT_SERVICE.call(Event.ARTICLE_CHANGED, skel=skel, deleted=False)
         self.clear_children_cache()
         # TODO: Validate quantity with hook (stock availability)
-        # if parent_skel["shipping_status"] == ShippingStatus.CHEAPEST:
-        #     parent_skel = self._cart_set_values(
-        #         skel=parent_skel
-        #     )
-        #     EVENT_SERVICE.call(Event.CART_CHANGED, skel=parent_skel, deleted=False)
-        #     parent_skel.write()
-
         return skel
 
     def move_article(
@@ -506,18 +499,9 @@ class Cart(ShopModuleAbstract, Tree):
                 skel["shipping"] = None
                 skel["shipping_status"] = ShippingStatus.CHEAPEST
             else:
-                skel.setBoneValue("shipping", shipping_key)
                 skel["shipping_status"] = ShippingStatus.USER
-        # else:
-        #     if (
-        #         skel["shipping_status"] == ShippingStatus.CHEAPEST
-        #         and skel["key"] is not None  # During add there is no key assigned yet
-        #     ):
-        #         applicable_shippings = self.shop.shipping.get_shipping_skels_for_cart(skel["key"])
-        #         if applicable_shippings:
-        #             cheapest_shipping = min(applicable_shippings,
-        #                                     key=lambda shipping: shipping["dest"]["shipping_cost"] or 0)
-        #             skel.setBoneValue("shipping", cheapest_shipping["dest"]["key"])
+                # FIXME: Ensure it's a valid shipping for the cart
+                skel.setBoneValue("shipping", shipping_key)
 
         if discount_key is not SENTINEL:
             if discount_key is None:
