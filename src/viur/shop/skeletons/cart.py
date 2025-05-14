@@ -154,14 +154,16 @@ class RelationalBoneShipping(RelationalBone):
         if skel["shipping_status"] == ShippingStatus.CHEAPEST:  # compute cheapest
             # TODO: if not locked ...
             self._prevent_compute = True
-            applicable_shippings = SHOP_INSTANCE.get().shipping.get_shipping_skels_for_cart(
-                cart_skel=skel, use_cache=True,
-            )
-            if applicable_shippings:
-                cheapest_shipping = min(applicable_shippings,
-                                        key=lambda shipping: shipping["dest"]["shipping_cost"] or 0)
-                skel.setBoneValue("shipping", cheapest_shipping["dest"]["key"])
-            self._prevent_compute = False
+            try:
+                applicable_shippings = SHOP_INSTANCE.get().shipping.get_shipping_skels_for_cart(
+                    cart_skel=skel, use_cache=True,
+                )
+                if applicable_shippings:
+                    cheapest_shipping = min(applicable_shippings,
+                                            key=lambda shipping: shipping["dest"]["shipping_cost"] or 0)
+                    skel.setBoneValue("shipping", cheapest_shipping["dest"]["key"])
+            finally:
+                self._prevent_compute = False
 
             return True
 
