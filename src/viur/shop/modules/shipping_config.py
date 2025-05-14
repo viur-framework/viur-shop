@@ -38,7 +38,7 @@ class ShippingConfig(ShopModuleAbstract, List):
 
         :param country: If provided, check if the shipping configuration is applicable for this country.
         """
-        if logger.getEffectiveLevel() <= logging.DEBUG:
+        if logger.isEnabledFor(logging.DEBUG):
             logger.debug(f'is_applicable({dest=}, {rel=}, '
                          f'{article_skel and article_skel["key"]=!r}, '
                          f'{cart_skel=}, {country=})')
