@@ -272,6 +272,8 @@ class Cart(ShopModuleAbstract, Tree):
             raise e.InvalidArgumentException("parent_cart_key", parent_cart_key)
         parent_skel = None
         if not (skel := self.get_article(article_key, parent_cart_key, must_be_listed=False)):
+            # FIXME: This part between get_article() and skel.write() is open for race conditions
+            #        parallel request might result into two different cart leafs with the same article.
             logger.info("This is an add")
             skel = self.addSkel("leaf")
             res = skel.setBoneValue("article", article_key)
