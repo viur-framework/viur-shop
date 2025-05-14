@@ -70,7 +70,7 @@ class Shipping(ShopModuleAbstract, List):
         cart_skel: SkeletonInstance_T[CartNodeSkel] = SENTINEL,
         country: str | None = None,
         use_cache: bool = False,
-    )-> list[SkeletonInstance_T[ShippingSkel]]:
+    ) -> list[SkeletonInstance_T[ShippingSkel]]:
         """Get all configured and applicable shippings of all items in the cart
 
         # TODO: how do we handle free shipping discounts?
