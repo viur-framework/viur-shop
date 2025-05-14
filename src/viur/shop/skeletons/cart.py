@@ -130,6 +130,46 @@ def get_vat_for_node(skel: "CartNodeSkel", bone: RecordBone) -> list[dict]:
     ]
 
 
+class RelationalBoneShipping(RelationalBone):
+    """A custom RelationalBone with conditionally compute logic for shipping"""
+
+    def unserialize_compute(self, skel: "SkeletonInstance", name: str) -> bool:
+        """
+        This method implements a conditionally compute.
+
+        Depending on the value of the 'shipping_status' bone, the cheapest
+        shipping option will be calculated. Otherwise, the shipping method
+        chosen by the user will be unserialized as usual.
+        """
+        assert name == "shipping", f"Special bone is only for shipping, but not for {name=}"
+        # logger.debug(f"{skel["shipping_status"]=}")
+
+        if getattr(self, "_prevent_compute", False):  # avoid recursion errors
+            return False
+
+        if skel["shipping_status"] == ShippingStatus.USER:  # should be unserialized from entity
+            # FIXME: Ensure it's a valid shipping for the cart
+            return False
+
+        if skel["shipping_status"] == ShippingStatus.CHEAPEST:  # compute cheapest
+            # TODO: if not locked ...
+            self._prevent_compute = True
+            try:
+                applicable_shippings = SHOP_INSTANCE.get().shipping.get_shipping_skels_for_cart(
+                    cart_skel=skel, use_cache=True,
+                )
+                if applicable_shippings:
+                    cheapest_shipping = min(applicable_shippings,
+                                            key=lambda shipping: shipping["dest"]["shipping_cost"] or 0)
+                    skel.setBoneValue("shipping", cheapest_shipping["dest"]["key"])
+            finally:
+                self._prevent_compute = False
+
+            return True
+
+        return super().unserialize_compute(skel, name)
+
+
 class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     kindName = "{{viur_shop_modulename}}_cart_node"
 
@@ -146,6 +186,14 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
         compute=Compute(
             TotalFactory("total", lambda child: child.price_.current, True,
                          additions=[add_shipping]),
+            ComputeInterval(ComputeMethod.Always),
+        ),
+    )
+
+    total_raw = NumericBone(
+        precision=2,
+        compute=Compute(
+            TotalFactory("total", lambda child: child.price_.current, True),
             ComputeInterval(ComputeMethod.Always),
         ),
     )
@@ -209,7 +257,7 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
         translation_key_prefix=None,
     )
 
-    shipping = RelationalBone(
+    shipping = RelationalBoneShipping(
         kind="{{viur_shop_modulename}}_shipping",
         module="{{viur_shop_modulename}}/shipping",
         refKeys=[

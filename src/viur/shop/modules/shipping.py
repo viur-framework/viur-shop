@@ -8,6 +8,7 @@ from viur.core.skeleton import RefSkel
 from viur.shop.skeletons import ArticleAbstractSkel, CartNodeSkel, ShippingSkel
 from viur.shop.types import SkeletonInstance_T
 from .abstract import ShopModuleAbstract
+from .. import SENTINEL
 from ..globals import SHOP_LOGGER
 
 logger = SHOP_LOGGER.getChild(__name__)
@@ -64,9 +65,11 @@ class Shipping(ShopModuleAbstract, List):
 
     def get_shipping_skels_for_cart(
         self,
-        cart_key: db.Key,
         *,
+        cart_key: db.Key = SENTINEL,
+        cart_skel: SkeletonInstance_T[CartNodeSkel] = SENTINEL,
         country: str | None = None,
+        use_cache: bool = False,
     ) -> list[SkeletonInstance_T[ShippingSkel]]:
         """Get all configured and applicable shippings of all items in the cart
 
@@ -76,16 +79,27 @@ class Shipping(ShopModuleAbstract, List):
         :param country: Ignore the context and get shipping for this country.
         :return: A list of :class:`SkeletonInstance`s for the :class:`ShippingSkel`.
         """
-        cart_skel = self.shop.cart.viewSkel("node")
-        if not cart_skel.read(cart_key):
-            raise errors.NotFound
+        if not ((cart_key is SENTINEL) ^ (cart_skel is SENTINEL)):
+            raise ValueError("You must provide cart_key xor cart_skel")
+        if cart_key is not SENTINEL:
+            cart_skel = self.shop.cart.viewSkel("node")
+            if not cart_skel.read(cart_key):
+                raise errors.NotFound
+        else:
+            assert cart_skel is not SENTINEL
+            cart_key = cart_skel["key"]
+
+        if use_cache:
+            get_children = self.shop.cart.get_children_from_cache
+        else:
+            get_children = self.shop.cart.get_children
 
         all_shipping_configs: list[RefSkel] = []
         # Walk down the entire cart tree and collect leafs in
         # `all_shipping_configs` and add nodes to the `node_queue`.
         node_queue = collections.deque([cart_key])
         while node_queue:
-            for child in self.shop.cart.get_children(node_queue.pop()):
+            for child in get_children(node_queue.pop()):
                 if issubclass(child.skeletonCls, CartNodeSkel):
                     node_queue.append(child["key"])
                 elif child.article_skel["shop_shipping_config"] is not None:

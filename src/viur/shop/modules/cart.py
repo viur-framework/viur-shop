@@ -162,9 +162,9 @@ class Cart(ShopModuleAbstract, Tree):
         if not skel.read(node_key):
             logger.debug(f"fail reason: 404")
             return False
-        logger.debug(f'{skel=}')
+        # logger.debug(f'{skel=}')
         if root_node and not skel["is_root_node"]:
-            # The node is not a root node, but a root nodes is expected
+            # The node is not a root node, but a root node is expected
             logger.debug(f"fail reason: not a root node")
             return False
         available_root_nodes = self.get_available_root_nodes()
@@ -272,6 +272,8 @@ class Cart(ShopModuleAbstract, Tree):
             raise e.InvalidArgumentException("parent_cart_key", parent_cart_key)
         parent_skel = None
         if not (skel := self.get_article(article_key, parent_cart_key, must_be_listed=False)):
+            # FIXME: This part between get_article() and skel.write() is open for race conditions
+            #        parallel request might result into two different cart leafs with the same article.
             logger.info("This is an add")
             skel = self.addSkel("leaf")
             res = skel.setBoneValue("article", article_key)
@@ -340,13 +342,6 @@ class Cart(ShopModuleAbstract, Tree):
         EVENT_SERVICE.call(Event.ARTICLE_CHANGED, skel=skel, deleted=False)
         self.clear_children_cache()
         # TODO: Validate quantity with hook (stock availability)
-        if parent_skel["shipping_status"] == ShippingStatus.CHEAPEST:
-            parent_skel = self._cart_set_values(
-                skel=parent_skel
-            )
-            EVENT_SERVICE.call(Event.CART_CHANGED, skel=parent_skel, deleted=False)
-            parent_skel.write()
-
         return skel
 
     def move_article(
@@ -506,18 +501,9 @@ class Cart(ShopModuleAbstract, Tree):
                 skel["shipping"] = None
                 skel["shipping_status"] = ShippingStatus.CHEAPEST
             else:
-                skel.setBoneValue("shipping", shipping_key)
                 skel["shipping_status"] = ShippingStatus.USER
-        else:
-            if (
-                skel["shipping_status"] == ShippingStatus.CHEAPEST
-                and skel["key"] is not None  # During add there is no key assigned yet
-            ):
-                applicable_shippings = self.shop.shipping.get_shipping_skels_for_cart(skel["key"])
-                if applicable_shippings:
-                    cheapest_shipping = min(applicable_shippings,
-                                            key=lambda shipping: shipping["dest"]["shipping_cost"] or 0)
-                    skel.setBoneValue("shipping", cheapest_shipping["dest"]["key"])
+                # FIXME: Ensure it's a valid shipping for the cart
+                skel.setBoneValue("shipping", shipping_key)
 
         if discount_key is not SENTINEL:
             if discount_key is None:
