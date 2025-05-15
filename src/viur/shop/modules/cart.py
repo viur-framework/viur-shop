@@ -1,7 +1,8 @@
 import typing as t  # noqa
 
 import viur.shop.types.exceptions as e
-from viur.core import conf, current, db, errors, exposed, utils
+from viur import toolkit
+from viur.core import conf, current, db, errors, exposed
 from viur.core.bones import BaseBone
 from viur.core.prototypes import Tree
 from viur.core.prototypes.tree import SkelType
@@ -14,7 +15,6 @@ from ..globals import SENTINEL, SHOP_INSTANCE, SHOP_LOGGER
 from ..services import EVENT_SERVICE, Event
 from ..skeletons.cart import CartItemSkel, CartNodeSkel
 from ..skeletons.order import OrderSkel
-from viur import toolkit
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -677,6 +677,13 @@ def delete_guest_cart(session: db.Entity) -> None:
     try:
         cart = session["data"]["shop"]["cart"]["session_cart_key"]
     except (KeyError, TypeError):
+        return
+    if (
+        SHOP_INSTANCE.get().order.skel().all()
+            .filter("cart.dest.__key__", cart)
+            .getSkel()
+    ) is not None:
+        # Is used by an order
         return
     SHOP_INSTANCE.get().cart.cart_remove(cart)
     logger.debug(f"Deleted {cart=} and children after deleting {session=}")
