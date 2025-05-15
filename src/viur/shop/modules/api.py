@@ -522,7 +522,7 @@ class Api(ShopModuleAbstract):
         :returns: list of :class:`ShippingSkel` `SkeletonInstance`s
         """
         cart_key = self._normalize_external_key(cart_key, "cart_key")
-        return JsonResponse(self.shop.shipping.get_shipping_skels_for_cart(cart_key))
+        return JsonResponse(self.shop.shipping.get_shipping_skels_for_cart(cart_key=cart_key))
 
     # --- Internal helpers  ----------------------------------------------------
 
