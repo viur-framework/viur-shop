@@ -290,6 +290,25 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     project_data = JsonBone(
     )
 
+    @classmethod
+    def refresh_shipping_address(cls, skel: SkeletonInstance) -> SkeletonInstance:
+        """
+        Shorthand to refresh the shipping_address of an CartNodeSkel
+        Due to race-condition and timing issues, the dest values are not always
+        set correctly. This refresh fixes this.
+        """
+        try:
+            skel.shipping_address.refresh(skel, skel.shipping_address.name)
+        except Exception as exc:
+            logger.debug(f'Failed to refresh shipping_address on cart {skel["key"]!r}: {exc}')
+        return skel
+
+    @classmethod
+    def read(cls, skel: SkeletonInstance, *args, **kwargs) -> t.Optional[SkeletonInstance]:
+        if res := super().read(skel, *args, **kwargs):
+            cls.refresh_shipping_address(skel)
+        return res
+
 
 class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     kindName = "{{viur_shop_modulename}}_cart_leaf"
