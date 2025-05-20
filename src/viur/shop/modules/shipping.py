@@ -128,6 +128,21 @@ class Shipping(ShopModuleAbstract, List):
             if is_applicable:
                 applicable_shippings.append(shipping)
 
+        # This is a workaround since we does not have a zip_code exclude list. # TODO
+        # If we found any shipping for only the current zip code, we show only shippings with zip_codes.
+        assert cart_skel is not None
+        shipping_address = cart_skel and cart_skel["shipping_address"] and cart_skel["shipping_address"]["dest"]
+        has_zip_shipping = []
+        if shipping_address:
+            for shipping in applicable_shippings:
+                rel = shipping["rel"]
+                if rel["zip_code"] and shipping_address["zip_code"] in rel["zip_code"]:
+                    has_zip_shipping.append(shipping)
+
+        if has_zip_shipping:
+            logger.debug(f"Found {len(has_zip_shipping)} special zip shippings, return only these!")
+            return has_zip_shipping
+
         # logger.debug(f"<{len(applicable_shippings)}>{applicable_shippings=}")
         if not applicable_shippings:
             logger.error("No suitable shipping found")  # TODO: fallback??
