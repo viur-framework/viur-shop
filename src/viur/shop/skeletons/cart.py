@@ -152,7 +152,7 @@ class RelationalBoneShipping(RelationalBone):
             # FIXME: Ensure it's a valid shipping for the cart
             return False
 
-        if skel["is_frozen"]: # locked, unserialize the latest stored value from entity
+        if skel["is_frozen"]:  # locked, unserialize the latest stored value from entity
             return False
 
         if skel["shipping_status"] == ShippingStatus.CHEAPEST:  # compute cheapest
