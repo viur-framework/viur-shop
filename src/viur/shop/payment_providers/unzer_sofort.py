@@ -11,6 +11,12 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 
 class UnzerSofort(UnzerAbstract):
+    """
+    Unzer Sofort payment method integration for the ViUR Shop.
+
+    Enables customers to pay using Sofortüberweisung through the Unzer payment gateway.
+    """
+
     name: t.Final[str] = "unzer-sofort"
 
     def get_payment_type(

@@ -18,7 +18,17 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 
 class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
+    """
+    Abstract base class for all payment providers in the ViUR Shop.
+
+    Provides a standardized interface for implementing different payment methods,
+    including methods for checkout, charging, and handling payment states.
+
+    Subclasses must implement the required methods to integrate specific payment providers.
+    """
+
     shop: "Shop" = None
+    """Reference to the main :class:`Shop` instance."""
 
     def __init__(
         self,

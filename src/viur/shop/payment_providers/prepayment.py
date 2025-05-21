@@ -15,11 +15,18 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 class Prepayment(PaymentProviderAbstract):
     """
-    Order is RTS as soon as the customer has paid.
+    Prepayment method for the ViUR Shop.
+
+    Allows customers to place orders with the agreement to pay in advance.
+    The order is marked as ready to ship (RTS) once payment is received.
 
     The customer pays this order in the next x days, shipping will wait.
-    But this will not be handled or checked here.
+
+    Note:
+       Payment receipt verification (The customer pays this order in the next x days,
+       shipping will wait) is handled externally and not within this module.
     """
+
     name: t.Final[str] = "prepayment"
 
     def checkout(

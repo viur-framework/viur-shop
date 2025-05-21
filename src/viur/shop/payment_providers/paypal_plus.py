@@ -10,6 +10,13 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 
 class PayPalPlus(PaymentProviderAbstract):
+    """
+    PayPal Plus integration for the ViUR Shop.
+
+    Supports multiple payment methods through PayPal Plus, including PayPal, credit card, and more.
+    Handles the checkout process, payment state checks, and webhook handling for payment updates.
+    """
+
     name: t.Final[str] = "paypal_plus"
 
     def checkout(

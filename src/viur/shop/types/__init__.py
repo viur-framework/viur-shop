@@ -1,7 +1,6 @@
 import typing as t
 
 from viur.core.skeleton import Skeleton as _Skeleton, SkeletonInstance as _SkeletonInstance
-from viur.core import i18n
 
 SkeletonCls_co = t.TypeVar("SkeletonCls_co", bound=t.Type[_Skeleton], covariant=True)
 
@@ -52,20 +51,3 @@ from .exceptions import (  # noqa
 from .price import Price  # noqa
 from .response import ExtendedCustomJsonEncoder, JsonResponse  # noqa
 from .results import (OrderViewResult, PaymentProviderResult, StatusError)  # noqa
-
-
-class BetterTranslate(i18n.translate):
-    """Extent :class:`i18n.translate` with ``default_variables``.
-
-    Should be part of standard: https://github.com/viur-framework/viur-core/issues/1379
-    """
-
-    def __init__(self, *args, default_variables: dict[str, str] | None = None, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.default_variables = default_variables or {}
-
-    def __str__(self):
-        return self.substitute_vars(super().__str__(), **self.default_variables)
-
-    def translate(self, **kwargs) -> str:
-        return self.substitute_vars(str(self), **(self.default_variables | kwargs))

@@ -439,7 +439,7 @@ class Order(ShopModuleAbstract, List):
         return errors
 
     def set_checkout_in_progress(self, order_skel: "SkeletonInstance") -> "SkeletonInstance":
-        """Set an order to the state _is_checkout_in_progress_"""
+        """Set an order to the state *is_checkout_in_progress*"""
         order_skel = toolkit.set_status(
             key=order_skel["key"],
             skel=order_skel,
@@ -450,7 +450,7 @@ class Order(ShopModuleAbstract, List):
         return order_skel
 
     def set_ordered(self, order_skel: "SkeletonInstance", payment: t.Any) -> "SkeletonInstance":
-        """Set an order to the state _ordered_"""
+        """Set an order to the state *ordered*"""
         order_skel = toolkit.set_status(
             key=order_skel["key"],
             skel=order_skel,
@@ -461,7 +461,7 @@ class Order(ShopModuleAbstract, List):
         return order_skel
 
     def set_paid(self, order_skel: "SkeletonInstance") -> "SkeletonInstance":
-        """Set an order to the state _paid_"""
+        """Set an order to the state *paid*"""
         order_skel = toolkit.set_status(
             key=order_skel["key"],
             skel=order_skel,
@@ -472,7 +472,7 @@ class Order(ShopModuleAbstract, List):
         return order_skel
 
     def set_rts(self, order_skel: "SkeletonInstance") -> "SkeletonInstance":
-        """Set an order to the state _Ready to ship_"""
+        """Set an order to the state *Ready to ship*"""
         order_skel = toolkit.set_status(
             key=order_skel["key"],
             skel=order_skel,
