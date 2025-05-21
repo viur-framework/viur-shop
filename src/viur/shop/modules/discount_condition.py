@@ -3,11 +3,11 @@ import string
 import typing as t
 
 import cachetools
+
 from viur import toolkit
 from viur.core import current, db, tasks
 from viur.core.prototypes import List
 from viur.core.skeleton import SkeletonInstance
-
 from .abstract import ShopModuleAbstract
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 from ..services import Event, on_event

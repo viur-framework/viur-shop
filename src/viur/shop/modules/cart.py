@@ -13,8 +13,8 @@ from viur.shop.types import *
 from viur.shop.types.exceptions import InvalidStateError
 from ..globals import SENTINEL, SHOP_INSTANCE, SHOP_LOGGER
 from ..services import EVENT_SERVICE, Event
+from ..skeletons.article import ArticleAbstractSkel
 from ..skeletons.cart import CartItemSkel, CartNodeSkel
-from ..skeletons.order import OrderSkel
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -237,7 +237,7 @@ class Cart(ShopModuleAbstract, Tree):
         parent_cart_key: db.Key,
         *,
         must_be_listed: bool = True,
-    ):
+    ) -> SkeletonInstance_T[CartItemSkel]:
         if not isinstance(article_key, db.Key):
             raise TypeError(f"article_key must be an instance of db.Key")
         if not isinstance(parent_cart_key, db.Key):
@@ -251,7 +251,7 @@ class Cart(ShopModuleAbstract, Tree):
         if must_be_listed:
             query.filter("shop_listed =", True)
         skel = query.getSkel()
-        return skel
+        return skel  # type: ignore
 
     def add_or_update_article(
         self,
@@ -261,7 +261,7 @@ class Cart(ShopModuleAbstract, Tree):
         quantity: int,
         quantity_mode: QuantityMode,
         **kwargs,
-    ) -> CartItemSkel | None:
+    ) -> SkeletonInstance_T[CartItemSkel] | None:
         if not isinstance(article_key, db.Key):
             raise TypeError(f"article_key must be an instance of db.Key")
         if not isinstance(parent_cart_key, db.Key):
@@ -275,7 +275,7 @@ class Cart(ShopModuleAbstract, Tree):
             # FIXME: This part between get_article() and skel.write() is open for race conditions
             #        parallel request might result into two different cart leafs with the same article.
             logger.info("This is an add")
-            skel = self.addSkel("leaf")
+            skel: SkeletonInstance_T[CartItemSkel] = self.addSkel("leaf")  # type:ignore
             res = skel.setBoneValue("article", article_key)
             skel["parententry"] = parent_cart_key
             parent_skel = self.viewSkel("node")
@@ -284,24 +284,13 @@ class Cart(ShopModuleAbstract, Tree):
                 skel["parentrepo"] = parent_skel["key"]
             else:
                 skel["parentrepo"] = parent_skel["parentrepo"]
-            article_skel: SkeletonInstance = self.shop.article_skel()
+            article_skel: SkeletonInstance_T[ArticleAbstractSkel] = self.shop.article_skel()  # type: ignore
             if not article_skel.read(article_key):
                 raise errors.NotFound(f"Article with key {article_key=} does not exist!")
             if not article_skel["shop_listed"]:
                 # logger.debug(f"not listed: {article_skel=}")
                 raise errors.UnprocessableEntity(f"Article is not listed for the shop!")
-            # Copy values from the article
-            for bone in skel.keys():
-                if not bone.startswith("shop_"):
-                    continue
-                instance = getattr(article_skel.skeletonCls, bone)
-                if isinstance(instance, BaseBone):
-                    value = article_skel[bone]
-                elif isinstance(instance, property):
-                    value = getattr(article_skel, bone)
-                else:
-                    raise NotImplementedError
-                skel[bone] = value
+            skel = self.copy_article_values(article_skel, skel)
         else:
             parent_skel = skel.parent_skel
         if quantity == 0 and quantity_mode in (QuantityMode.INCREASE, QuantityMode.DECREASE):
@@ -344,12 +333,31 @@ class Cart(ShopModuleAbstract, Tree):
         # TODO: Validate quantity with hook (stock availability)
         return skel
 
+    def copy_article_values(
+        self,
+        article_skel: SkeletonInstance_T[ArticleAbstractSkel],
+        skel: SkeletonInstance_T[CartItemSkel],
+    ) -> SkeletonInstance_T[CartItemSkel]:
+        """Copy values from the article to the cart leaf"""
+        for bone in skel.keys():
+            if not bone.startswith("shop_"):
+                continue
+            instance = getattr(article_skel.skeletonCls, bone)
+            if isinstance(instance, BaseBone):
+                value = article_skel[bone]
+            elif isinstance(instance, property):
+                value = getattr(article_skel, bone)
+            else:
+                raise NotImplementedError
+            skel[bone] = value
+        return skel
+
     def move_article(
         self,
         article_key: db.Key,
         parent_cart_key: db.Key,
         new_parent_cart_key: db.Key,
-    ) -> CartItemSkel | None:
+    ) -> SkeletonInstance_T[CartItemSkel] | None:
         if not isinstance(article_key, db.Key):
             raise TypeError(f"article_key must be an instance of db.Key")
         if not isinstance(parent_cart_key, db.Key):
@@ -390,7 +398,7 @@ class Cart(ShopModuleAbstract, Tree):
         shipping_key: str | db.Key = SENTINEL,
         discount_key: str | db.Key = SENTINEL,
         **kwargs,
-    ) -> SkeletonInstance | None:
+    ) -> SkeletonInstance_T[CartNodeSkel] | None:
         if not isinstance(parent_cart_key, (db.Key, type(None))):
             raise TypeError(f"parent_cart_key must be an instance of db.Key")
         if not isinstance(cart_type, (CartType, type(None))):
@@ -426,7 +434,7 @@ class Cart(ShopModuleAbstract, Tree):
         shipping_key: str | db.Key = SENTINEL,
         discount_key: str | db.Key = SENTINEL,
         **kwargs,
-    ) -> SkeletonInstance | None:
+    ) -> SkeletonInstance_T[CartNodeSkel] | None:
         if not isinstance(cart_key, db.Key):
             raise TypeError(f"cart_key must be an instance of db.Key")
         if not isinstance(cart_type, (CartType, type(None))):
@@ -466,7 +474,7 @@ class Cart(ShopModuleAbstract, Tree):
         shipping_address_key: str | db.Key = SENTINEL,
         shipping_key: str | db.Key = SENTINEL,
         discount_key: str | db.Key = SENTINEL,
-    ) -> SkeletonInstance:
+    ) -> SkeletonInstance_T[CartNodeSkel]:
         if parent_cart_key is not SENTINEL:
             skel["parententry"] = parent_cart_key
             if parent_cart_key is None:
@@ -608,21 +616,50 @@ class Cart(ShopModuleAbstract, Tree):
     def freeze_cart(
         self,
         cart_key: db.Key,
-        order_skel: SkeletonInstance_T[OrderSkel],
-    ) -> None:
-        # TODO: for node in tree:
-        #   freeze node with values, discount, shipping (JSON dump? bone duplication?)
-        #   ensure each article still exists and shop_listed is True
-        return NotImplemented
+    ) -> SkeletonInstance_T[CartNodeSkel]:
+        """Freeze (lock) cart values and children items.
+
+        :param cart_key: Key of the (sub-)cart skeleton.
+        :return: The frozen CartNode skeleton.
+        """
+        child: SkeletonInstance_T[CartNodeSkel | CartItemSkel]
+        for child in self.get_children(cart_key):
+            if issubclass(child.skeletonCls, CartNodeSkel):
+                self.freeze_cart(child["key"])
+            else:
+                self.freeze_leaf(child)
+
+        self.clear_children_cache()
+
         cart_skel = self.editSkel("node")
         assert cart_skel.read(cart_key)
-        """
-        skel["shop_vat_rate_value"] = self.shop.vat_rate.get_vat_rate_for_country(
-            country=order_skel["billing_address"]["dest"]["country"],
-            category=article_skel["shop_vat_rate_category"],
-        )
-        """
+        # Clone the address, so in case the user edits the address, existing orders wouldn't be affected by this
+        sa_key = cart_skel["shipping_address"]["dest"]["key"]
+        sa_skel = self.shop.address.clone_address(sa_key)
+        assert sa_skel["key"] != sa_key, f'{sa_skel["key"]} != {sa_key}'
+        cart_skel.setBoneValue("shipping_address", sa_skel["key"])
+
+        cart_skel["frozen_values"] = {
+            "total": cart_skel["total"],
+            "total_raw": cart_skel["total_raw"],
+            "total_discount_price": cart_skel["total_discount_price"],
+            "vat": cart_skel["vat"],
+            "total_quantity": cart_skel["total_quantity"],
+            "shipping": cart_skel["shipping"],
+        }
+        cart_skel["is_frozen"] = True
         cart_skel.write()
+        return cart_skel  # type: ignore
+
+    def freeze_leaf(self, leaf_skel: SkeletonInstance_T[CartItemSkel]):
+        leaf_skel = self.copy_article_values(leaf_skel.article_skel_full, leaf_skel)
+        leaf_skel["frozen_values"] = {
+            "price": leaf_skel["price"],
+            "shipping": leaf_skel["shipping"],
+        }
+        leaf_skel["is_frozen"] = True
+        leaf_skel.write()
+        return leaf_skel
 
     # -------------------------------------------------------------------------
 
