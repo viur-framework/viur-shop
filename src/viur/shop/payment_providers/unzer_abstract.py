@@ -26,7 +26,7 @@ class UnzerClientViURShop(unzer.UnzerClient):
     def _request(self, url, method, headers, payload, auth):
         # Extend with ViUR Logic:
         # Before the request is performed, we update the accept-language with
-        # the language of the current request, except it's explicit set.
+        # the language of the current request, unless it has been explicitly set.
         if self.language is None:
             # language for translation of customerMessage in errors
             headers["accept-language"] = current.language.get()
@@ -35,6 +35,12 @@ class UnzerClientViURShop(unzer.UnzerClient):
 
 
 class UnzerAbstract(PaymentProviderAbstract):
+    """
+    Abstract base class for Unzer payment methods in the ViUR Shop.
+
+    Provides common functionality for Unzer-based payment providers,
+    including API communication and payment type handling.
+    """
 
     def __init__(
         self,
@@ -155,14 +161,18 @@ class UnzerAbstract(PaymentProviderAbstract):
     def charge(self):
         raise errors.NotImplemented()
 
-    def get_order_by_pay_id(self, payment_id, public_key, *args, **kwargs):
+    def get_order_by_pay_id(
+        self,
+        payment_id: str,
+        public_key: str,
+        *args, **kwargs
+    ) -> SkeletonInstance_T[OrderSkel] | None:
         """Helper method to get the order skel for a payment-id.
 
         :param payment_id: The payment id. (ex: s-pay-1).
         :param public_key: Public key of the key pair.
 
-        :return: The order-skel if the key seems to be valid. None otherwise.
-        :rtype: OrderSkel | None
+        :return: The order-skel if the key seems valid. None otherwise.
         """
         logger.debug(f"get_order_by_pay_id({payment_id=} | {public_key=})")
 
@@ -235,7 +245,7 @@ class UnzerAbstract(PaymentProviderAbstract):
             raise errors.BadRequest("Invalid payload")
         logger.info(f"Received request via webhook. {args=}, {kwargs=}")
         logger.info(f"{payload=}")
-        logger.info(f"headers={current.request.get().request.headers!r}")
+        logger.info(f"headers={dict(current.request.get().request.headers)!r}")
 
         ip = current.request.get().request.remote_addr
         logger.info(f"{ip=}")

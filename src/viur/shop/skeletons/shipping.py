@@ -28,7 +28,7 @@ def is_empty(self: NumericBone, value: t.Any):
     return value is None
 
 
-class ShippingSkel(Skeleton):  # STATE: Complete (as in model)
+class ShippingSkel(Skeleton):
     kindName = "{{viur_shop_modulename}}_shipping"
 
     name = StringBone(

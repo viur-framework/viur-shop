@@ -11,6 +11,12 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 
 class UnzerCard(UnzerAbstract):
+    """
+    Unzer credit card payment method integration for the ViUR Shop.
+
+    Enables customers to pay using credit cards through the Unzer payment gateway.
+    """
+
     name: t.Final[str] = "unzer-card"
 
     def get_payment_type(

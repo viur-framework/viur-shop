@@ -7,7 +7,7 @@ from .prepayment import PrePayment, Prepayment
 try:
     import unzer
 except ImportError:
-    # The unzer extras was not enabled, we don't import the related providers
+    # The unzer extra was not enabled, we don't import the related providers
     ...
 else:
     del unzer

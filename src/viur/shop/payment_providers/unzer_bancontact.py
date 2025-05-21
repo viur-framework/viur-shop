@@ -11,6 +11,12 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 
 class UnzerBancontact(UnzerAbstract):
+    """
+    Unzer Bancontact payment method integration for the ViUR Shop.
+
+    Enables customers to pay using Bancontact through the Unzer payment gateway.
+    """
+
     name: t.Final[str] = "unzer-bancontact"
 
     def get_payment_type(

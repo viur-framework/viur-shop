@@ -10,6 +10,12 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 
 class AmazonPay(PaymentProviderAbstract):
+    """
+    Amazon Pay integration for the ViUR Shop.
+
+    Handles the checkout process using Amazon Pay, including authorization and payment capture.
+    Requires Amazon MWS credentials and configuration parameters.
+    """
     name: t.Final[str] = "amazonpay"
 
     def __init__(
@@ -26,6 +32,18 @@ class AmazonPay(PaymentProviderAbstract):
         language: str = "en",
         **kwargs: t.Any,
     ) -> None:
+        """
+
+        :param mws_access_key: Amazon MWS access key.
+        :param mws_secret_key: Amazon MWS secret key.
+        :param merchant_id: Amazon merchant ID.
+        :param client_id: Amazon client ID.
+        :param client_secret: Amazon client secret.
+        :param region: Region code (default: 'de').
+        :param currency_code: Currency code (default: 'EUR').
+        :param sandbox: Use sandbox environment (default: False).
+        :param language: Language code (default: 'en').
+        """
         super().__init__(**kwargs)
         self.mws_access_key = mws_access_key
         self.mws_secret_key = mws_secret_key

@@ -11,6 +11,12 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 
 class UnzerPayPal(UnzerAbstract):
+    """
+    Unzer PayPal payment method integration for the ViUR Shop.
+
+    Enables customers to pay using PayPal through the Unzer payment gateway.
+    """
+
     name: t.Final[str] = "unzer-paypal"
 
     def get_payment_type(

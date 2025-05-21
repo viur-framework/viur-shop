@@ -5,8 +5,9 @@ from viur.core.prototypes import List
 from viur.core.prototypes.skelmodule import DEFAULT_ORDER_TYPE
 from viur.core.skeleton import SkeletonInstance
 from .abstract import ShopModuleAbstract
-from .. import AddressSkel, SkeletonInstance_T
 from ..globals import SHOP_LOGGER
+from ..skeletons import AddressSkel
+from ..types import SkeletonInstance_T
 
 logger = SHOP_LOGGER.getChild(__name__)
 

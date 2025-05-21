@@ -171,7 +171,7 @@ class RelationalBoneShipping(RelationalBone):
         return super().unserialize_compute(skel, name)
 
 
-class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
+class CartNodeSkel(TreeSkel):
     kindName = "{{viur_shop_modulename}}_cart_node"
 
     subSkels = {
@@ -321,7 +321,7 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
         return res
 
 
-class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
+class CartItemSkel(TreeSkel):
     kindName = "{{viur_shop_modulename}}_cart_leaf"
 
     article = RelationalBone(

@@ -45,7 +45,7 @@ logger = SHOP_LOGGER.getChild(__name__)
 def _skel_repr(skel: SkeletonInstance_T | None) -> str:
     if skel is None:
         return "None"
-    return f'<SkeletonInstance of {skel.skeletonCls.__name__} with key={skel["key"]} and name={skel["key"]}>'
+    return f'<SkeletonInstance of {skel.skeletonCls.__name__} with key={skel["key"]} and name={skel["name"]}>'
 
 
 class DiscountConditionScope:

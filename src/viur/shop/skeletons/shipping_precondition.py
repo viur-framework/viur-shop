@@ -7,7 +7,7 @@ from ..globals import SHOP_LOGGER
 logger = SHOP_LOGGER.getChild(__name__)
 
 
-class ShippingPreconditionRelSkel(RelSkel):  # STATE: Complete (as in model)
+class ShippingPreconditionRelSkel(RelSkel):
     minimum_order_value = NumericBone(
         precision=2,
         min=0,

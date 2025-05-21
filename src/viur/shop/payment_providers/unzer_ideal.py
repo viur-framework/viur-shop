@@ -11,6 +11,12 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 
 class UnzerIdeal(UnzerAbstract):
+    """
+    Unzer iDEAL payment method integration for the ViUR Shop.
+
+    Enables customers to pay using iDEAL through the Unzer payment gateway.
+    """
+
     name: t.Final[str] = "unzer-ideal"
 
     def get_payment_type(

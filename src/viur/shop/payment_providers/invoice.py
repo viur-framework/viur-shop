@@ -12,10 +12,14 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 class Invoice(PaymentProviderAbstract):
     """
-    Order is directly RTS, but not paid.
+    Invoice payment method for the ViUR Shop.
 
-    The customer pays this order in the next x days, independent of shipping.
-    But this will not be handled or checked here.
+    Allows customers to place orders with the agreement to pay later via invoice.
+    The order can be marked as ready to ship (RTS) immediately but is not considered paid.
+
+    Note:
+        Payment processing (the customer pays this order in the next x days)
+        and verification are handled externally and not within this module.
     """
 
     name: t.Final[str] = "invoice"
