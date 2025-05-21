@@ -9,6 +9,7 @@ from viur.core.skeleton import SkeletonInstance
 from viur.shop.types import *
 from .vat import VatIncludedSkel
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
+from ..skeletons.article import ArticleAbstractSkel
 from ..types.response import make_json_dumpable
 
 logger = SHOP_LOGGER.getChild(__name__)
@@ -394,12 +395,26 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
         return self["article"]["dest"]
 
     @property
-    def article_skel_full(self) -> SkeletonInstance:
-        # TODO: Cache this property
-        # logger.debug(f'Reading article_skel_full {self.article_skel["key"]=}')
-        skel = SHOP_INSTANCE.get().article_skel()
-        assert skel.read(self.article_skel["key"])
-        return skel
+    def article_skel_full(self) -> SkeletonInstance_T[ArticleAbstractSkel]:
+        # logger.debug(f'Access article_skel_full {self.article_skel["key"]=}')
+        try:
+            return CartItemSkel.article_cache[self.article_skel["key"]]
+        except KeyError:
+            # logger.debug(f'Read article_skel_full {self.article_skel["key"]=}')
+            skel = SHOP_INSTANCE.get().article_skel()
+            assert skel.read(self.article_skel["key"])
+            CartItemSkel.article_cache[self.article_skel["key"]] = skel
+            return skel
+
+    @classmethod
+    @property
+    def article_cache(cls) -> dict[db.Key, SkeletonInstance_T[ArticleAbstractSkel]]:
+        if current.request_data.get() is None:
+            return {}
+        return (
+            current.request_data.get().setdefault("viur.shop", {})
+            .setdefault("article_cache", {})
+        )
 
     @property
     def parent_skel(self) -> SkeletonInstance:
