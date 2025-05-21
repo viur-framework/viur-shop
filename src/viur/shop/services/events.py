@@ -36,7 +36,8 @@ Key Components
 Usage
 -----
 
-### Registering an Event Handler
+Registering an Event Handler
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can register an event handler manually or use the ``@on_event`` decorator.
 
@@ -52,7 +53,8 @@ You can register an event handler manually or use the ``@on_event`` decorator.
    # Registering manually
    EVENT_SERVICE.register(Event.ORDER_PAID, process_payment)
 
-### Triggering an Event
+Triggering an Event
+~~~~~~~~~~~~~~~~~~~
 
 To trigger an event and execute all associated methods,
 use the ``call`` method of ``EventService``.

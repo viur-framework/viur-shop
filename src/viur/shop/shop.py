@@ -29,6 +29,22 @@ if SHOP_LOGGER.level == logging.NOTSET:
 
 
 class Shop(InstancedModule, Module):
+    """
+    A ViUR module providing core shop functionality such as cart handling,
+    order processing, and integration with shipping and payment providers.
+
+    This class serves as the central module for the `viur-shop` extension,
+    offering routing and logic for managing shopping carts, creating and
+    finalizing orders, and communicating with pluggable payment and shipping
+    systems.
+
+    Currently, only one instance of this module is supported per project.
+
+    .. note::
+        This module assumes integration with the ViUR framework and is not
+        intended to be used standalone.
+    """
+
     _is_registered_for: t.ClassVar[set[str]] = set()
 
     def __init__(

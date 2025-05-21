@@ -2,6 +2,9 @@
 This module contains several kinds of validators to do the discount validation.
 
 The structure of validators is:
+
+.. code-block:: none
+
     DiscountValidator
     ├─ ConditionValidator
     │  ├─ DiscountConditionScope
@@ -13,10 +16,12 @@ The structure of validators is:
     │  └─ ...
     └─ ...
 
+
 Each validator refers to a layer of the model
-- :class:`DiscountValidator` <-> :class:`DiscountSkel`
-- :class:`ConditionValidator` <-> :class:`DiscountConditionSkel`
-- :class:`DiscountConditionScope` <-> bones in :class:`DiscountConditionSkel`
+
+-   :class:`DiscountValidator` <-> :class:`DiscountSkel`
+-   :class:`ConditionValidator` <-> :class:`DiscountConditionSkel`
+-   :class:`DiscountConditionScope` <-> bones in :class:`DiscountConditionSkel`
 """
 
 import abc
