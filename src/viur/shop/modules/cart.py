@@ -618,18 +618,16 @@ class Cart(ShopModuleAbstract, Tree):
     def freeze_cart(
         self,
         cart_key: db.Key,
-        order_skel: SkeletonInstance_T[OrderSkel] | None,
-    ) -> tuple[SkeletonInstance_T[CartNodeSkel], SkeletonInstance_T[OrderSkel]]:
+    ) -> SkeletonInstance_T[CartNodeSkel]:
         """Freeze (lock) cart values and children items.
 
         :param cart_key: Key of the (sub-)cart skeleton.
-        :param order_skel: OrderSkel for context
-        :return: The frozen CartNode skeleton and order skeleton.
+        :return: The frozen CartNode skeleton.
         """
         child : SkeletonInstance_T[CartNodeSkel|CartItemSkel]
         for child in self.get_children(cart_key):
             if issubclass(child.skeletonCls, CartNodeSkel):
-                self.freeze_cart(child["key"], None)
+                self.freeze_cart(child["key"])
             else:
                 self.freeze_leaf(child)
 
@@ -653,7 +651,7 @@ class Cart(ShopModuleAbstract, Tree):
         }
         cart_skel["is_frozen"] = True
         cart_skel.write()
-        return cart_skel, order_skel  # type: ignore
+        return cart_skel  # type: ignore
 
     def freeze_leaf(self, leaf_skel: SkeletonInstance_T[CartItemSkel]):
         leaf_skel = self.copy_article_values(leaf_skel.article_skel_full, leaf_skel)

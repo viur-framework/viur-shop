@@ -336,7 +336,7 @@ class Order(ShopModuleAbstract, List):
         self,
         order_skel: SkeletonInstance_T[OrderSkel],
     ) -> SkeletonInstance_T[OrderSkel]:
-        cart_skel, order_skel = self.shop.cart.freeze_cart(order_skel["cart"]["dest"]["key"], order_skel)
+        cart_skel = self.shop.cart.freeze_cart(order_skel["cart"]["dest"]["key"])
         order_skel["total"] = cart_skel["total"]
 
         # Clone the address, so in case the user edits the address, existing orders wouldn't be affected by this
