@@ -5,6 +5,7 @@ from viur.core.prototypes import List
 from viur.core.prototypes.skelmodule import DEFAULT_ORDER_TYPE
 from viur.core.skeleton import SkeletonInstance
 from .abstract import ShopModuleAbstract
+from .. import AddressSkel, SkeletonInstance_T
 from ..globals import SHOP_LOGGER
 
 logger = SHOP_LOGGER.getChild(__name__)
@@ -84,7 +85,7 @@ class Address(ShopModuleAbstract, List):
                 other_skel["is_default"] = False
                 other_skel.write()
 
-    def clone_address(self, key: db.Key):
+    def clone_address(self, key: db.Key) -> SkeletonInstance_T[AddressSkel]:
         # Clone the address, so in case the user edits the address, existing orders wouldn't be affected by this
         # TODO: Can we do this copy-on-write instead; clone if an address is edited and replace on used order skels?
         src_address_skel = address_skel = self.editSkel()

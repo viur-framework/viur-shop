@@ -1,4 +1,3 @@
-import collections
 import typing as t  # noqa
 
 import viur.shop.types.exceptions as e
@@ -12,11 +11,10 @@ from viur.core.skeleton import Skeleton, SkeletonInstance
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.types import *
 from viur.shop.types.exceptions import InvalidStateError
-from ..skeletons.article import ArticleAbstractSkel
 from ..globals import SENTINEL, SHOP_INSTANCE, SHOP_LOGGER
 from ..services import EVENT_SERVICE, Event
+from ..skeletons.article import ArticleAbstractSkel
 from ..skeletons.cart import CartItemSkel, CartNodeSkel
-from ..skeletons.order import OrderSkel
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -253,7 +251,7 @@ class Cart(ShopModuleAbstract, Tree):
         if must_be_listed:
             query.filter("shop_listed =", True)
         skel = query.getSkel()
-        return skel # type: ignore
+        return skel  # type: ignore
 
     def add_or_update_article(
         self,
@@ -624,7 +622,7 @@ class Cart(ShopModuleAbstract, Tree):
         :param cart_key: Key of the (sub-)cart skeleton.
         :return: The frozen CartNode skeleton.
         """
-        child : SkeletonInstance_T[CartNodeSkel|CartItemSkel]
+        child: SkeletonInstance_T[CartNodeSkel | CartItemSkel]
         for child in self.get_children(cart_key):
             if issubclass(child.skeletonCls, CartNodeSkel):
                 self.freeze_cart(child["key"])
