@@ -1,7 +1,7 @@
 import typing as t  # noqa
 from datetime import datetime as dt
 
-from viur.core import conf
+from viur.core import conf, i18n
 from viur.core.bones import *
 from viur.core.skeleton import Skeleton
 from viur.shop.types import *
@@ -11,7 +11,7 @@ from ..modules.discount_condition import CODE_CHARS
 logger = SHOP_LOGGER.getChild(__name__)
 
 
-class DiscountConditionSkel(Skeleton):  # STATE: Complete (as in model)
+class DiscountConditionSkel(Skeleton):
     kindName = "{{viur_shop_modulename}}_discount_condition"
 
     interBoneValidations = [

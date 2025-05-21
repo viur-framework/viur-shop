@@ -1,4 +1,4 @@
-from viur.core import conf, current
+from viur.core import conf, current, i18n
 from viur.core.bones import *
 from viur.core.skeleton import Skeleton
 from viur.shop.types import *
@@ -7,9 +7,7 @@ from ..globals import SHOP_LOGGER
 logger = SHOP_LOGGER.getChild(__name__)
 
 
-# TODO: should these bones required or will this be handled in a editSkel?
-
-class AddressSkel(Skeleton):  # STATE: Complete (as in model)
+class AddressSkel(Skeleton):
     kindName = "{{viur_shop_modulename}}_address"
 
     name = StringBone(
@@ -108,7 +106,7 @@ class AddressSkel(Skeleton):  # STATE: Complete (as in model)
             "group": "Customer Info",
             "pattern": {
                 # Pattern source: https://html.spec.whatwg.org/multipage/input.html#valid-e-mail-address
-                country: r"/^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/"  # noqa
+                country: r"/^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/" # noqa
                 for country in conf.i18n.available_dialects
             },
             "pattern-error": i18n.translate(

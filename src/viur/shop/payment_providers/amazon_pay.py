@@ -34,15 +34,15 @@ class AmazonPay(PaymentProviderAbstract):
     ) -> None:
         """
 
-        :param mws_access_key:: Amazon MWS access key.
-        :param mws_secret_key:: Amazon MWS secret key.
-        :param merchant_id:: Amazon merchant ID.
-        :param client_id:: Amazon client ID.
-        :param client_secret:: Amazon client secret.
-        :param region:: Region code (default: 'de').
-        :param currency_code:: Currency code (default: 'EUR').
-        :param sandbox:: Use sandbox environment (default: False).
-        :param language:: Language code (default: 'en').
+        :param mws_access_key: Amazon MWS access key.
+        :param mws_secret_key: Amazon MWS secret key.
+        :param merchant_id: Amazon merchant ID.
+        :param client_id: Amazon client ID.
+        :param client_secret: Amazon client secret.
+        :param region: Region code (default: 'de').
+        :param currency_code: Currency code (default: 'EUR').
+        :param sandbox: Use sandbox environment (default: False).
+        :param language: Language code (default: 'en').
         """
         super().__init__(**kwargs)
         self.mws_access_key = mws_access_key

@@ -8,7 +8,7 @@ from ..globals import SHOP_LOGGER
 logger = SHOP_LOGGER.getChild(__name__)
 
 
-class ShippingConfigSkel(Skeleton):  # STATE: Complete (as in model)
+class ShippingConfigSkel(Skeleton):
     kindName = "{{viur_shop_modulename}}_shipping_config"
 
     name = StringBone(

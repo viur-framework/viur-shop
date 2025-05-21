@@ -16,7 +16,7 @@ def get_payment_providers() -> dict[str, str | translate]:
     }
 
 
-class OrderSkel(Skeleton):  # STATE: Complete (as in model)
+class OrderSkel(Skeleton):
     kindName = "{{viur_shop_modulename}}_order"
 
     billing_address = RelationalBone(
@@ -77,6 +77,7 @@ class OrderSkel(Skeleton):  # STATE: Complete (as in model)
 
     payment_provider = SelectBone(
         values=get_payment_providers,
+        translation_key_prefix="viur.shop.payment_provider.",
     )
 
     is_ordered = BooleanBone(

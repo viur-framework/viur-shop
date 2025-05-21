@@ -8,7 +8,7 @@ from ..globals import SHOP_LOGGER
 logger = SHOP_LOGGER.getChild(__name__)
 
 
-class DiscountSkel(Skeleton):  # STATE: Complete (as in model)
+class DiscountSkel(Skeleton):
     kindName = "{{viur_shop_modulename}}_discount"
 
     interBoneValidations = [
