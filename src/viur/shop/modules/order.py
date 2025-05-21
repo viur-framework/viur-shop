@@ -309,8 +309,8 @@ class Order(ShopModuleAbstract, List):
         EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=order_skel, deleted=False)
         return JsonResponse({
             "skel": order_skel,
-            "payment": self.get_payment_provider_by_name(order_skel["payment_provider"]).get_checkout_start_data(
-                order_skel),
+            "payment": (self.get_payment_provider_by_name(order_skel["payment_provider"])
+                        .get_checkout_start_data(order_skel)),
         })
 
     def can_checkout(
@@ -327,21 +327,16 @@ class Order(ShopModuleAbstract, List):
             errors.append(ClientError("missing payment_provider"))
         elif pp_errors := self.get_payment_provider_by_name(order_skel["payment_provider"]).can_checkout(order_skel):
             errors.extend(pp_errors)
+        # TODO: ensure each article still exists and shop_listed is True
 
         # TODO: ...
         return errors
 
     def freeze_order(
         self,
-        order_skel: "SkeletonInstance",
-    ) -> "SkeletonInstance":
-        # TODO:
-        #  - recalculate cart
-        #  - copy values (should not be hit by update relations)
+        order_skel: SkeletonInstance_T[OrderSkel],
+    ) -> SkeletonInstance_T[OrderSkel]:
         cart_skel, order_skel = self.shop.cart.freeze_cart(order_skel["cart"]["dest"]["key"], order_skel)
-
-        # cart_skel = self.shop.cart.viewSkel("node")
-        # assert cart_skel.read(order_skel["cart"]["dest"]["key"])
         order_skel["total"] = cart_skel["total"]
 
         # Clone the address, so in case the user edits the address, existing orders wouldn't be affected by this

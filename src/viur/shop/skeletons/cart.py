@@ -290,6 +290,16 @@ class CartNodeSkel(TreeSkel):  # STATE: Complete (as in model)
     project_data = JsonBone(
     )
 
+    is_frozen = BooleanBone(
+        readOnly=True,
+        defaultValue=False,
+    )
+
+    frozen_values = JsonBone(
+        readOnly=True,
+        visible=False,
+    )
+
     @classmethod
     def refresh_shipping_address(cls, skel: SkeletonInstance) -> SkeletonInstance:
         """
@@ -403,16 +413,24 @@ class CartItemSkel(TreeSkel):  # STATE: Complete (as in model)
     def price_(self) -> Price:
         return Price.get_or_create(self)
 
-    price = RawBone(  # FIXME: JsonBone doesn't work (https://github.com/viur-framework/viur-core/issues/1092)
+    price = JsonBone(
         compute=Compute(lambda skel: skel.price_.to_dict(), ComputeInterval(ComputeMethod.Always))
     )
-    price.type = JsonBone.type
 
-    shipping = RawBone(  # FIXME: JsonBone doesn't work (https://github.com/viur-framework/viur-core/issues/1092)
+    shipping = JsonBone(
         compute=Compute(
             lambda skel: make_json_dumpable(
                 SHOP_INSTANCE.get().shipping.choose_shipping_skel_for_article(skel.article_skel_full)
             ),
             ComputeInterval(ComputeMethod.Always)),
     )
-    shipping.type = JsonBone.type
+
+    is_frozen = BooleanBone(
+        readOnly=True,
+        defaultValue=False,
+    )
+
+    frozen_values = JsonBone(
+        readOnly=True,
+        visible=False,
+    )
