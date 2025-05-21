@@ -6,6 +6,7 @@ import enum
 
 
 class ArticleAvailability(enum.Enum):
+    """Defines the stock availability status of an article."""
     IN_STOCK = "instock"
     OUT_OF_STOCK = "outofstock"
     LIMITED = "limited"
@@ -14,33 +15,39 @@ class ArticleAvailability(enum.Enum):
 
 
 class CartType(enum.Enum):
+    """Distinguishes between different cart types, such as wishlist and active basket."""
     WISHLIST = "wishlist"
     BASKET = "basket"
 
 
 class CustomerType(enum.Enum):
+    """Specifies whether a customer is a private individual or a business."""
     PRIVATE = "private"
     BUSINESS = "business"
 
 
 class Salutation(enum.Enum):
+    """Represents the salutation used when addressing a customer."""
     FEMALE = "female"
     MALE = "male"
     OTHER = "other"
 
 
 class AddressType(enum.Enum):
+    """Specifies whether an address is used for billing or shipping."""
     BILLING = "billing"
     SHIPPING = "shipping"
 
 
 class CodeType(enum.Enum):
+    """Defines how discount or voucher codes are applied and managed."""
     NONE = "none"
     INDIVIDUAL = "individual"
     UNIVERSAL = "universal"
 
 
 class ApplicationDomain(enum.Enum):
+    """Specifies where a discount or rule applies — in basket, article, or globally."""
     BASKET = "basket"
     ARTICLE = "article"
     ALL = "all"
@@ -48,6 +55,8 @@ class ApplicationDomain(enum.Enum):
 
 
 class CustomerGroup(enum.Enum):
+    """Defines customer segmentation for applying conditions like first-time buyer."""
+
     ALL = "all"
     """alle Kunden"""
 
@@ -59,6 +68,8 @@ class CustomerGroup(enum.Enum):
 
 
 class DiscountType(enum.Enum):
+    """Specifies the kind of discount applied, e.g., percentage or free shipping."""
+
     PERCENTAGE = "percentage"
     """percentage"""
 
@@ -73,6 +84,8 @@ class DiscountType(enum.Enum):
 
 
 class ConditionOperator(enum.Enum):
+    """Defines whether all or at least one discount condition must be satisfied."""
+
     ONE_OF = "one_of"
     """One condition must be satisfied"""
 
@@ -81,6 +94,8 @@ class ConditionOperator(enum.Enum):
 
 
 class OrderState(enum.Enum):
+    """Represents the current processing state of an order."""
+
     ORDERED = "ordered"
     """Customer completed this order and clicked on buy"""
 
@@ -95,6 +110,8 @@ class OrderState(enum.Enum):
 
 
 class QuantityMode(enum.Enum):
+    """Specifies how item quantities in the cart should be modified."""
+
     REPLACE = "replace"
     """Use the provided quantity as new value"""
 
@@ -106,6 +123,8 @@ class QuantityMode(enum.Enum):
 
 
 class ShippingStatus(enum.Enum):
+    """Defines how a shipping method was selected (e.g., by user or cheapest option)."""
+
     USER = "user"
     """Shipping selected by a user"""
 
@@ -114,9 +133,7 @@ class ShippingStatus(enum.Enum):
 
 
 class VatRateCategory(enum.StrEnum):
-    """
-    Enumeration for VAT rate categories in the EU.
-    """
+    """Categorizes different VAT rate categories in the EU applied to goods and services."""
 
     STANDARD = "standard"
     """Applies to most goods and services, with a minimum rate of 15% mandated by the EU."""
@@ -132,7 +149,10 @@ class VatRateCategory(enum.StrEnum):
 
 
 class DiscountValidationContext(enum.IntEnum):
-    """Context in which a :class:`DiscountConditionScope` can be checked"""
+    """Describes the evaluation context for checking discount conditions.
+
+    Context in which a :class:`DiscountConditionScope` can be checked.
+    """
 
     NORMAL = enum.auto()
     """Normal context, in real time e.g. for an article"""

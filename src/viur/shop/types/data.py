@@ -6,6 +6,8 @@ from viur.core.i18n import translate
 
 @dataclasses.dataclass
 class Supplier:
+    """Supplier definition"""
+
     key: str
     """Internal identifier"""
 
