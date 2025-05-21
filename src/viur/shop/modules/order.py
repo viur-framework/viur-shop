@@ -338,34 +338,17 @@ class Order(ShopModuleAbstract, List):
         # TODO:
         #  - recalculate cart
         #  - copy values (should not be hit by update relations)
-        self.shop.cart.freeze_cart(order_skel["cart"]["dest"]["key"], order_skel)
+        cart_skel, order_skel = self.shop.cart.freeze_cart(order_skel["cart"]["dest"]["key"], order_skel)
 
-        cart_skel = self.shop.cart.viewSkel("node")
-        assert cart_skel.read(order_skel["cart"]["dest"]["key"])
+        # cart_skel = self.shop.cart.viewSkel("node")
+        # assert cart_skel.read(order_skel["cart"]["dest"]["key"])
         order_skel["total"] = cart_skel["total"]
 
         # Clone the address, so in case the user edits the address, existing orders wouldn't be affected by this
         # TODO: Can we do this copy-on-write instead; clone if an address is edited and replace on used order skels?
-        ba_skel = self.shop.address.editSkel()
         ba_key = order_skel["billing_address"]["dest"]["key"]
-        assert ba_skel.read(ba_key)
-        # Remove the key to clone it #  TODO: why does this not work?
-        # ba_skel.dbEntity.key = None
-        # ba_skel.accessedValues.pop("key", None)
-        # ba_skel.boneMap = ba_skel.boneMap.copy()
-        old_ba_ske = ba_skel
-        # create a new instance and copy all values except the jey
-        ba_skel = self.shop.address.addSkel()
-        for name, value in old_ba_ske.items(True):
-            if name == "key":
-                continue
-            ba_skel[name] = value
-        ba_skel.setBoneValue("cloned_from", ba_key)
-        # logger.debug(f"{order_skel = }")
-        ba_skel.write()
-        # logger.debug(f"{key = } // {ba_skel = }")
-        assert ba_skel["key"] != ba_key, \
-            f'{ba_skel["key"]} != {ba_key}'
+        ba_skel = self.shop.address.clone_address(ba_key)
+        assert ba_skel["key"] != ba_key, f'{ba_skel["key"]} != {ba_key}'
         order_skel.setBoneValue("billing_address", ba_skel["key"])
         order_skel.write()
         EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=order_skel, deleted=False)

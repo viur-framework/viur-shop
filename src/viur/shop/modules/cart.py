@@ -609,13 +609,17 @@ class Cart(ShopModuleAbstract, Tree):
         self,
         cart_key: db.Key,
         order_skel: SkeletonInstance_T[OrderSkel],
-    ) -> None:
+    ) -> tuple[SkeletonInstance_T[CartNodeSkel], SkeletonInstance_T[OrderSkel]]:
         # TODO: for node in tree:
         #   freeze node with values, discount, shipping (JSON dump? bone duplication?)
         #   ensure each article still exists and shop_listed is True
-        return NotImplemented
         cart_skel = self.editSkel("node")
         assert cart_skel.read(cart_key)
+        # Clone the address, so in case the user edits the address, existing orders wouldn't be affected by this
+        sa_key = cart_skel["shipping_address"]["dest"]["key"]
+        sa_skel = self.shop.address.clone_address(sa_key)
+        assert sa_skel["key"] != sa_key, f'{sa_skel["key"]} != {sa_key}'
+        cart_skel.setBoneValue("shipping_address", sa_skel["key"])
         """
         skel["shop_vat_rate_value"] = self.shop.vat_rate.get_vat_rate_for_country(
             country=order_skel["billing_address"]["dest"]["country"],
@@ -623,6 +627,7 @@ class Cart(ShopModuleAbstract, Tree):
         )
         """
         cart_skel.write()
+        return cart_skel, order_skel  # type: ignore
 
     # -------------------------------------------------------------------------
 
