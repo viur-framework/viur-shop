@@ -3,7 +3,7 @@ This module contains several kinds of validators to do the discount validation.
 
 The structure of validators is:
 
-..  code-block:: none
+.. code-block:: none
 
     DiscountValidator
     ├─ ConditionValidator
