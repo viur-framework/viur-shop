@@ -269,10 +269,16 @@ class Price:
         :return: VAT rate as float between 0.0 and 1.0.
         """
         try:
+            country = self._shipping_address["dest"]["country"]
+        except (KeyError, TypeError):
+            country = None
+        # logger.debug(f"Using country: {country}")
+        try:
             # FIXME: self.article_skel has here sometimes renderPreparation set,
             #        but toolkit.without_render_preparation is already called in __init__
             #        What's going on here?
             vat_rate = SHOP_INSTANCE.get().vat_rate.get_vat_rate_for_country(
+                country=country,
                 category=toolkit.without_render_preparation(self.article_skel)["shop_vat_rate_category"],
             )
         except ConfigurationError as e:  # TODO(discussion): Or re-raise or implement fallback?
@@ -292,6 +298,21 @@ class Price:
         except TypeError:  # One value is None
             return 0.0
 
+    @functools.cached_property
+    def _shipping_address(self):
+        """
+        Returns the shipping address for the closest cart node.
+        """
+        if not self.is_in_cart:
+            return None
+        res = SHOP_INSTANCE.get().cart.get_closest_node(
+            self.cart_leaf,
+            condition=lambda skel: skel["shipping_address"] is not None,
+        )
+        if res:
+            return res["shipping_address"]
+        return res
+
     def to_dict(self) -> dict:
         """
         Serializes the relevant pricing fields to a dictionary, suitable for frontend or API use.
@@ -302,7 +323,7 @@ class Price:
         return {
             attr_name: getattr(self, attr_name)
             for attr_name, attr_value in vars(self.__class__).items()
-            if isinstance(attr_value, (property, functools.cached_property))
+            if isinstance(attr_value, (property, functools.cached_property)) and not attr_name.startswith("_")
         } | utils.json.loads(json.dumps({  # must be JSON serializable for vi renderer
             "cart_discounts": self.cart_discounts,
             "article_discount": self.article_discount,
