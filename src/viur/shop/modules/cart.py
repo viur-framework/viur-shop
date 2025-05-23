@@ -710,7 +710,7 @@ class Cart(ShopModuleAbstract, Tree):
     def get_closest_node(
         self,
         start: SkeletonInstance_T[CartNodeSkel | CartItemSkel],
-        condition: (lambda skel: True),
+        condition: t.Callable[[SkeletonInstance], bool] = (lambda skel: True),
     ) -> SkeletonInstance_T[CartNodeSkel] | None:
         while True:
             parent_skel = self.get_cached_cart_skel(start["parententry"])
