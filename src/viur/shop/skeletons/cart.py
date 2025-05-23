@@ -149,8 +149,26 @@ class RelationalBoneShipping(RelationalBone):
             return False
 
         if skel["shipping_status"] == ShippingStatus.USER:  # should be unserialized from entity
-            # FIXME: Ensure it's a valid shipping for the cart
-            return False
+            # Ensure it's still a valid shipping for the cart
+            try:
+                shipping_key = skel.dbEntity["shipping"]["dest"].key
+            except (KeyError, TypeError, AttributeError):
+                shipping_key = None
+            if shipping_key is not None:
+                self._prevent_compute = True
+                try:
+                    applicable_shippings = SHOP_INSTANCE.get().shipping.get_shipping_skels_for_cart(
+                        cart_skel=skel, use_cache=True,
+                    )
+                    for shipping in applicable_shippings:
+                        if shipping["dest"]["key"] == shipping_key:
+                            return False
+                    else:
+                        logger.warning(f"Invalid shipping. {shipping_key=!r} not found in applicable_shippings")
+                        skel.setBoneValue("shipping", None)
+                        skel.setBoneValue("shipping_status", ShippingStatus.CHEAPEST)
+                finally:
+                    self._prevent_compute = False
 
         if skel["is_frozen"]:  # locked, unserialize the latest stored value from entity
             return False
