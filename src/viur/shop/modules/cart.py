@@ -696,6 +696,30 @@ class Cart(ShopModuleAbstract, Tree):
         EVENT_SERVICE.call(Event.ARTICLE_CHANGED, skel=leaf_skel, deleted=False)
         return new_parent_skel
 
+    def get_cached_cart_skel(self, key: db.Key) -> SkeletonInstance_T[CartNodeSkel]:
+        cache = current.request_data.get().setdefault("shop_cache_cart_skel", {})
+        key = db.keyHelper(key, CartNodeSkel.kindName)
+        try:
+            parent_skel = cache[key]
+        except KeyError:
+            parent_skel = self.viewSkel("node")
+            assert parent_skel.read(key)
+            cache[key] = parent_skel
+        return parent_skel
+
+    def get_closest_node(
+        self,
+        start: SkeletonInstance_T[CartNodeSkel | CartItemSkel],
+        condition: t.Callable[[SkeletonInstance], bool] = (lambda skel: True),
+    ) -> SkeletonInstance_T[CartNodeSkel] | None:
+        while True:
+            parent_skel = self.get_cached_cart_skel(start["parententry"])
+            if condition(parent_skel):
+                return parent_skel  # type:ignore
+            if parent_skel["is_root_node"]:
+                return None  # NotFound
+            start = parent_skel
+
 
 try:
     Session.on_delete
