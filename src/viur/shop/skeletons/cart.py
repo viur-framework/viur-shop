@@ -148,9 +148,8 @@ class RelationalBoneShipping(RelationalBone):
         if getattr(self, "_prevent_compute", False):  # avoid recursion errors
             return False
 
-        if skel["shipping_status"] == ShippingStatus.USER:  # should be unserialized from entity
-            # FIXME: Ensure it's a valid shipping for the cart
-            return False
+        if skel["shipping_status"] == ShippingStatus.USER and self._is_valid_user_shipping(skel):
+            return False  # should be unserialized from entity
 
         if skel["is_frozen"]:  # locked, unserialize the latest stored value from entity
             return False
@@ -171,6 +170,30 @@ class RelationalBoneShipping(RelationalBone):
             return True
 
         return super().unserialize_compute(skel, name)
+
+    def _is_valid_user_shipping(self, skel: SkeletonInstance) -> bool:
+        """Ensure it's still a valid shipping for the cart"""
+        try:
+            shipping_key = skel.dbEntity["shipping"]["dest"].key
+        except (KeyError, TypeError, AttributeError):
+            shipping_key = None
+        if shipping_key is None:
+            return True
+        self._prevent_compute = True
+        try:
+            applicable_shippings = SHOP_INSTANCE.get().shipping.get_shipping_skels_for_cart(
+                cart_skel=skel, use_cache=True,
+            )
+            for shipping in applicable_shippings:
+                if shipping["dest"]["key"] == shipping_key:
+                    return True
+            else:
+                logger.warning(f"Invalid shipping. {shipping_key=!r} not found in applicable_shippings")
+                skel.setBoneValue("shipping", None)
+                skel.setBoneValue("shipping_status", ShippingStatus.CHEAPEST)
+                return False
+        finally:
+            self._prevent_compute = False
 
 
 class CartNodeSkel(TreeSkel):
