@@ -210,7 +210,7 @@ class Api(ShopModuleAbstract):
         name: str = None,
         customer_comment: str = None,
         shipping_address_key: str | db.Key = None,
-        shipping_key: str | db.Key = None,
+        shipping_key: str | db.Key = SENTINEL,
         discount_key: str | db.Key = None,  # TODO: use sentinel?
         **kwargs,
     ):
