@@ -170,7 +170,7 @@ class RelationalBoneShipping(RelationalBone):
                 )
                 if applicable_shippings:
                     cheapest_shipping = func(applicable_shippings,
-                                            key=lambda shipping: shipping["dest"]["shipping_cost"] or 0)
+                                             key=lambda shipping: shipping["dest"]["shipping_cost"] or 0)
                     skel.setBoneValue("shipping", cheapest_shipping["dest"]["key"])
             finally:
                 self._prevent_compute = False
