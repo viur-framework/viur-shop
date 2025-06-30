@@ -131,6 +131,9 @@ class ShippingStatus(enum.Enum):
     CHEAPEST = "cheapest"
     """Cheapest shipping selected"""
 
+    MOST_EXPENSIVE = "most_expensive"
+    """Most expensive shipping selected"""
+
 
 class VatRateCategory(enum.StrEnum):
     """Categorizes different VAT rate categories in the EU applied to goods and services."""

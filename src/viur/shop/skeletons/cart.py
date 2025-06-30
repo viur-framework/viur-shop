@@ -154,14 +154,22 @@ class RelationalBoneShipping(RelationalBone):
         if skel["is_frozen"]:  # locked, unserialize the latest stored value from entity
             return False
 
-        if skel["shipping_status"] == ShippingStatus.CHEAPEST:  # compute cheapest
+        match skel["shipping_status"]:
+            case ShippingStatus.CHEAPEST:
+                func = min
+            case ShippingStatus.MOST_EXPENSIVE:
+                func = max
+            case _:
+                func = None
+
+        if func is not None:  # compute cheapest & most expensive
             self._prevent_compute = True
             try:
                 applicable_shippings = SHOP_INSTANCE.get().shipping.get_shipping_skels_for_cart(
                     cart_skel=skel, use_cache=True,
                 )
                 if applicable_shippings:
-                    cheapest_shipping = min(applicable_shippings,
+                    cheapest_shipping = func(applicable_shippings,
                                             key=lambda shipping: shipping["dest"]["shipping_cost"] or 0)
                     skel.setBoneValue("shipping", cheapest_shipping["dest"]["key"])
             finally:
@@ -190,7 +198,7 @@ class RelationalBoneShipping(RelationalBone):
             else:
                 logger.warning(f"Invalid shipping. {shipping_key=!r} not found in applicable_shippings")
                 skel.setBoneValue("shipping", None)
-                skel.setBoneValue("shipping_status", ShippingStatus.CHEAPEST)
+                skel.setBoneValue("shipping_status", skel.shipping_status.getDefaultValue())
                 return False
         finally:
             self._prevent_compute = False
