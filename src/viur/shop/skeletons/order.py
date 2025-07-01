@@ -45,6 +45,7 @@ class OrderSkel(Skeleton):
         refKeys=[
             "name",
             "total",
+            "total_raw",
             "total_discount_price",
             "vat",
             "total_quantity",
