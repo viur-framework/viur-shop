@@ -198,7 +198,7 @@ class RelationalBoneShipping(RelationalBone):
             else:
                 logger.warning(f"Invalid shipping. {shipping_key=!r} not found in applicable_shippings")
                 skel.setBoneValue("shipping", None)
-                skel.setBoneValue("shipping_status", skel.shipping_status.getDefaultValue())
+                skel.setBoneValue("shipping_status", skel.shipping_status.getDefaultValue(skel))
                 return False
         finally:
             self._prevent_compute = False
