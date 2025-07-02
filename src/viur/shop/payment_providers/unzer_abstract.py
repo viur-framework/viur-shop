@@ -1,4 +1,5 @@
 import abc
+import functools
 import json
 import typing as t  # noqa
 
@@ -19,6 +20,31 @@ from ..services import HOOK_SERVICE, Hook
 from ..types import exceptions as e
 
 logger = SHOP_LOGGER.getChild(__name__)
+
+P = t.ParamSpec("P")
+R = t.TypeVar("R")
+
+
+def log_unzer_error(func: t.Callable[P, R]) -> t.Callable[P, R]:
+    """
+    Decorator to log unzer errors
+
+    Decorator that logs details of an unzer.model.ErrorResponse if raised,
+    then re-raises the error.
+    """
+
+    @functools.wraps(func)
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        try:
+            return func(*args, **kwargs)
+        except unzer.model.ErrorResponse as err:
+            logger.error(f"Unzer ErrorResponse encountered in {func.__qualname__}")
+            logger.error(f"ErrorResponse: {err!r}")
+            for idx, error in enumerate(err.errors, start=1):
+                logger.error(f"  #{idx} {error!r}")
+            raise err
+
+    return wrapper
 
 
 class UnzerClientViURShop(unzer.UnzerClient):
@@ -133,6 +159,7 @@ class UnzerAbstract(PaymentProviderAbstract):
             errs.append(ClientError("cart.shipping_address is missing"))
         return errs
 
+    @log_unzer_error
     def checkout(
         self,
         order_skel: SkeletonInstance,
@@ -262,6 +289,7 @@ class UnzerAbstract(PaymentProviderAbstract):
         return False, payment
 
     @exposed
+    @log_unzer_error
     def return_handler(
         self,
         order_key: db.Key,
@@ -315,6 +343,7 @@ class UnzerAbstract(PaymentProviderAbstract):
         return ""
 
     @CallDeferred
+    @log_unzer_error
     def check_payment_deferred(self, order_key: db.Key) -> None:
         """Check the status for an unzer payment deferred"""
         order_skel = self.shop.order.skel().read(order_key)
@@ -334,6 +363,7 @@ class UnzerAbstract(PaymentProviderAbstract):
         raise errors.NotImplemented()
 
     @exposed
+    @log_unzer_error
     def save_type(
         self,
         order_key: str | db.Key,
