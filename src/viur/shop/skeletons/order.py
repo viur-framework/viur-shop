@@ -50,6 +50,7 @@ class OrderSkel(Skeleton):
             "vat",
             "total_quantity",
             "shipping_address",
+            "shipping_status",
             "shipping",
             "project_data",
         ],
