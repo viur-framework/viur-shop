@@ -21,16 +21,27 @@ from ..types import exceptions as e
 
 logger = SHOP_LOGGER.getChild(__name__)
 
+P = t.ParamSpec("P")
+R = t.TypeVar("R")
 
-def log_unzer_error(func):
+
+def log_unzer_error(func: t.Callable[P, R]) -> t.Callable[P, R]:
+    """
+    Decorator to log unzer errors
+
+    Decorator that logs details of an unzer.model.ErrorResponse if raised,
+    then re-raises the error.
+    """
+
     @functools.wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
         try:
             return func(*args, **kwargs)
         except unzer.model.ErrorResponse as err:
+            logger.error(f"Unzer ErrorResponse encountered in {func.__qualname__}")
             logger.error(f"ErrorResponse: {err!r}")
-            for error in err.errors:
-                logger.error(f"  {error!r}")
+            for idx, error in enumerate(err.errors, start=1):
+                logger.error(f"  #{idx} {error!r}")
             raise err
 
     return wrapper
