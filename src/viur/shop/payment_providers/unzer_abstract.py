@@ -348,7 +348,7 @@ class UnzerAbstract(PaymentProviderAbstract):
         else:
             if order_key is None:
                 if not (order_key := self.shop.order.current_session_order_key):
-                    raise errors.BadRequest("No order_key or payment_id give")
+                    raise errors.BadRequest("No order_key or payment_id given")
             skel = self.shop.order.skel().read(key=order_key)
             payment_ids = [payment["payment_id"] for payment in skel["payment"]["payments"]]
 
