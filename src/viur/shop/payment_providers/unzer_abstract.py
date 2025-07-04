@@ -338,7 +338,11 @@ class UnzerAbstract(PaymentProviderAbstract):
         order_key: db.Key | str | None = None,
         payment_id: str | None = None,
     ) -> JsonResponse[list[dict[str, t.Any]]]:
-        """Get information about a payment / order."""
+        """Get information about a payment / order.
+
+        :param order_key: Key of the order skeleton.
+        :param payment_id: Unzer ID of the order / payment.
+        """
         if payment_id is not None:
             payment_ids = [payment_id]
         else:
