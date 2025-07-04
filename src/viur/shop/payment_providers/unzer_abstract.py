@@ -4,12 +4,13 @@ import typing as t  # noqa
 
 import unzer
 from unzer.model import PaymentType
+from unzer.model.base import BaseModel
 from unzer.model.customer import Salutation as UnzerSalutation
 from unzer.model.payment import PaymentState
 from unzer.model.webhook import Events, IP_ADDRESS
 
 from viur import toolkit
-from viur.core import CallDeferred, current, db, errors, exposed, force_post
+from viur.core import CallDeferred, access, current, db, errors, exposed, force_post
 from viur.core.skeleton import SkeletonInstance
 from viur.shop.skeletons import OrderSkel
 from viur.shop.types import *
@@ -330,8 +331,43 @@ class UnzerAbstract(PaymentProviderAbstract):
             logger.info(f'Order {order_skel["key"]!r} is not paid')
 
     @exposed
-    def get_debug_information(self):
-        raise errors.NotImplemented()
+    @access("root")
+    def get_debug_information(
+        self,
+        *,
+        order_key: db.Key | str | None = None,
+        payment_id: str | None = None,
+    ) -> JsonResponse[list[dict[str, t.Any]]]:
+        """Get information about a payment / order."""
+        if payment_id is not None:
+            payment_ids = [payment_id]
+        else:
+            if order_key is None:
+                if not (order_key := self.shop.order.current_session_order_key):
+                    raise errors.BadRequest("No order_key or payment_id give")
+            skel = self.shop.order.skel().read(key=order_key)
+            payment_ids = [payment["payment_id"] for payment in skel["payment"]["payments"]]
+
+        result = []
+        for payment_id in payment_ids:
+            logger.info(f"Checking payment {payment_id=}:")
+            payment = self.client.getPayment(payment_id)
+            logger.info(f"payment: {payment!r}")
+            txn = payment.getChargedTransactions()
+            logger.info(f"charged transactions: {txn!r}")
+            customer = payment.customerId and self.client.getCustomer(payment.customerId)
+            logger.info(f"customer: {customer!r}")
+            basket = payment.basketId and self.client.getBasket(payment.basketId)
+            logger.info(f"basket: {basket!r}")
+
+            result.append({
+                "payment": dict(payment),
+                "transactions": [dict(t) for t in txn],
+                "customer": customer and dict(customer),
+                "basket": basket and dict(basket),
+            })
+
+        return JsonResponse(self.model_to_dict(result))
 
     @exposed
     def save_type(
@@ -407,3 +443,14 @@ class UnzerAbstract(PaymentProviderAbstract):
             Salutation.FEMALE: UnzerSalutation.MRS,
             Salutation.OTHER: UnzerSalutation.UNKNOWN,  # TODO
         }.get(salutation, UnzerSalutation.UNKNOWN)
+
+    @classmethod
+    def model_to_dict(cls, obj):
+        """Convert any nested unzer model to dict representation"""
+        if isinstance(obj, BaseModel):
+            return dict(obj)
+        elif isinstance(obj, dict):
+            return {k: cls.model_to_dict(v) for k, v in obj.items()}
+        elif isinstance(obj, list | tuple):
+            return [cls.model_to_dict(v) for v in obj]
+        return obj
