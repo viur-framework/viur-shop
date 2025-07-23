@@ -19,6 +19,7 @@ Components included:
     Only a single shop instance per project is currently supported.
 """
 
+from .types_global import *
 from .globals import *
 from .modules import *
 from .payment_providers import *
