@@ -431,17 +431,16 @@ class CartItemSkel(TreeSkel):
     def article_skel_full(self) -> SkeletonInstance_T[ArticleAbstractSkel]:
         # logger.debug(f'Access article_skel_full {self.article_skel["key"]=}')
         try:
-            return CartItemSkel.article_cache[self.article_skel["key"]]
+            return CartItemSkel.get_article_cache()[self.article_skel["key"]]
         except KeyError:
             # logger.debug(f'Read article_skel_full {self.article_skel["key"]=}')
             skel = SHOP_INSTANCE.get().article_skel()
             assert skel.read(self.article_skel["key"])
-            CartItemSkel.article_cache[self.article_skel["key"]] = skel
+            CartItemSkel.get_article_cache()[self.article_skel["key"]] = skel
             return skel
 
     @classmethod
-    @property
-    def article_cache(cls) -> dict[db.Key, SkeletonInstance_T[ArticleAbstractSkel]]:
+    def get_article_cache(cls) -> dict[db.Key, SkeletonInstance_T[ArticleAbstractSkel]]:
         if current.request_data.get() is None:
             return {}
         return (
