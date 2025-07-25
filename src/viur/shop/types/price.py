@@ -399,18 +399,17 @@ class Price:
         """
         # logger.debug(f"Called get_or_create with {src_object = }")
         try:
-            cls.cache[src_object["key"]]
+            obj = cls.get_cache()[src_object["key"]]
             logger.debug(f'Price.get_or_create() hit cache for {src_object["key"]}')
-            return cls.cache[src_object["key"]]
+            return obj
         except KeyError:
             pass
         obj = Price(src_object)
-        cls.cache[src_object["key"]] = obj
+        cls.get_cache()[src_object["key"]] = obj
         return obj
 
     @classmethod
-    @property
-    def cache(cls) -> dict[db.Key, t.Self]:
+    def get_cache(cls) -> dict[db.Key, t.Self]:
         """
         Request-local price cache to avoid recalculating prices during one request lifecycle.
 
