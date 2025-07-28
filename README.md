@@ -18,7 +18,7 @@
 
 - Fully integrated **Shop logic** via the central `shop.Shop` class: cart handling, order management, API routing, bootstrapping with custom `article_skel`, and payment/shipping modules.  
 - Extensible **Modules**: Address, Api, Cart, Discount, Shipping, VatRate, Order, etc. — all provided as abstract base implementations.  
-- **Payment Providers**: Amazon Pay, PayPal Plus, Prepayment, Invoice, and Unzer integrations (Credit Card, PayPal, SOFORT, Bancontact, iDEAL). Can be extended with custom implmentations. 
+- **Payment Providers**: Amazon Pay, PayPal Plus, Prepayment, Invoice, and Unzer integrations (Credit Card, PayPal, SOFORT, Bancontact, iDEAL). Can be extended with custom implementations. 
 - **Event & Hook System**: Customize checkout and order flow with hooks for events like `ORDER_PAID`, `CART_CHANGED`, and `CHECKOUT_STARTED`.  
 - **Pricing & Discounts**: Automated calculation of unit and bulk prices, gross/net handling, VAT rates, savings, and discount combinations via the `Price` class.
 
