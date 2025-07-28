@@ -39,9 +39,9 @@ pipenv install viur-shop
 
 Integrate into your ViUR application:
 ```py
-# deploy/moduled/shop.py
+# deploy/modules/shop.py
 from viur.shop import Shop
-from skeletons import ArticleSkel  # your custom article skeleton
+from skeletons.article import ArticleSkel  # your custom article skeleton
 
 shop = Shop(
     name="myshop",
