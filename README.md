@@ -58,3 +58,4 @@ shop = Shop(
 ## 🔍 Additional Resources
 
 - Full API Reference: [viur-shop.readthedocs.io](https://viur-shop.readthedocs.io/en/latest/viur/shop/index.html)
+- [Frontend Components for Vue.js](https://github.com/viur-framework/shop-components)
