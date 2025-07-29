@@ -94,7 +94,7 @@ class Cart(ShopModuleAbstract, Tree):
             current.session.get().markChanged()
             # Store basket at the user skel, it will be shared over multiple sessions / devices
             if user := current.user.get():
-                db.RunInTransaction(self._set_basket_txn, user_key=user["key"], basket_key=root_node["key"])
+                self._set_basket_txn(user_key=user["key"], basket_key=root_node["key"])
         return self.session["session_cart_key"]
 
     def detach_session_cart(self) -> db.Key:
@@ -102,11 +102,13 @@ class Cart(ShopModuleAbstract, Tree):
         self.session["session_cart_key"] = None
         current.session.get().markChanged()
         if user := current.user.get():
-            db.RunInTransaction(self._set_basket_txn, user_key=user["key"], basket_key=None)
+            self._set_basket_txn(user_key=user["key"], basket_key=None)
         return key
 
     @staticmethod
     def _set_basket_txn(user_key: db.Key, basket_key: db.Key | None) -> SkeletonInstance:
+        if not db.IsInTransaction():
+            return db.RunInTransaction(Cart._set_basket_txn, user_key=user_key, basket_key=basket_key)
         user_skel = conf.main_app.vi.user.editSkel()
         user_skel.read(user_key)
         user_skel.setBoneValue("basket", basket_key)
