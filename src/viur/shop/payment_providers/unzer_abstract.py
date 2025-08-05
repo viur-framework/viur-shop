@@ -1,4 +1,5 @@
 import abc
+import enum
 import functools
 import json
 import typing as t  # noqa
@@ -9,12 +10,12 @@ from unzer.model.base import BaseModel
 from unzer.model.customer import Salutation as UnzerSalutation
 from unzer.model.payment import PaymentState
 from unzer.model.webhook import Events, IP_ADDRESS
-
 from viur import toolkit
 from viur.core import CallDeferred, access, current, db, errors, exposed, force_post
 from viur.core.skeleton import SkeletonInstance
 from viur.shop.skeletons import OrderSkel
 from viur.shop.types import *
+
 from . import PaymentProviderAbstract
 from ..globals import SHOP_LOGGER
 from ..services import HOOK_SERVICE, Hook
@@ -373,16 +374,28 @@ class UnzerAbstract(PaymentProviderAbstract):
         :param payment_id: Unzer ID of the order / payment.
         """
         if payment_id is not None:
-            payment_ids = [payment_id]
+            payments = {"payment_id": payment_id}
         else:
             if order_key is None:
                 if not (order_key := self.shop.order.current_session_order_key):
                     raise errors.BadRequest("No order_key or payment_id given")
             skel = self.shop.order.skel().read(key=order_key)
-            payment_ids = [payment["payment_id"] for payment in skel["payment"]["payments"]]
+            payments = skel["payment"]["payments"]
 
         result = []
-        for payment_id in payment_ids:
+        for payment_src in payments:
+            if not (payment_id := payment_src.get("payment_id")):
+                result.append({
+                    "error": "payment_id missing",
+                })
+                continue
+            if (public_key := payment_src.get("public_key")) and public_key != self.client.public_key:
+                result.append({
+                    "error": "public_key does not match client's public_key",
+                    "public_key_payment": public_key,
+                    "public_key_client": self.client.public_key,
+                })
+                continue
             logger.info(f"Checking payment {payment_id=}:")
             payment = self.client.getPayment(payment_id)
             logger.info(f"payment: {payment!r}")
@@ -419,8 +432,8 @@ class UnzerAbstract(PaymentProviderAbstract):
             {
                 "public_key": self.public_key,
                 "type_id": type_id,
-                "charged": False,
-                "aborted": False,
+                "charged": False,  # TODO: Set value
+                "aborted": False,  # TODO: Set value
             }
         )
         return JsonResponse(order_skel)
@@ -487,4 +500,6 @@ class UnzerAbstract(PaymentProviderAbstract):
             return {k: cls.model_to_dict(v) for k, v in obj.items()}
         elif isinstance(obj, list | tuple):
             return [cls.model_to_dict(v) for v in obj]
+        elif isinstance(obj, enum.Enum):
+            return f"{obj!r}"
         return obj
