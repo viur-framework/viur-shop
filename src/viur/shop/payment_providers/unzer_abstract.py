@@ -398,6 +398,7 @@ class UnzerAbstract(PaymentProviderAbstract):
         """
         if payment_id is not None:
             payments = [{"payment_id": payment_id}]
+            skel = None
         else:
             if order_key is None:
                 if not (order_key := self.shop.order.current_session_order_key):
@@ -438,7 +439,7 @@ class UnzerAbstract(PaymentProviderAbstract):
 
         result = {
             "payments": result,
-            "payment_state": self.check_payment_state(self.shop.order.skel().read(order_key)),
+            "payment_state": skel and self.check_payment_state(skel),
         }
 
         return JsonResponse(self.model_to_dict(result))
