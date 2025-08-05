@@ -272,23 +272,42 @@ class UnzerAbstract(PaymentProviderAbstract):
     def check_payment_state(
         self,
         order_skel: SkeletonInstance,
-    ) -> tuple[bool, unzer.PaymentGetResponse]:
-        payment_id = order_skel["payment"]["payments"][-1]["payment_id"]
-        logger.debug(f"{payment_id = }")
-        payment = self.client.getPayment(payment_id)
-        logger.debug(f"{payment = }")
-        # payment.charge(order_skel["total"])
-        payment_id = str(order_skel["key"].id_or_name)
-        logger.debug(f"{payment_id = }")
-        payment = self.client.getPayment(payment_id)
-        logger.debug(f"{payment = }")
+        # TODO: params check_specific_payment_by_uuid
+    ) -> tuple[bool, unzer.PaymentGetResponse | list[unzer.PaymentGetResponse]]:
+        """
+        Get the payment state for a order.
 
-        if str(payment.invoiceId) != str(order_skel["order_uid"]):
-            raise e.InvalidStateError(f'{payment.invoiceId} != {order_skel["order_uid"]}')
+        Checks all payments stored in order_skel["payment"]["payments"] for
+        a completed and full charge.
 
-        if payment.state == PaymentState.COMPLETED and payment.amountCharged == order_skel["total"]:
-            return True, payment
-        return False, payment
+        In case of a completed charge, only the payment data of the charged payment is returned.
+        Otherwise (failed or missing payment), data of all payments is returned.
+
+        :param order_skel: OrderSkel SkeletonInstance to check
+        :return: A tuple: [is_paid-boolean, payment-data]
+        """
+        payment_results = []
+        for idx, payment_src in enumerate(order_skel["payment"]["payments"], start=1):
+            if not (payment_id := payment_src.get("payment_id")):
+                logger.error(f"Payment #{idx} has no payment_id")
+                # Fetch by order short key (orderId)
+                order_id = str(order_skel["key"].id_or_name)
+                logger.debug(f"{order_id = }")
+                payment = self.client.getPayment(order_id)
+                logger.debug(f"{payment = }")
+            else:
+                logger.debug(f"{payment_id = }")
+                payment = self.client.getPayment(payment_id)
+                logger.debug(f"{payment = }")
+            payment_results.append(payment)
+
+            if str(payment.invoiceId) != str(order_skel["order_uid"]):
+                raise e.InvalidStateError(f'{payment.invoiceId} != {order_skel["order_uid"]}')
+
+            if payment.state == PaymentState.COMPLETED and payment.amountCharged == order_skel["total"]:
+                return True, payment
+
+        return False, payment_results
 
     @exposed
     @log_unzer_error
@@ -296,6 +315,10 @@ class UnzerAbstract(PaymentProviderAbstract):
         self,
         order_key: db.Key,
     ) -> t.Any:
+        """Return Endpoint
+
+        Endpoint to which customers are redirected once they have processed a payment on the payment server.
+        """
         order_key = self.shop.api._normalize_external_key(order_key, "order_key")
         order_skel = self.shop.order.viewSkel()
         if not order_skel.read(order_key):
@@ -413,6 +436,11 @@ class UnzerAbstract(PaymentProviderAbstract):
                 "basket": basket and dict(basket),
             })
 
+        result = {
+            "payments": result,
+            "payment_state": self.check_payment_state(self.shop.order.skel().read(order_key)),
+        }
+
         return JsonResponse(self.model_to_dict(result))
 
     @exposed
@@ -495,8 +523,8 @@ class UnzerAbstract(PaymentProviderAbstract):
     def model_to_dict(cls, obj):
         """Convert any nested unzer model to dict representation"""
         if isinstance(obj, BaseModel):
-            return dict(obj)
-        elif isinstance(obj, dict):
+            obj = dict(obj) # no elif! needs to proceed in depth
+        if isinstance(obj, dict):
             return {k: cls.model_to_dict(v) for k, v in obj.items()}
         elif isinstance(obj, list | tuple):
             return [cls.model_to_dict(v) for v in obj]
