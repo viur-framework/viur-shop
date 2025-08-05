@@ -397,7 +397,7 @@ class UnzerAbstract(PaymentProviderAbstract):
         :param payment_id: Unzer ID of the order / payment.
         """
         if payment_id is not None:
-            payments = {"payment_id": payment_id}
+            payments = [{"payment_id": payment_id}]
         else:
             if order_key is None:
                 if not (order_key := self.shop.order.current_session_order_key):
