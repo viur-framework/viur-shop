@@ -524,7 +524,7 @@ class UnzerAbstract(PaymentProviderAbstract):
     def model_to_dict(cls, obj):
         """Convert any nested unzer model to dict representation"""
         if isinstance(obj, BaseModel):
-            obj = dict(obj) # no elif! needs to proceed in depth
+            obj = dict(obj)  # Convert to dict first, then process recursively
         if isinstance(obj, dict):
             return {k: cls.model_to_dict(v) for k, v in obj.items()}
         elif isinstance(obj, list | tuple):
