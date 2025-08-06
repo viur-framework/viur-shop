@@ -272,7 +272,7 @@ class UnzerAbstract(PaymentProviderAbstract):
     def check_payment_state(
         self,
         order_skel: SkeletonInstance,
-        # TODO: params check_specific_payment_by_uuid
+        # TODO: Add params check_specific_payment_by_uuid
     ) -> tuple[bool, unzer.PaymentGetResponse | list[unzer.PaymentGetResponse]]:
         """
         Get the payment state for a order.
