@@ -1,4 +1,5 @@
 import abc
+import enum
 import functools
 import json
 import typing as t  # noqa
@@ -9,12 +10,12 @@ from unzer.model.base import BaseModel
 from unzer.model.customer import Salutation as UnzerSalutation
 from unzer.model.payment import PaymentState
 from unzer.model.webhook import Events, IP_ADDRESS
-
 from viur import toolkit
 from viur.core import CallDeferred, access, current, db, errors, exposed, force_post
 from viur.core.skeleton import SkeletonInstance
 from viur.shop.skeletons import OrderSkel
 from viur.shop.types import *
+
 from . import PaymentProviderAbstract
 from ..globals import SHOP_LOGGER
 from ..services import HOOK_SERVICE, Hook
@@ -271,23 +272,42 @@ class UnzerAbstract(PaymentProviderAbstract):
     def check_payment_state(
         self,
         order_skel: SkeletonInstance,
-    ) -> tuple[bool, unzer.PaymentGetResponse]:
-        payment_id = order_skel["payment"]["payments"][-1]["payment_id"]
-        logger.debug(f"{payment_id = }")
-        payment = self.client.getPayment(payment_id)
-        logger.debug(f"{payment = }")
-        # payment.charge(order_skel["total"])
-        payment_id = str(order_skel["key"].id_or_name)
-        logger.debug(f"{payment_id = }")
-        payment = self.client.getPayment(payment_id)
-        logger.debug(f"{payment = }")
+        # TODO: Add params check_specific_payment_by_uuid
+    ) -> tuple[bool, unzer.PaymentGetResponse | list[unzer.PaymentGetResponse]]:
+        """
+        Get the payment state for a order.
 
-        if str(payment.invoiceId) != str(order_skel["order_uid"]):
-            raise e.InvalidStateError(f'{payment.invoiceId} != {order_skel["order_uid"]}')
+        Checks all payments stored in order_skel["payment"]["payments"] for
+        a completed and full charge.
 
-        if payment.state == PaymentState.COMPLETED and payment.amountCharged == order_skel["total"]:
-            return True, payment
-        return False, payment
+        In case of a completed charge, only the payment data of the charged payment is returned.
+        Otherwise (failed or missing payment), data of all payments is returned.
+
+        :param order_skel: OrderSkel SkeletonInstance to check
+        :return: A tuple: [is_paid-boolean, payment-data]
+        """
+        payment_results = []
+        for idx, payment_src in enumerate(order_skel["payment"]["payments"], start=1):
+            if not (payment_id := payment_src.get("payment_id")):
+                logger.error(f"Payment #{idx} has no payment_id")
+                # Fetch by order short key (orderId)
+                order_id = str(order_skel["key"].id_or_name)
+                logger.debug(f"{order_id=}")
+                payment = self.client.getPayment(order_id)
+                logger.debug(f"{payment=}")
+            else:
+                logger.debug(f"{payment_id=}")
+                payment = self.client.getPayment(payment_id)
+                logger.debug(f"{payment=}")
+            payment_results.append(payment)
+
+            if str(payment.invoiceId) != str(order_skel["order_uid"]):
+                raise e.InvalidStateError(f'{payment.invoiceId} != {order_skel["order_uid"]}')
+
+            if payment.state == PaymentState.COMPLETED and payment.amountCharged == order_skel["total"]:
+                return True, payment
+
+        return False, payment_results
 
     @exposed
     @log_unzer_error
@@ -295,6 +315,10 @@ class UnzerAbstract(PaymentProviderAbstract):
         self,
         order_key: db.Key,
     ) -> t.Any:
+        """Return Endpoint
+
+        Endpoint to which customers are redirected once they have processed a payment on the payment server.
+        """
         order_key = self.shop.api._normalize_external_key(order_key, "order_key")
         order_skel = self.shop.order.viewSkel()
         if not order_skel.read(order_key):
@@ -373,16 +397,29 @@ class UnzerAbstract(PaymentProviderAbstract):
         :param payment_id: Unzer ID of the order / payment.
         """
         if payment_id is not None:
-            payment_ids = [payment_id]
+            payments = [{"payment_id": payment_id}]
+            skel = None
         else:
             if order_key is None:
                 if not (order_key := self.shop.order.current_session_order_key):
                     raise errors.BadRequest("No order_key or payment_id given")
             skel = self.shop.order.skel().read(key=order_key)
-            payment_ids = [payment["payment_id"] for payment in skel["payment"]["payments"]]
+            payments = skel["payment"]["payments"]
 
         result = []
-        for payment_id in payment_ids:
+        for payment_src in payments:
+            if not (payment_id := payment_src.get("payment_id")):
+                result.append({
+                    "error": "payment_id missing",
+                })
+                continue
+            if (public_key := payment_src.get("public_key")) and public_key != self.client.public_key:
+                result.append({
+                    "error": "public_key does not match client's public_key",
+                    "public_key_payment": public_key,
+                    "public_key_client": self.client.public_key,
+                })
+                continue
             logger.info(f"Checking payment {payment_id=}:")
             payment = self.client.getPayment(payment_id)
             logger.info(f"payment: {payment!r}")
@@ -399,6 +436,11 @@ class UnzerAbstract(PaymentProviderAbstract):
                 "customer": customer and dict(customer),
                 "basket": basket and dict(basket),
             })
+
+        result = {
+            "payments": result,
+            "payment_state": skel and self.check_payment_state(skel),
+        }
 
         return JsonResponse(self.model_to_dict(result))
 
@@ -419,8 +461,8 @@ class UnzerAbstract(PaymentProviderAbstract):
             {
                 "public_key": self.public_key,
                 "type_id": type_id,
-                "charged": False,
-                "aborted": False,
+                "charged": False,  # TODO: Set value
+                "aborted": False,  # TODO: Set value
             }
         )
         return JsonResponse(order_skel)
@@ -482,9 +524,11 @@ class UnzerAbstract(PaymentProviderAbstract):
     def model_to_dict(cls, obj):
         """Convert any nested unzer model to dict representation"""
         if isinstance(obj, BaseModel):
-            return dict(obj)
-        elif isinstance(obj, dict):
+            obj = dict(obj)  # Convert to dict first, then process recursively
+        if isinstance(obj, dict):
             return {k: cls.model_to_dict(v) for k, v in obj.items()}
         elif isinstance(obj, list | tuple):
             return [cls.model_to_dict(v) for v in obj]
+        elif isinstance(obj, enum.Enum):
+            return f"{obj!r}"
         return obj

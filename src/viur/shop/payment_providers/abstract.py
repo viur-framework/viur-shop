@@ -145,7 +145,6 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
             skel["payment"].setdefault("payments", []).append(
                 {
                     "payment_provider": self.name,
-                    "pp": self.name,  # TODO: legacy, remove (payment_provider is more expressing)
                     "creationdate": utils.utcNow().isoformat(),
                     "uuid": str(uuid.uuid4()),
                 }
