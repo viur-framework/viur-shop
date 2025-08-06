@@ -292,13 +292,13 @@ class UnzerAbstract(PaymentProviderAbstract):
                 logger.error(f"Payment #{idx} has no payment_id")
                 # Fetch by order short key (orderId)
                 order_id = str(order_skel["key"].id_or_name)
-                logger.debug(f"{order_id = }")
+                logger.debug(f"{order_id=}")
                 payment = self.client.getPayment(order_id)
-                logger.debug(f"{payment = }")
+                logger.debug(f"{payment=}")
             else:
-                logger.debug(f"{payment_id = }")
+                logger.debug(f"{payment_id=}")
                 payment = self.client.getPayment(payment_id)
-                logger.debug(f"{payment = }")
+                logger.debug(f"{payment=}")
             payment_results.append(payment)
 
             if str(payment.invoiceId) != str(order_skel["order_uid"]):
