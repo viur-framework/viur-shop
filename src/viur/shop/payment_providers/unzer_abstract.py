@@ -324,8 +324,6 @@ class UnzerAbstract(PaymentProviderAbstract):
         if not order_skel.read(order_key):
             raise errors.NotFound
         is_paid, payment = self.check_payment_state(order_skel)
-        charges = payment.getChargedTransactions()
-        logger.debug(f"{charges = }")
         if is_paid and order_skel["is_paid"]:
             logger.info(f'Order {order_skel["key"]} already marked as paid. Nothing to do.')
         elif is_paid:
@@ -373,8 +371,6 @@ class UnzerAbstract(PaymentProviderAbstract):
         """Check the status for an unzer payment deferred"""
         order_skel = self.shop.order.skel().read(order_key)
         is_paid, payment = self.check_payment_state(order_skel)
-        charges = payment.getChargedTransactions()
-        logger.debug(f"{charges=}")
         if is_paid and order_skel["is_paid"]:
             logger.info(f'Order {order_skel["key"]!r} already marked as paid. Nothing to do.')
         elif is_paid:
