@@ -30,12 +30,12 @@ import typing as t  # noqa
 from datetime import timedelta as td
 
 from viur.core import current, utils
+from viur.core.skeleton import RefSkel, SkeletonInstance, skeletonByKind
 from .enums import *
 from .exceptions import DispatchError, InvalidStateError
 from ..globals import SENTINEL, SHOP_INSTANCE, SHOP_LOGGER, Sentinel
 from ..services import HOOK_SERVICE, Hook
 from ..types import SkeletonInstance_T
-from viur.core.skeleton import RefSkel, Skeleton, SkeletonInstance, skeletonByKind
 
 if t.TYPE_CHECKING:
     from ..skeletons import ArticleAbstractSkel
@@ -212,6 +212,7 @@ class DiscountValidator:
 
     It validates a complete :class:`DiscountSkel`.
     """
+
     def __init__(self):
         super().__init__()
         self._is_fulfilled = None
@@ -239,20 +240,21 @@ class DiscountValidator:
 
         from ..skeletons import ArticleAbstractSkel
 
+        # TODO: move this check in a generic version into viur-toolkit
         if (
             article_skel is not None
             and (not isinstance(article_skel, SkeletonInstance)
                  or not issubclass(article_skel.skeletonCls, ArticleAbstractSkel))
         ):
             okay = False
-            # FIXME: RefSkelFor sucks
+            # FIXME: RefSkelFor sucks: Why isn't a RefSkel subclassed from the source skel too
             if issubclass(article_skel.skeletonCls, RefSkel):
                 full_skel_cls = skeletonByKind(article_skel.skeletonCls.kindName)
                 if issubclass(full_skel_cls, ArticleAbstractSkel):
                     okay = True
             if not okay:
                 raise TypeError(f"article_skel must be a SkeletonInstance for ArticleAbstractSkel. "
-                            f"Got {article_skel.skeletonCls=}")
+                                f"Got {article_skel.skeletonCls=}")
 
         # We need the full skel with all bones (otherwise the refSkel would be to large)
         for condition in discount_skel["condition"]:
