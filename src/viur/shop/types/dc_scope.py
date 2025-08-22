@@ -49,7 +49,17 @@ def _skel_repr(skel: SkeletonInstance_T | None) -> str:
     return f'<SkeletonInstance of {skel.skeletonCls.__name__} with key={skel["key"]} and name={skel["name"]}>'
 
 
-class DiscountConditionScope:
+class DiscountConditionScope(abc.ABC):
+    """
+    Validator that validates a specific discount condition scope.
+
+    The scope is usually defined by one bone in the :class:`DiscountConditionSkel`.
+
+    A scope is fulfilled if the precondition and the main condition are fulfilled.
+    It is not fulfilled if the precondition is fulfilled but the main condition is not.
+    If the precondition is not fulfilled, the scope is ignored (regardless of the main condition).
+    """
+
     _is_applicable = None
     _is_fulfilled = None
 
@@ -71,6 +81,12 @@ class DiscountConditionScope:
         self.context = context
 
     def precondition(self) -> bool:
+        """
+        Validates the precondition for this scope.
+
+        Usually this means the related bone in the :class:`DiscountConditionSkel` has a value defined.
+        Unfulfilled preconditions make :class:``DiscountConditionScope`` no longer necessary.
+        """
         return True
 
     allowed_contexts: t.Final[list[DiscountValidationContext]] = [
@@ -81,21 +97,34 @@ class DiscountConditionScope:
 
     @abc.abstractmethod
     def __call__(self) -> bool:
+        """
+        The (main) condition of this scope.
+
+        This check could be, for example, that:
+
+            -   A bone of an ``ArticleAbstractSkel`` has the value from the
+                value range of a scope bone in the :class:`DiscountConditionSkel`.
+
+            -   The context (e.g. language) matches the value range of a scope bone.
+        """
         ...
 
     @property
     def is_applicable(self) -> bool:
+        """Cached and evaluated precondition"""
         if self._is_applicable is None:
             self._is_applicable = self.precondition()
         return self._is_applicable
 
     @property
     def is_fulfilled(self) -> bool:
+        """Cached and evaluated condition"""
         if self._is_fulfilled is None and self.is_applicable:
             self._is_fulfilled = self()
         return self._is_fulfilled
 
     def __repr__(self) -> str:
+        """Represent the scope as a string"""
         return (
             f'<{self.__class__.__name__} with '
             f'{self.is_applicable=} and {self.is_fulfilled=}>'
@@ -103,6 +132,11 @@ class DiscountConditionScope:
 
 
 class ConditionValidator:
+    """
+    Validator that validates a specific discount condition (with many scopes).
+
+    It validates a complete :class:`DiscountConditionSkel`.
+    """
     scopes: list[t.Type[DiscountConditionScope]] = []
 
     def __init__(self):
@@ -173,7 +207,11 @@ class ConditionValidator:
 
 
 class DiscountValidator:
+    """
+    Validator that validates a specific discount (with many conditions).
 
+    It validates a complete :class:`DiscountSkel`.
+    """
     def __init__(self):
         super().__init__()
         self._is_fulfilled = None
