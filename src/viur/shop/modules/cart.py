@@ -320,7 +320,6 @@ class Cart(ShopModuleAbstract, Tree):
         try:
             discount_type = parent_skel["discount"]["dest"]["discount_type"]
         except (TypeError, KeyError) as exc:
-            logger.debug(exc, exc_info=True)
             discount_type = None
         logger.debug(f"{discount_type=}")
         if discount_type == DiscountType.FREE_ARTICLE and skel["quantity"] > 1:

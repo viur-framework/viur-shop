@@ -41,10 +41,12 @@ from .enums import (  # noqa
 from .exceptions import (  # noqa
     ConfigurationError,
     DispatchError,
+    IllegalOperationError,
     InvalidArgumentException,
     InvalidKeyException,
     InvalidStateError,
-    IllegalOperationError,
+    MissingArgumentsException,
+    TooManyArgumentsException,
     ViURShopException,
     ViURShopHttpException,
 )

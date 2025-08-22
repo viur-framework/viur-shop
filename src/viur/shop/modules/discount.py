@@ -10,7 +10,7 @@ from viur.shop import DEBUG_DISCOUNTS
 from viur.shop.types import *
 from .abstract import ShopModuleAbstract
 from ..globals import SHOP_LOGGER
-from ..skeletons import DiscountSkel
+from ..skeletons import CartItemSkel, DiscountSkel
 from ..types.dc_scope import DiscountValidator
 
 logger = SHOP_LOGGER.getChild(__name__)
@@ -78,8 +78,12 @@ class Discount(ShopModuleAbstract, List):
             raise TypeError(f"code must be an instance of str")
         if not isinstance(discount_key, (db.Key, type(None))):
             raise TypeError(f"discount_key must be an instance of db.Key")
-        if not bool(code) ^ bool(discount_key):
-            raise ValueError(f"Need code xor discount_code")
+        if not bool(code is None) ^ bool(discount_key is None):
+            raise MissingArgumentsException(f"{self}.apply", "code", "discount_code", one_of=True)
+        if code is not None and not code:
+            raise InvalidArgumentException("code", code)
+        if discount_key is not None and not discount_key:
+            raise InvalidArgumentException("discount_key", discount_key)
         cart_key = self.shop.cart.current_session_cart_key  # TODO: parameter?
         if cart_key is None:
             raise errors.PreconditionFailed("No basket created yet for this session")
@@ -90,19 +94,16 @@ class Discount(ShopModuleAbstract, List):
         if not skels:
             raise errors.NotFound
         for discount_skel in skels:
-            logger.debug(f'{discount_skel["name"]=} // {discount_skel["description"]=}')
+            # logger.debug(f'{discount_skel["name"]=} // {discount_skel["description"]=}')
             # logger.debug(f"{discount_skel = }")
             applicable, dv = self.can_apply(discount_skel, cart_key=cart_key, code=code)
             if applicable:
-                logger.debug("is applicable")
                 break
-            else:
-                logger.error(f"{dv = }")
         else:
             raise errors.NotFound("No valid code found")
 
-        logger.debug(f"Using {discount_skel=}")
-        logger.debug(f"Using {dv=}")
+        # logger.debug(f"Using {discount_skel=}")
+        # logger.debug(f"Using {dv=}")
 
         try:
             application_domain = dv.application_domain
@@ -115,14 +116,14 @@ class Discount(ShopModuleAbstract, List):
                 name="Free Article",
                 discount_key=discount_skel["key"],
             )
-            logger.debug(f"{cart_node_skel = }")
+            # logger.debug(f"{cart_node_skel = }")
             cart_item_skel = self.shop.cart.add_or_update_article(
                 article_key=discount_skel["free_article"]["dest"]["key"],
                 parent_cart_key=cart_node_skel["key"],
                 quantity=1,
                 quantity_mode=QuantityMode.REPLACE,
             )
-            logger.debug(f"{cart_item_skel = }")
+            # logger.debug(f"{cart_item_skel = }")
             return {  # TODO: what should be returned?
                 "discount_skel": discount_skel,
                 "cart_node_skel": cart_node_skel,
@@ -134,50 +135,57 @@ class Discount(ShopModuleAbstract, List):
                     cart_key=cart_key,
                     discount_key=discount_skel["key"]
                 )
-                logger.debug(f"{cart = }")
+                # logger.debug(f"{cart = }")
                 return {  # TODO: what should be returned?
                     "discount_skel": discount_skel,
                 }
         elif application_domain == ApplicationDomain.ARTICLE:
-            # In this case we use scope_article to find the article on which this discount should be applied
-            all_leafs = []
-            for cv in dv.condition_validator_instances:
-                if cv.is_fulfilled and cv.condition_skel["scope_article"]:
-                    leaf_skels = (
-                        self.shop.cart.viewSkel("leaf").all()
-                        .filter("parentrepo =", cart_key)
-                        .filter(
-                            "article.dest.__key__ IN",
-                            [article["dest"]["key"] for article in cv.condition_skel["scope_article"]]
-                        )
-                        .fetch()
+            # In this case we check every article where this discount can be applied
+            # and insert a new node with the discount.
+            leafs_applied = []
+            """Leafs to which the discount has been applied IN this request"""
+            leafs_already = []
+            """Leafs to which the discount has already applied BEFORE this request"""
+
+            leaf_skels: list[SkeletonInstance_T[CartItemSkel]] = (
+                self.shop.cart.viewSkel("leaf").all()
+                .filter("parentrepo =", cart_key)
+                .fetch(100)
+            )
+
+            for leaf_skel in leaf_skels:
+                # logger.debug(f"{leaf_skel=}")
+                leaf_applicable, leaf_dv = self.can_apply(
+                    discount_skel, cart_key=cart_key, article_skel=leaf_skel.article_skel, code=code
+                )
+                # logger.debug(f"{leaf_applicable=}, {leaf_dv=}")
+                if leaf_applicable:
+                    # Assign discount on new parent node for the leaf where the article is
+                    parent_skel = self.shop.cart.viewSkel("node")
+                    assert parent_skel.read(leaf_skel["parententry"])
+                    if parent_skel["discount"] and parent_skel["discount"]["dest"]["key"] == discount_skel["key"]:
+                        logger.info("Parent has already this discount key")
+                        leafs_already.append(leaf_skel)
+                        continue
+                    parent_skel = self.shop.cart.add_new_parent(leaf_skel, name=f'Discount {discount_skel["name"]}')
+                    cart = self.shop.cart.cart_update(
+                        cart_key=parent_skel["key"],
+                        discount_key=discount_skel["key"]
                     )
-                    logger.debug(f"<{len(leaf_skels)}>{leaf_skels = }")
-                    # if not leaf_skels:
-                    #     raise errors.NotFound("expected article is missing on cart")
-                    # if len(leaf_skels) > 1:
-                    #     raise NotImplementedError("article is ambiguous")
-                    for leaf_skel in leaf_skels:
-                        # Assign discount on new parent node for the leaf where the article is
-                        parent_skel = self.shop.cart.viewSkel("node")
-                        assert parent_skel.read(leaf_skel["parententry"])
-                        if parent_skel["discount"] and parent_skel["discount"]["dest"]["key"] == discount_skel["key"]:
-                            logger.info("Parent has already this discount key")
-                            continue
-                        parent_skel = self.shop.cart.add_new_parent(leaf_skel, name=f'Discount {discount_skel["name"]}')
-                        cart = self.shop.cart.cart_update(
-                            cart_key=parent_skel["key"],
-                            discount_key=discount_skel["key"]
-                        )
-                        logger.debug(f"{cart = }")
-                        all_leafs.append(leaf_skels)
-            if not all_leafs:
-                raise errors.NotFound("expected article is missing on cart (or discount exist already)")
+                    # logger.debug(f"{cart = }")
+                    leafs_applied.append(leaf_skel)
+
+            if not leafs_applied and not leafs_already:
+                # applied to no article (neither now nor before)
+                raise errors.NotFound("expected article is missing on cart")
+            elif not leafs_applied and leafs_already:
+                raise errors.NotFound("discount already applied to all applicable articles")
             return {  # TODO: what should be returned?
-                "leaf_skel": all_leafs,
+                "leaf_skel": leafs_applied,
                 # "parent_skel": parent_skel,
                 "discount_skel": discount_skel,
             }
+
         raise errors.NotImplemented(f'{discount_skel["discount_type"]=} is not implemented yet :(')
 
     def can_apply(
