@@ -63,7 +63,7 @@ class DiscountCondition(ShopModuleAbstract, List):
     def canEdit(self, skel):
         if skel["is_subcode"]:
             return False
-        if skel["code_type"] is not None and skel["code_type"] != CodeType.NONE:
+        if skel.is_cloned and skel["code_type"] is not None and skel["code_type"] != CodeType.NONE:
             skel.code_type.readOnly = True
         return super().canEdit(skel)
 
@@ -82,6 +82,10 @@ class DiscountCondition(ShopModuleAbstract, List):
         super().onEdit(skel)
         self.on_change(skel, "edit")
 
+    def onClone(self, skel: SkeletonInstance, src_skel: SkeletonInstance):
+        super().onClone(skel, src_skel)
+        self.on_change(skel, "clone")
+
     def onAdded(self, skel: SkeletonInstance):
         super().onAdded(skel)
         self.on_changed(skel, "added")
@@ -90,14 +94,18 @@ class DiscountCondition(ShopModuleAbstract, List):
         super().onEdited(skel)
         self.on_changed(skel, "edited")
 
-    def on_change(self, skel, event: str):
+    def onCloned(self, skel: SkeletonInstance, src_skel: SkeletonInstance):
+        super().onCloned(skel, src_skel)
+        self.on_changed(skel, "cloned")
+
+    def on_change(self, skel: SkeletonInstance, event: str):
         # logger.debug(pprint.pformat(skel, width=120))
         skel_old = self.viewSkel()
         if skel["key"] is not None:  # not on add
             skel_old.read(skel["key"])
         current.request_data.get()[f'shop_skel_{skel["key"]}'] = skel_old
 
-    def on_changed(self, skel, event: str):
+    def on_changed(self, skel: SkeletonInstance, event: str):
         # logger.debug(pprint.pformat(skel, width=120))
         if skel["code_type"] == CodeType.INDIVIDUAL and not skel["is_subcode"]:
             skel_old = current.request_data.get()[f'shop_skel_{skel["key"]}']
