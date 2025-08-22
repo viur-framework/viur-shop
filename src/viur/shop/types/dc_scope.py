@@ -35,9 +35,10 @@ from .exceptions import DispatchError, InvalidStateError
 from ..globals import SENTINEL, SHOP_INSTANCE, SHOP_LOGGER, Sentinel
 from ..services import HOOK_SERVICE, Hook
 from ..types import SkeletonInstance_T
+from viur.core.skeleton import RefSkel, Skeleton, SkeletonInstance, skeletonByKind
 
 if t.TYPE_CHECKING:
-    from ..skeletons import ArticleAbstractSkel, CartNodeSkel, DiscountConditionSkel, DiscountSkel
+    from ..skeletons import ArticleAbstractSkel
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -197,6 +198,23 @@ class DiscountValidator:
         self.discount_skel = discount_skel
         self.code = code
         self.context = context
+
+        from ..skeletons import ArticleAbstractSkel
+
+        if (
+            article_skel is not None
+            and (not isinstance(article_skel, SkeletonInstance)
+                 or not issubclass(article_skel.skeletonCls, ArticleAbstractSkel))
+        ):
+            okay = False
+            # FIXME: RefSkelFor sucks
+            if issubclass(article_skel.skeletonCls, RefSkel):
+                full_skel_cls = skeletonByKind(article_skel.skeletonCls.kindName)
+                if issubclass(full_skel_cls, ArticleAbstractSkel):
+                    okay = True
+            if not okay:
+                raise TypeError(f"article_skel must be a SkeletonInstance for ArticleAbstractSkel. "
+                            f"Got {article_skel.skeletonCls=}")
 
         # We need the full skel with all bones (otherwise the refSkel would be to large)
         for condition in discount_skel["condition"]:
