@@ -106,7 +106,7 @@ class InvalidArgumentException(ViURShopHttpException):
 
 @deprecated(
     reason="Use InvalidArgumentException instead",
-    version="0.5.4",
+    version="0.6.0",
 )
 class InvalidKeyException(ViURShopHttpException):
     # TODO: Remove in a future version
