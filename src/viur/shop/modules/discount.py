@@ -78,8 +78,12 @@ class Discount(ShopModuleAbstract, List):
             raise TypeError(f"code must be an instance of str")
         if not isinstance(discount_key, (db.Key, type(None))):
             raise TypeError(f"discount_key must be an instance of db.Key")
-        if not bool(code) ^ bool(discount_key):
-            raise ValueError(f"Need code xor discount_code")
+        if not bool(code is None) ^ bool(discount_key is None):
+            raise MissingArgumentsException(f"{self}.apply", "code", "discount_code", one_of=True)
+        if code is not None and not code:
+            raise InvalidArgumentException("code", code)
+        if discount_key is not None and not discount_key:
+            raise InvalidArgumentException("discount_key", discount_key)
         cart_key = self.shop.cart.current_session_cart_key  # TODO: parameter?
         if cart_key is None:
             raise errors.PreconditionFailed("No basket created yet for this session")

@@ -74,10 +74,26 @@ class InvalidKeyException(ViURShopHttpException):
 
 
 class TooManyArgumentsException(ViURShopHttpException):
-    def __init__(self, func_nam: str, *argument_name: str):
-        self.func_nam = func_nam
+    def __init__(self, func_name: str, *argument_name: str):
+        self.func_name = func_name
         self.argument_names: tuple[str, ...] = argument_name
         super().__init__(
             status=462, name="Too Many Arguments",
-            descr=f"{func_nam} got too many (unknown) arguments: {', '.join(argument_name)}"
+            descr=f"{func_name} got too many (unknown) arguments: {', '.join(argument_name)}"
+        )
+
+
+class MissingArgumentsException(ViURShopHttpException):
+    def __init__(self, func_name: str, *argument_names: str, one_of: bool = False):
+        self.func_name = func_name
+        self.argument_names: tuple[str, ...] = argument_names
+        self.one_of: bool = one_of
+        super().__init__(
+            status=463,
+            name="Missing Arguments",
+            descr=(
+                f"{func_name} is missing at least one of the required arguments: {' or '.join(argument_names)}"
+                if one_of else
+                f"{func_name} is missing the required arguments: {', '.join(argument_names)}"
+            )
         )
