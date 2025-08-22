@@ -124,17 +124,17 @@ class TooManyArgumentsException(ViURShopHttpException):
     Exception raised when a function receives unknown or excessive arguments.
     """
 
-    def __init__(self, func_name: str, *argument_name: str):
+    def __init__(self, func_name: str, *argument_names: str):
         """Create a new TooManyArgumentsException.
 
         :param func_nam: The name of the function where the error occurred.
-        :param argument_name: Names of the unexpected arguments passed to the function.
+        :param argument_names: Names of the unexpected arguments passed to the function.
         """
         self.func_name = func_name
-        self.argument_names: tuple[str, ...] = argument_name
+        self.argument_names: tuple[str, ...] = argument_names
         super().__init__(
             status=462, name="Too Many Arguments",
-            descr=f"{func_name} got too many (unknown) arguments: {', '.join(argument_name)}",
+            descr=f"{func_name} got too many (unknown) arguments: {', '.join(argument_names)}",
         )
 
 
