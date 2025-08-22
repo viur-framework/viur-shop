@@ -11,7 +11,7 @@ from viur.shop.types import *
 from ..globals import SENTINEL, SHOP_INSTANCE_VI, SHOP_LOGGER
 
 if t.TYPE_CHECKING:
-    from viur.shop import OrderSkel, SkeletonInstance_T
+    from viur.shop import SkeletonInstance_T
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -540,13 +540,13 @@ class Api(ShopModuleAbstract):
         if can_be_None and not external_key:
             return None
         elif not external_key:
-            raise InvalidKeyException(external_key, parameter_name)
+            raise InvalidArgumentException(parameter_name, external_key)
         if isinstance(external_key, db.Key):
             return external_key
         try:
             return db.Key.from_legacy_urlsafe(external_key)
         except (ValueError, DecodeError):  # yes, the exception really comes from protobuf...
-            raise InvalidKeyException(external_key, parameter_name)
+            raise InvalidArgumentException(parameter_name, external_key)
 
 
 Api.html = True
