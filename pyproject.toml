@@ -20,10 +20,10 @@ authors = [
 maintainers = [
     { name = "Sven Eberth", email = "se@mausbrand.de" },
 ]
-description = "ViUR shop-plugin"
+description = "A modular e-commerce extension for the ViUR framework"
 readme = "README.md"
 license = { file = "LICENSE" }
-keywords = ["viur", "plugin", "backend", "shop"]
+keywords = ["viur", "plugin", "backend", "shop", "ecommerce"]
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "Intended Audience :: Developers",
