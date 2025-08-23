@@ -1,3 +1,7 @@
+"""
+Specific exceptions used inside ViUR Shop
+"""
+
 from __future__ import annotations
 
 import typing as t
@@ -74,6 +78,8 @@ class ViURShopHttpException(errors.HTTPException):
 class InvalidArgumentException(ViURShopHttpException):
     """
     Exception raised when a function receives an invalid value for an argument.
+
+    **HTTP response status code:** ``460 Invalid Parameter``
     """
 
     def __init__(
@@ -122,6 +128,8 @@ class InvalidKeyException(ViURShopHttpException):
 class TooManyArgumentsException(ViURShopHttpException):
     """
     Exception raised when a function receives unknown or excessive arguments.
+
+    **HTTP response status code:** ``462 Too Many Arguments``
     """
 
     def __init__(self, func_name: str, *argument_names: str):
@@ -141,6 +149,8 @@ class TooManyArgumentsException(ViURShopHttpException):
 class MissingArgumentsException(ViURShopHttpException):
     """
     Exception raised when one or more required arguments are missing in a function call.
+
+    **HTTP response status code:** ``463 Missing Arguments``
     """
 
     def __init__(self, func_name: str, *argument_names: str, one_of: bool = False):
