@@ -75,6 +75,10 @@ TRANSLATIONS = {
         "_default_text": "Sofort via Unzer",
         "_hint": "viur-shop payment provider: unzer-sofort",
     },
+    "viur.shop.payment_provider.unzer-googlepay": {
+        "_default_text": "Google Pay via Unzer",
+        "_hint": "viur-shop payment provider: unzer-googlepay",
+    },
     "viur.shop.payment_provider.prepayment": {
         "_default_text": "Prepayment",
         "_hint": "viur-shop Prepayment",
