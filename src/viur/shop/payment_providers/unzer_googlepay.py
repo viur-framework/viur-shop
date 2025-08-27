@@ -24,8 +24,8 @@ class UnzerGooglepay(UnzerAbstract):
         *,
         merchant_id: str | t.Callable[[], str],
         merchant_name: str | t.Callable[[], str],
-        allow_credit_cards:bool=True,
-        allow_prepaid_cards:bool=True,
+        allow_credit_cards: bool = True,
+        allow_prepaid_cards: bool = True,
         **kwargs: t.Any,
     ) -> None:
         super().__init__(**kwargs)
