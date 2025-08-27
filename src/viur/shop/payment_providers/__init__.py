@@ -17,3 +17,4 @@ else:
     from .unzer_ideal import UnzerIdeal
     from .unzer_paypal import UnzerPayPal
     from .unzer_sofort import UnzerSofort
+    from .unzer_googlepay import UnzerGooglepay

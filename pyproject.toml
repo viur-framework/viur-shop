@@ -31,6 +31,7 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
@@ -39,7 +40,7 @@ version = { attr = "viur.shop.version.__version__" }
 
 [project.optional-dependencies]
 unzer = [
-    "unzer~=1.0",
+    "unzer~=1.1",
 ]
 
 [tool.setuptools.packages.find]
@@ -49,4 +50,4 @@ where = ["src"]
 Documentation = "https://viur-shop.readthedocs.io"
 Repository = "https://github.com/viur-framework/viur-shop.git"
 "Bug Tracker" = "https://github.com/viur-framework/viur-shop/issues"
-#TODO: Changelog = "https://github.com/viur-framework/viur-shop/blob/main/CHANGELOG.md"
+Changelog = "https://github.com/viur-framework/viur-shop/releases"
