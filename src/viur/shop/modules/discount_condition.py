@@ -1,5 +1,6 @@
 import random
 import string
+import threading
 import typing as t
 
 import cachetools
@@ -21,6 +22,9 @@ logger = SHOP_LOGGER.getChild(__name__)
 CODE_CHARS = sorted(set(string.ascii_uppercase + string.digits).difference(set("0OIl1")))
 CODE_LENGTH = 8
 SUFFIX_LENGTH = 6
+
+lock_get_skel = threading.Lock()
+"""Lock to make the get_skel cache thread-safe"""
 
 
 class DiscountCondition(ShopModuleAbstract, List):
@@ -158,7 +162,7 @@ class DiscountCondition(ShopModuleAbstract, List):
     # --- Helpers  ------------------------------------------------------------
 
     @classmethod
-    @cachetools.cached(cache=cachetools.TTLCache(maxsize=1024, ttl=3600))
+    @cachetools.cached(cache=cachetools.TTLCache(maxsize=1024, ttl=3600), lock=lock_get_skel)
     def get_skel(cls, key: db.Key) -> SkeletonInstance_T["DiscountConditionSkel"] | None:
         # logger.debug(f"get_skel({key=})")
         skel = SHOP_INSTANCE.get().discount_condition.viewSkel()
