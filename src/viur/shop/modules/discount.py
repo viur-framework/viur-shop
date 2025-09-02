@@ -1,4 +1,5 @@
 import io
+import threading
 import typing as t  # noqa
 
 import cachetools
@@ -14,6 +15,9 @@ from ..skeletons import CartItemSkel, DiscountSkel
 from ..types.dc_scope import DiscountValidator
 
 logger = SHOP_LOGGER.getChild(__name__)
+
+lock_current_automatically_discounts = threading.Lock()
+"""Lock to make the current_automatically_discounts cache thread-safe"""
 
 
 class Discount(ShopModuleAbstract, List):
@@ -236,7 +240,7 @@ class Discount(ShopModuleAbstract, List):
         return dv.is_fulfilled, dv
 
     @property
-    @cachetools.cached(cache=cachetools.TTLCache(maxsize=1024, ttl=3600))
+    @cachetools.cached(cache=cachetools.TTLCache(maxsize=1024, ttl=3600), lock=lock_current_automatically_discounts)
     def current_automatically_discounts(self) -> list[SkeletonInstance_T[DiscountSkel]]:
         query = self.viewSkel().all().filter("activate_automatically =", True)
         discounts = []
