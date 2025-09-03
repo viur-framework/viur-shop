@@ -12,7 +12,7 @@ except ImportError:
 else:
     del unzer
     from .unzer_abstract import UnzerAbstract
-    from .unzer_applelepay import UnzerApplepay
+    from .unzer_applepay import UnzerApplepay
     from .unzer_bancontact import UnzerBancontact
     from .unzer_card import UnzerCard
     from .unzer_googlepay import UnzerGooglepay
