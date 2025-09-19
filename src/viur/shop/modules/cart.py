@@ -500,7 +500,7 @@ class Cart(ShopModuleAbstract, Tree):
                 skel["shipping_address"] = None
             else:
                 skel.setBoneValue("shipping_address", shipping_address_key)
-                if AddressType.SHIPPING not in skel["shipping_address"]["dest"]["address_type"]:
+                if AddressType.SHIPPING.value not in (addr.value for addr in skel["shipping_address"]["dest"]["address_type"]):
                     raise e.InvalidArgumentException(
                         "shipping_address",
                         descr_appendix="Address is not of type shipping."
