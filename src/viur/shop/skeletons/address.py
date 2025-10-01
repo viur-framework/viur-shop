@@ -134,6 +134,14 @@ class AddressSkel(Skeleton):
         searchable=True,
     )
 
+    birthdate = DateBone(
+        params={
+            "group": "Customer Info",
+        },
+        localize=False,
+        naive=True,
+    )
+
     # FIXME: What happens if an AddressSkel has both address_types and is_default
     #        and you add an new default AddressSkel with only one address_type?
     is_default = BooleanBone(

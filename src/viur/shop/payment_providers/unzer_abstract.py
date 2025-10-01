@@ -459,6 +459,8 @@ class UnzerAbstract(PaymentProviderAbstract):
                 "type_id": type_id,
                 "charged": False,  # TODO: Set value
                 "aborted": False,  # TODO: Set value
+                "client_ip": current.request.get().request.client_addr,
+                "user_agent": current.request.get().request.user_agent,
             }
         )
         return JsonResponse(order_skel)
@@ -479,6 +481,7 @@ class UnzerAbstract(PaymentProviderAbstract):
             customerId=self.customer_id_from_order_skel(order_skel),
             email=ba["email"],
             phone=ba["phone"],
+            birthDate=ba["birthdate"],
             billingAddress=self.address_from_address_skel(ba),
             shippingAddress=self.address_from_address_skel(sa),
         )
