@@ -45,8 +45,8 @@ class Address(ShopModuleAbstract, List):
         return True
 
     def canEdit(self, skel: SkeletonInstance) -> bool:
-        # if super().canEdit(skel):
-        #     return True
+        if super().canEdit(skel):
+            return True
 
         logger.debug(f"canEdit {skel}")
         logger.debug((

@@ -36,6 +36,7 @@ class OrderSkel(Skeleton):
     customer = RelationalBone(
         kind="user",
         searchable=True,
+        refKeys={"name", "creationdate"},
     )
 
     cart = TreeNodeBone(

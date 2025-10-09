@@ -20,3 +20,6 @@ SENTINEL: t.Final[Sentinel] = Sentinel()
 
 DEBUG_DISCOUNTS: GlobalVar[bool] = GlobalVar("DEBUG_DISCOUNTS", default=False)
 """Print detailed discount evaluation for debugging"""
+
+MAX_FETCH_LIMIT: int = 100
+"""Limit used if all entries should be fetched, but it needs to be limited because it's ViUR."""
