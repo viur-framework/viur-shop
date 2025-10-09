@@ -61,7 +61,7 @@ class UnzerPaylaterInvoice(UnzerAbstract):
         )
         logger.debug(f"{payment=} [charge response]")
 
-        logger.debug(f"{unzer_session = }")
+        logger.debug(f"{unzer_session=}")
         current.session.get().markChanged()
 
         def set_payment(skel: SkeletonInstance):
@@ -78,15 +78,16 @@ class UnzerPaylaterInvoice(UnzerAbstract):
 
     def get_customer(self, order_skel: SkeletonInstance) -> unzer.Customer:
         customer = self.customer_from_order_skel(order_skel)
-        logger.debug(f"{customer = }")
+        logger.debug(f"{customer=}")
         customer = self.client.createOrUpdateCustomer(customer)
-        logger.debug(f"{customer = } [RESPONSE]")
+        logger.debug(f"{customer=} [RESPONSE]")
         return customer
 
     def get_payment_request(self, order_skel: SkeletonInstance) -> unzer.PaymentRequest:
         customer = self.get_customer(order_skel)
         host = current.request.get().request.host_url
-        return_url = f'{host.rstrip("/")}/{self.modulePath.strip("/")}/return_handler?order_key={order_skel["key"].to_legacy_urlsafe().decode("ASCII")}'
+        return_url = (f'{host.rstrip("/")}/{self.modulePath.strip("/")}/return_handler'
+                      f'?order_key={order_skel["key"].to_legacy_urlsafe().decode("ASCII")}')
         return unzer.PaymentRequest(
             self.get_payment_type(order_skel),
             amount=order_skel["total"],

@@ -48,15 +48,6 @@ class Address(ShopModuleAbstract, List):
         if super().canEdit(skel):
             return True
 
-        logger.debug(f"canEdit {skel}")
-        logger.debug((
-            current.request.get().kwargs,
-            current.request.get().context.get("order") == self.shop.order.current_session_order_key,
-            current.request.get().context.get("order") , self.shop.order.current_session_order_key, str(self.shop.order.current_session_order_key),
-            self.shop.order.current_order_skel["billing_address"]["dest"]["key"],
-            skel["key"]
-        ))
-
         if (
             not (set(current.request.get().kwargs.keys()) - {"birthdate", "skey", "@order"})
             and current.request.get().context.get("order") == str(self.shop.order.current_session_order_key)

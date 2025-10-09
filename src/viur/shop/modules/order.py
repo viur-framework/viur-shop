@@ -297,9 +297,9 @@ class Order(ShopModuleAbstract, List):
             }, status_code=400)
             raise e.InvalidStateError(", ".join(errors))
 
-        # if order_skel["cart"]["dest"]["key"] == self.shop.cart.current_session_cart_key:
-        #     # This is now an order basket and should no longer be modified
-        #     self.shop.cart.detach_session_cart()
+        if order_skel["cart"]["dest"]["key"] == self.shop.cart.current_session_cart_key:
+            # This is now an order basket and should no longer be modified
+            self.shop.cart.detach_session_cart()
 
         order_skel = self.freeze_order(order_skel)
         try:
