@@ -142,7 +142,7 @@ class DiscountCondition(ShopModuleAbstract, List):
                             logger.error(f"Try {_try} failed. Terminate generation.")
                             raise
 
-                        logger.error(f"Code {skel["scope_code"]} is already forgiven. This was try: {_try}")
+                        logger.error(f"Code {skel["scope_code"]} is already taken. This was try: {_try}")
                         _try += 1
                     else:
                         raise
