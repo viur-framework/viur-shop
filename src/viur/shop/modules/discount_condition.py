@@ -102,17 +102,13 @@ class DiscountCondition(ShopModuleAbstract, List):
         super().onCloned(skel, src_skel)
         self.on_changed(skel, "cloned")
 
-    def on_change(self, skel: SkeletonInstance, event: str):
+    def on_change(self, skel: SkeletonInstance, event: str) -> None:
         # logger.debug(pprint.pformat(skel, width=120))
-        skel_old = self.viewSkel()
-        if skel["key"] is not None:  # not on add
-            skel_old.read(skel["key"])
-        current.request_data.get()[f'shop_skel_{skel["key"]}'] = skel_old
+        ...
 
-    def on_changed(self, skel: SkeletonInstance, event: str):
+    def on_changed(self, skel: SkeletonInstance, event: str) -> None:
         # logger.debug(pprint.pformat(skel, width=120))
         if skel["code_type"] == CodeType.INDIVIDUAL and not skel["is_subcode"]:
-            skel_old = current.request_data.get()[f'shop_skel_{skel["key"]}']
             query = self.viewSkel().all().filter("parent_code.dest.__key__ =", skel["key"])
             counter = query.count()
             # logger.debug(f"{counter = }")
@@ -121,7 +117,7 @@ class DiscountCondition(ShopModuleAbstract, List):
                                        skel["individual_codes_amount"] - counter)
 
     @tasks.CallDeferred
-    def generate_subcodes(self, parent_key: db.Key, prefix: str, amount: int):
+    def generate_subcodes(self, parent_key: db.Key, prefix: str, amount: int) -> None:
         """Generate subcodes for a parent individual code."""
         chunk_amount = amount
         while chunk_amount > 0:
@@ -143,10 +139,10 @@ class DiscountCondition(ShopModuleAbstract, List):
                 except ValueError as e:
                     if "The unique value" in str(e):
                         if _try == 30:
-                            logger.error(f"Try %d failed. Terminate generation.", _try)
+                            logger.error(f"Try {_try} failed. Terminate generation.")
                             raise
 
-                        logger.error(f"Code %r is already forgiven. This was try: %d", skel["scope_code"], _try)
+                        logger.error(f"Code {skel["scope_code"]} is already forgiven. This was try: {_try}")
                         _try += 1
                     else:
                         raise
