@@ -5,7 +5,7 @@ from viur.core.prototypes import List
 from viur.core.prototypes.skelmodule import DEFAULT_ORDER_TYPE
 from viur.core.skeleton import SkeletonInstance
 from .abstract import ShopModuleAbstract
-from ..globals import SHOP_LOGGER
+from ..globals import MAX_FETCH_LIMIT, SHOP_LOGGER
 from ..skeletons import AddressSkel
 from ..types import SkeletonInstance_T
 
@@ -48,6 +48,13 @@ class Address(ShopModuleAbstract, List):
         if super().canEdit(skel):
             return True
 
+        if (
+            not (set(current.request.get().kwargs.keys()) - {"birthdate", "skey", "@order"})
+            and current.request.get().context.get("order") == str(self.shop.order.current_session_order_key)
+            and self.shop.order.current_order_skel["billing_address"]["dest"]["key"] == skel["key"]
+        ):
+            return True  # only birthdate should be set (e.g. for unzer invoice)
+
         if skel["key"] in self.session.get("created_skel_keys", ()):
             logger.debug(f"User added this address in his session: {skel['key']!r}")
             return True
@@ -81,7 +88,7 @@ class Address(ShopModuleAbstract, List):
             .filter("is_default =", True) \
             .filter("customer.dest.__key__ =", skel["customer"]["dest"]["key"]) \
             .filter("address_type IN", [at.value for at in skel["address_type"]])
-        for other_skel in query.fetch(100):
+        for other_skel in query.fetch(MAX_FETCH_LIMIT):
             if skel["key"] != other_skel["key"]:
                 other_skel["is_default"] = False
                 other_skel.write()

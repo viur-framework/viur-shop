@@ -27,7 +27,7 @@ class OrderSkel(Skeleton):
             "key", "name", "customer_type", "salutation", "company_name",
             "firstname", "lastname", "street_name", "street_number",
             "address_addition", "zip_code", "city", "country",
-            "email", "phone",
+            "email", "phone", "birthdate",
             "is_default", "address_type",
         ],
         searchable=True,
@@ -36,6 +36,7 @@ class OrderSkel(Skeleton):
     customer = RelationalBone(
         kind="user",
         searchable=True,
+        refKeys={"name", "creationdate"},
     )
 
     cart = TreeNodeBone(
@@ -140,6 +141,19 @@ class OrderSkel(Skeleton):
             skel.cart.refresh(skel, skel.cart.name)
         except Exception as exc:
             logger.debug(f'Failed to refresh cart on order {skel["key"]!r}: {exc}')
+        return skel
+
+    @classmethod
+    def refresh_billing_address(cls, skel: SkeletonInstance) -> SkeletonInstance:
+        """
+        Shorthand to refresh the billing_address of an OrderSkel
+        Due to race-condition and timing issues, the dest values are not always
+        set correctly. This refresh fixes this.
+        """
+        try:
+            skel.billing_address.refresh(skel, skel.billing_address.name)
+        except Exception as exc:
+            logger.info(f'Failed to refresh billing_address on order {skel["key"]!r}: {exc}')
         return skel
 
     @classmethod

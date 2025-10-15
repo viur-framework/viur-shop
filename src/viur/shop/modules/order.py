@@ -12,7 +12,7 @@ from ..globals import SENTINEL, SHOP_LOGGER
 from ..payment_providers import PaymentProviderAbstract
 from ..services import EVENT_SERVICE, Event, HOOK_SERVICE, Hook
 from ..skeletons.order import OrderSkel
-from ..types import exceptions as e
+from ..types import error_handler, exceptions as e
 
 if t.TYPE_CHECKING:
     from viur.core.skeleton import SkeletonInstance
@@ -274,6 +274,7 @@ class Order(ShopModuleAbstract, List):
 
     @exposed
     @force_post
+    @error_handler
     def checkout_start(
         self,
         order_key: db.Key,
@@ -374,6 +375,7 @@ class Order(ShopModuleAbstract, List):
 
     @exposed
     @force_post
+    @error_handler
     def checkout_order(
         self,
         order_key: db.Key,

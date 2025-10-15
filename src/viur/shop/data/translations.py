@@ -86,6 +86,16 @@ TRANSLATIONS = {
         "_hint": "viur-shop payment provider: unzer-applepay",
         "de": "Apple Pay über Unzer",
     },
+    "viur.shop.payment_provider.unzer-paylater_invoice": {
+        "_default_text": "Invoice via Unzer",
+        "_hint": "viur-shop Unzer Paylater Invoice",
+        "de": "Rechnungskauf über Unzer",
+    },
+    "viur.shop.payment_provider.unzer-paylater_invoice.descr": {
+        "_default_text": "Buy Now Pay Later (BNPL)",
+        "en": "Buy Now Pay Later (BNPL)",
+        "de": "Jetzt kaufen, später bezahlen",
+    },
     "viur.shop.payment_provider.prepayment": {
         "_default_text": "Prepayment",
         "_hint": "viur-shop Prepayment",
