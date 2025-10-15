@@ -11,7 +11,7 @@ from viur.core.skeleton import Skeleton, SkeletonInstance
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.types import *
 from viur.shop.types.exceptions import InvalidStateError
-from ..globals import SENTINEL, SHOP_INSTANCE, SHOP_LOGGER
+from ..globals import MAX_FETCH_LIMIT, SENTINEL, SHOP_INSTANCE, SHOP_LOGGER
 from ..services import EVENT_SERVICE, Event
 from ..skeletons.article import ArticleAbstractSkel
 from ..skeletons.cart import CartItemSkel, CartNodeSkel
@@ -197,7 +197,7 @@ class Cart(ShopModuleAbstract, Tree):
             if query is None:
                 raise errors.Unauthorized()
             query.filter("parententry =", parent_cart_key)
-            yield from query.fetch(100)
+            yield from query.fetch(MAX_FETCH_LIMIT)
 
     def get_children_from_cache(
         self,

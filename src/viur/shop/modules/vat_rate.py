@@ -2,7 +2,7 @@ import functools
 
 from viur.core.prototypes import List
 from .abstract import ShopModuleAbstract
-from ..globals import SHOP_LOGGER
+from ..globals import MAX_FETCH_LIMIT, SHOP_LOGGER
 from ..services import HOOK_SERVICE, Hook
 from ..types import VatRateCategory
 from ..types.exceptions import ConfigurationError
@@ -36,7 +36,7 @@ class VatRate(ShopModuleAbstract, List):
                 cfg["category"]: cfg["percentage"]
                 for cfg in skel["configuration"]
             }
-            for skel in self.viewSkel().all().fetch(100)
+            for skel in self.viewSkel().all().fetch(MAX_FETCH_LIMIT)
         }
 
     @functools.cached_property

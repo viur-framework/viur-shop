@@ -10,7 +10,7 @@ from viur.core.skeleton import SkeletonInstance
 from viur.shop import DEBUG_DISCOUNTS
 from viur.shop.types import *
 from .abstract import ShopModuleAbstract
-from ..globals import SHOP_LOGGER
+from ..globals import MAX_FETCH_LIMIT, SHOP_LOGGER
 from ..skeletons import CartItemSkel, DiscountSkel
 from ..types.dc_scope import DiscountValidator
 
@@ -67,7 +67,7 @@ class Discount(ShopModuleAbstract, List):
             if not cond_skels:
                 raise errors.NotFound
             # Get discount skel(s) using these condition skel
-            discount_skels = skel.all().filter("condition.dest.__key__ IN", [s["key"] for s in cond_skels]).fetch(100)
+            discount_skels = skel.all().filter("condition.dest.__key__ IN", [s["key"] for s in cond_skels]).fetch(MAX_FETCH_LIMIT)
             logger.debug(f"{code = } yields <{len(discount_skels)}>{discount_skels = }")
             return discount_skels
         else:
@@ -154,7 +154,7 @@ class Discount(ShopModuleAbstract, List):
             leaf_skels: list[SkeletonInstance_T[CartItemSkel]] = (
                 self.shop.cart.viewSkel("leaf").all()
                 .filter("parentrepo =", cart_key)
-                .fetch(100)
+                .fetch(MAX_FETCH_LIMIT)
             )
 
             for leaf_skel in leaf_skels:
@@ -244,7 +244,7 @@ class Discount(ShopModuleAbstract, List):
     def current_automatically_discounts(self) -> list[SkeletonInstance_T[DiscountSkel]]:
         query = self.viewSkel().all().filter("activate_automatically =", True)
         discounts = []
-        for skel in query.fetch(100):
+        for skel in query.fetch(MAX_FETCH_LIMIT):
             if not self.can_apply(skel, context=DiscountValidationContext.AUTOMATICALLY_PREVALIDATE)[0]:
                 logger.debug(f'Skipping discount {skel["key"]} {skel["name"]} for current_automatically_discounts')
                 continue
@@ -297,7 +297,7 @@ class Discount(ShopModuleAbstract, List):
                 self.shop.cart.viewSkel("node").all()
                 .filter("parentrepo =", cart_key)
                 .filter("discount.dest.__key__ =", discount_key)
-                .fetch(100)
+                .fetch(MAX_FETCH_LIMIT)
             )
 
             # logger.debug(f"<{len(node_skels)}>{node_skels=}")

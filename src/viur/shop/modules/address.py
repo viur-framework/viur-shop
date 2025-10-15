@@ -5,7 +5,7 @@ from viur.core.prototypes import List
 from viur.core.prototypes.skelmodule import DEFAULT_ORDER_TYPE
 from viur.core.skeleton import SkeletonInstance
 from .abstract import ShopModuleAbstract
-from ..globals import SHOP_LOGGER
+from ..globals import MAX_FETCH_LIMIT, SHOP_LOGGER
 from ..skeletons import AddressSkel
 from ..types import SkeletonInstance_T
 
@@ -88,7 +88,7 @@ class Address(ShopModuleAbstract, List):
             .filter("is_default =", True) \
             .filter("customer.dest.__key__ =", skel["customer"]["dest"]["key"]) \
             .filter("address_type IN", [at.value for at in skel["address_type"]])
-        for other_skel in query.fetch(100):
+        for other_skel in query.fetch(MAX_FETCH_LIMIT):
             if skel["key"] != other_skel["key"]:
                 other_skel["is_default"] = False
                 other_skel.write()

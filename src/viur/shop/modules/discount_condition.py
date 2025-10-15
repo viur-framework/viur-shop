@@ -10,7 +10,7 @@ from viur.core import current, db, tasks
 from viur.core.prototypes import List
 from viur.core.skeleton import SkeletonInstance
 from .abstract import ShopModuleAbstract
-from ..globals import SHOP_INSTANCE, SHOP_LOGGER
+from ..globals import MAX_FETCH_LIMIT, SHOP_INSTANCE, SHOP_LOGGER
 from ..services import Event, on_event
 from ..types import CodeType, SkeletonInstance_T
 
@@ -174,7 +174,7 @@ class DiscountCondition(ShopModuleAbstract, List):
 
     def get_by_code(self, code: str = None) -> t.Iterator[SkeletonInstance]:
         query = self.viewSkel().all().filter("scope_code.idx =", code.lower())
-        for cond_skel in query.fetch(100):
+        for cond_skel in query.fetch(MAX_FETCH_LIMIT):
             if cond_skel["is_subcode"]:
                 parent_cond_skel = self.viewSkel()
                 assert parent_cond_skel.read(cond_skel["parent_code"]["dest"]["key"])
@@ -184,7 +184,7 @@ class DiscountCondition(ShopModuleAbstract, List):
                 yield cond_skel
 
     def get_discounts_from_cart(self, cart_key: db.Key) -> list[db.Key]:
-        nodes = self.shop.cart.viewSkel("node").all().filter("parentrepo =", cart_key).fetch(100)
+        nodes = self.shop.cart.viewSkel("node").all().filter("parentrepo =", cart_key).fetch(MAX_FETCH_LIMIT)
         discounts = []
         for node in nodes:
             # logger.debug(f"{node = }")
