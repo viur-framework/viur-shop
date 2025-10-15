@@ -67,7 +67,11 @@ class Discount(ShopModuleAbstract, List):
             if not cond_skels:
                 raise errors.NotFound
             # Get discount skel(s) using these condition skel
-            discount_skels = skel.all().filter("condition.dest.__key__ IN", [s["key"] for s in cond_skels]).fetch(MAX_FETCH_LIMIT)
+            discount_skels = (
+                skel.all()
+                .filter("condition.dest.__key__ IN", [s["key"] for s in cond_skels])
+                .fetch(MAX_FETCH_LIMIT)
+            )
             logger.debug(f"{code = } yields <{len(discount_skels)}>{discount_skels = }")
             return discount_skels
         else:
