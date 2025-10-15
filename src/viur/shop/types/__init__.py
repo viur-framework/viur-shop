@@ -38,6 +38,11 @@ from .enums import (  # noqa
     ShippingStatus,
     VatRateCategory,
 )
+from .error import (  # noqa
+    Error,
+    ErrorResponse,
+    error_handler,
+)
 from .exceptions import (  # noqa
     ConfigurationError,
     DispatchError,

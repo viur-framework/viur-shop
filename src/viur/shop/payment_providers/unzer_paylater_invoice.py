@@ -42,6 +42,8 @@ class UnzerPaylaterInvoice(UnzerAbstract):
         if not order_skel["billing_address"]["dest"]["birthdate"]:
             raise errors.PreconditionFailed("Billing address has no birthdate")
 
+        # Paylater invoice cannot be charged directly.
+        # Therefore, we must authorize them first before charging them.
         payment = self.client.authorize(
             self.get_payment_request(order_skel),
             headers={

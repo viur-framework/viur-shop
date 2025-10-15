@@ -10,16 +10,16 @@ from unzer.model.base import BaseModel
 from unzer.model.customer import Salutation as UnzerSalutation
 from unzer.model.payment import PaymentState
 from unzer.model.webhook import Events, IP_ADDRESS
+
 from viur import toolkit
 from viur.core import CallDeferred, access, current, db, errors, exposed, force_post
 from viur.core.skeleton import SkeletonInstance
 from viur.shop.skeletons import OrderSkel
 from viur.shop.types import *
-
 from . import PaymentProviderAbstract
 from ..globals import SHOP_LOGGER
 from ..services import HOOK_SERVICE, Hook
-from ..types import exceptions as e
+from ..types import error_handler, exceptions as e
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -311,6 +311,7 @@ class UnzerAbstract(PaymentProviderAbstract):
 
     @exposed
     @log_unzer_error
+    @error_handler
     def return_handler(
         self,
         order_key: db.Key,
@@ -335,6 +336,8 @@ class UnzerAbstract(PaymentProviderAbstract):
 
     @exposed
     @force_post
+    @log_unzer_error
+    @error_handler
     def webhook(self, *args, **kwargs):
         """Webhook for unzer.
 
@@ -381,6 +384,7 @@ class UnzerAbstract(PaymentProviderAbstract):
 
     @exposed
     @access("root")
+    @error_handler
     def get_debug_information(
         self,
         *,
@@ -442,6 +446,7 @@ class UnzerAbstract(PaymentProviderAbstract):
 
     @exposed
     @log_unzer_error
+    @error_handler
     def save_type(
         self,
         order_key: str | db.Key,
