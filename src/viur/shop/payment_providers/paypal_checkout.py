@@ -1,5 +1,5 @@
 import logging
-import typing as t
+import typing as t  # noqa
 
 from apimatic_core.utilities.api_helper import ApiHelper
 from paypalserversdk.controllers.orders_controller import OrdersController
@@ -15,12 +15,12 @@ from paypalserversdk.models.checkout_payment_intent import CheckoutPaymentIntent
 from paypalserversdk.models.order_request import OrderRequest
 from paypalserversdk.models.purchase_unit_request import PurchaseUnitRequest
 from paypalserversdk.paypal_serversdk_client import PaypalServersdkClient
-from viur.core import errors, exposed
+from viur.core import current, db, errors, exposed
 from viur.core.skeleton import SkeletonInstance
 
 from . import PaymentProviderAbstract
 from ..globals import SHOP_LOGGER
-from ..types import JsonResponse
+from ..types import JsonResponse, error_handler
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -65,6 +65,15 @@ class PayPalCheckout(PaymentProviderAbstract):
                 ),
             ),
         )
+
+    def get_checkout_start_data(
+        self,
+        order_skel: SkeletonInstance,
+    ) -> dict[str, t.Any]:
+        return {
+            "public_key": self._client_id,
+            "sandbox": self._sandbox,
+        }
 
     def checkout(
         self,
@@ -141,12 +150,36 @@ class PayPalCheckout(PaymentProviderAbstract):
         raise errors.NotImplemented()
 
     @exposed
-    def capture_order(self, order_id):
+    @error_handler
+    def capture_order(
+        self,
+        order_key: str | db.Key,
+        order_id: str,
+    ):
         """
         Capture payment for the created order to complete the transaction.
 
         @see https://developer.paypal.com/docs/api/orders/v2/#orders_capture
         """
+
+        order_key = self.shop.api._normalize_external_key(order_key, "order_key")
+        order_skel = self.shop.order.editSkel()
+        if not order_skel.read(order_key):
+            raise errors.NotFound
+
+        order_skel = self._append_payment_to_order_skel(
+            order_skel,
+            {
+                "client_id": self.client_id,
+                "order_id": order_id,
+                "charged": False,  # TODO: Set value
+                "aborted": False,  # TODO: Set value
+                "client_ip": current.request.get().request.client_addr,
+                "user_agent": current.request.get().request.user_agent,
+            }
+        )
+        # return JsonResponse(order_skel)
+
         orders_controller: OrdersController = self.client.orders
         order = orders_controller.capture_order(
             {"id": order_id, "prefer": "return=representation"}
@@ -154,6 +187,7 @@ class PayPalCheckout(PaymentProviderAbstract):
         logger.debug(f"Order {order_id} captured successfully.")
         logger.debug(f"{order=}")
         logger.debug(f"{order.body=}")
+
         return JsonResponse(
             ApiHelper.json_serialize(order.body, should_encode=False)
         )

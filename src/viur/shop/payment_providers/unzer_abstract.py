@@ -216,7 +216,7 @@ class UnzerAbstract(PaymentProviderAbstract):
     def get_checkout_start_data(
         self,
         order_skel: SkeletonInstance,
-    ) -> t.Any:
+    ) -> dict[str, t.Any]:
         return {
             "public_key": self.public_key,
             "sandbox": self.sandbox,
