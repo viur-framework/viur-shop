@@ -111,7 +111,7 @@ class AddressSkel(Skeleton):
                 "bi": r"",
                 "kh": r"^\d{5}$",
                 "cm": r"",
-                "ca": r"^(?=[^DdFfIiOoQqUu\d\s])[A-Za-z]\d(?=[^DdFfIiOoQqUu\d\s])[A-Za-z]\s{0,1}\d(?=[^DdFfIiOoQqUu\d\s])[A-Za-z]\d$", # noqa
+                "ca": r"^(?=[^DdFfIiOoQqUu\d\s])[A-Za-z]\d(?=[^DdFfIiOoQqUu\d\s])[A-Za-z]\s{0,1}\d(?=[^DdFfIiOoQqUu\d\s])[A-Za-z]\d$",  # noqa
                 "cv": r"^\d{4}$",
                 "ky": r"^[Kk][Yy]\d[-\s]{0,1}\d{4}$",
                 "cf": r"",
