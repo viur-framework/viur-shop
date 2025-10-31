@@ -1,6 +1,7 @@
 from viur.core import conf, current, i18n
 from viur.core.bones import *
 from viur.core.skeleton import Skeleton
+from viur.shop.data.zip_patterns import ZIP_CODE_PATTERNS
 from viur.shop.types import *
 from ..globals import SHOP_LOGGER
 
@@ -71,10 +72,7 @@ class AddressSkel(Skeleton):
         required=True,
         params={
             "group": "Customer Address",
-            "pattern": {
-                country: r"\d{4,5}"
-                for country in conf.i18n.available_dialects
-            },
+            "pattern": ZIP_CODE_PATTERNS,
             "pattern-error": i18n.translate(
                 "viur.shop.skeleton.address.zip_code.invalid",
                 public=True,
