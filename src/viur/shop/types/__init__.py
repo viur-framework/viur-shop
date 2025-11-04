@@ -58,3 +58,4 @@ from .exceptions import (  # noqa
 from .price import Price  # noqa
 from .response import ExtendedCustomJsonEncoder, JsonResponse  # noqa
 from .results import (OrderViewResult, PaymentProviderResult, StatusError)  # noqa
+from .typed_dicts import (PaymentTransaction, PaymentTransactionSpecific)  # noqa

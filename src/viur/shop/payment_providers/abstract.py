@@ -2,10 +2,11 @@ import abc
 import functools
 import uuid
 
-from viur import toolkit
-from viur.core import Module, translate, utils
+from viur.core import Module, current, translate, utils
 from viur.core.prototypes.instanced_module import InstancedModule
 from viur.core.skeleton import SkeletonInstance
+
+from viur import toolkit
 from viur.shop.skeletons.order import OrderSkel
 from ..types import *
 
@@ -131,7 +132,7 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
     def _append_payment_to_order_skel(
         self,
         order_skel: SkeletonInstance_T[OrderSkel],
-        payment: dict[str, t.Any] | None = None,
+        payment: PaymentTransactionSpecific | None = None,
     ) -> SkeletonInstance_T[OrderSkel]:
         """Append payment data to an order
 
@@ -147,8 +148,10 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
                     "payment_provider": self.name,
                     "creationdate": utils.utcNow().isoformat(),
                     "uuid": str(uuid.uuid4()),
+                    "client_ip": current.request.get().request.client_addr,
+                    "user_agent": current.request.get().request.user_agent,
                 }
-                | (payment or {})
+                | (payment or {})  # type: PaymentTransaction
             )
 
         order_skel = toolkit.set_status(

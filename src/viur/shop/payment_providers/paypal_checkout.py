@@ -19,11 +19,12 @@ from paypalserversdk.models.order_status import OrderStatus
 from paypalserversdk.models.purchase_unit import PurchaseUnit
 from paypalserversdk.models.purchase_unit_request import PurchaseUnitRequest
 from paypalserversdk.paypal_serversdk_client import PaypalServersdkClient
-from viur import toolkit
-from viur.core import access, current, db, errors, exposed
+from viur.core import access, db, errors, exposed
 from viur.core.skeleton import SkeletonInstance
 
+from viur import toolkit
 from . import PaymentProviderAbstract
+from .. import PaymentTransaction
 from ..globals import SHOP_LOGGER
 from ..types import InvalidStateError, JsonResponse, error_handler
 
@@ -128,6 +129,7 @@ class PayPalCheckout(PaymentProviderAbstract):
                 )
             }
         )
+        # TODO: store this order.id -- it's the payment_id
         logger.debug(f"Order created: {order}.")
         logger.debug(f"{order=}")
         logger.debug(f"{order.body=}")
@@ -145,8 +147,9 @@ class PayPalCheckout(PaymentProviderAbstract):
         # TODO: Add params check_specific_payment_by_uuid
     ) -> tuple[bool, t.Any | list[t.Any]]:
         payment_results = []
+        payment_src: PaymentTransaction
         for idx, payment_src in enumerate(order_skel["payment"]["payments"], start=1):
-            if not (payment_id := payment_src.get("payment_id") or payment_src.get("order_id")):
+            if not (payment_id := payment_src.get("payment_id")):
                 logger.error(f"Payment #{idx} has no payment_id")
                 continue
                 raise InvalidStateError(f"Payment #{idx} has no payment_id")
@@ -159,17 +162,17 @@ class PayPalCheckout(PaymentProviderAbstract):
             else:
                 logger.debug(f"{payment_id=}")
 
-                order : ApiResponse = self.client.orders.get_order(dict(id=payment_id))
+                order: ApiResponse = self.client.orders.get_order(dict(id=payment_id))
                 logger.info(f"order: {order!r}")
 
             payment_results.append(order)
 
-            order : Order = order.body
+            order: Order = order.body
 
             logger.info(f"{toolkit.vars_full(order)=!r}")
             logger.info(f"{order.status=!r}")
             assert len(order.purchase_units) == 1, len(order.purchase_units)
-            purchase_unit :PurchaseUnit = order.purchase_units[0]
+            purchase_unit: PurchaseUnit = order.purchase_units[0]
             logger.debug(f"{purchase_unit=!r}")
             logger.debug(f"{purchase_unit.payments=!r}")
             logger.debug(f"{purchase_unit.payments.captures=!r}")
@@ -296,15 +299,13 @@ class PayPalCheckout(PaymentProviderAbstract):
 
         order_skel = self._append_payment_to_order_skel(
             order_skel,
-            {
+             PaymentTransaction(**{
                 "client_id": self._client_id,
                 "order_id": order_id,
                 "payment_id": order_id,
                 "charged": False,  # TODO: Set value
                 "aborted": False,  # TODO: Set value
-                "client_ip": current.request.get().request.client_addr,
-                "user_agent": current.request.get().request.user_agent,
-            }
+            })
         )
         # return JsonResponse(order_skel)
 

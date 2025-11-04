@@ -10,10 +10,10 @@ from unzer.model.base import BaseModel
 from unzer.model.customer import Salutation as UnzerSalutation
 from unzer.model.payment import PaymentState
 from unzer.model.webhook import Events, IP_ADDRESS
-
-from viur import toolkit
 from viur.core import CallDeferred, access, current, db, errors, exposed, force_post
 from viur.core.skeleton import SkeletonInstance
+
+from viur import toolkit
 from viur.shop.skeletons import OrderSkel
 from viur.shop.types import *
 from . import PaymentProviderAbstract
@@ -287,6 +287,7 @@ class UnzerAbstract(PaymentProviderAbstract):
         :return: A tuple: [is_paid-boolean, payment-data]
         """
         payment_results = []
+        payment_src: PaymentTransaction
         for idx, payment_src in enumerate(order_skel["payment"]["payments"], start=1):
             if not (payment_id := payment_src.get("payment_id")):
                 logger.error(f"Payment #{idx} has no payment_id")
@@ -459,14 +460,12 @@ class UnzerAbstract(PaymentProviderAbstract):
 
         order_skel = self._append_payment_to_order_skel(
             order_skel,
-            {
+            PaymentTransaction(**{
                 "public_key": self.public_key,
                 "type_id": type_id,
                 "charged": False,  # TODO: Set value
                 "aborted": False,  # TODO: Set value
-                "client_ip": current.request.get().request.client_addr,
-                "user_agent": current.request.get().request.user_agent,
-            }
+            })
         )
         return JsonResponse(order_skel)
 
