@@ -24,9 +24,8 @@ from viur.core.skeleton import SkeletonInstance
 
 from viur import toolkit
 from . import PaymentProviderAbstract
-from .. import PaymentTransaction
 from ..globals import SHOP_LOGGER
-from ..types import InvalidStateError, JsonResponse, error_handler
+from ..types import InvalidStateError, JsonResponse, PaymentTransaction, error_handler
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -299,7 +298,7 @@ class PayPalCheckout(PaymentProviderAbstract):
 
         order_skel = self._append_payment_to_order_skel(
             order_skel,
-             PaymentTransaction(**{
+            PaymentTransaction(**{
                 "client_id": self._client_id,
                 "order_id": order_id,
                 "payment_id": order_id,
