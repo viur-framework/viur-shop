@@ -4,6 +4,7 @@ import typing as t  # noqa
 from apimatic_core.utilities.api_helper import ApiHelper
 from paypalserversdk.controllers.orders_controller import OrdersController
 from paypalserversdk.controllers.payments_controller import PaymentsController
+from paypalserversdk.http.api_response import ApiResponse
 from paypalserversdk.http.auth.o_auth_2 import ClientCredentialsAuthCredentials
 from paypalserversdk.logging.configuration.api_logging_configuration import (
     LoggingConfiguration,
@@ -12,9 +13,13 @@ from paypalserversdk.logging.configuration.api_logging_configuration import (
 )
 from paypalserversdk.models.amount_with_breakdown import AmountWithBreakdown
 from paypalserversdk.models.checkout_payment_intent import CheckoutPaymentIntent
+from paypalserversdk.models.order import Order
 from paypalserversdk.models.order_request import OrderRequest
+from paypalserversdk.models.order_status import OrderStatus
+from paypalserversdk.models.purchase_unit import PurchaseUnit
 from paypalserversdk.models.purchase_unit_request import PurchaseUnitRequest
 from paypalserversdk.paypal_serversdk_client import PaypalServersdkClient
+from viur import toolkit
 from viur.core import access, current, db, errors, exposed
 from viur.core.skeleton import SkeletonInstance
 
@@ -154,24 +159,31 @@ class PayPalCheckout(PaymentProviderAbstract):
             else:
                 logger.debug(f"{payment_id=}")
 
-                order = self.client.orders.get_order(dict(id=payment_id))
+                order : ApiResponse = self.client.orders.get_order(dict(id=payment_id))
                 logger.info(f"order: {order!r}")
 
             payment_results.append(order)
 
-            logger.info(f"{order["status"]=!r}")
-            assert len(order["purchase_units"]) == 1, len(order["purchase_units"])
-            purchase_unit = order["purchase_units"][0]
-            logger.info(f"{purchase_unit["status"]=!r}")
+            order : Order = order.body
 
-            assert len(purchase_unit["payments"]["captures"]) == 1, len(purchase_unit["payments"]["captures"])
-            capture = purchase_unit["capture"][0]
-            logger.info(f"{capture["status"]=!r}")
+            logger.info(f"{toolkit.vars_full(order)=!r}")
+            logger.info(f"{order.status=!r}")
+            assert len(order.purchase_units) == 1, len(order.purchase_units)
+            purchase_unit :PurchaseUnit = order.purchase_units[0]
+            logger.debug(f"{purchase_unit=!r}")
+            logger.debug(f"{purchase_unit.payments=!r}")
+            logger.debug(f"{purchase_unit.payments.captures=!r}")
+            # logger.info(f"{purchase_unit.status=!r}")
+
+            assert len(purchase_unit.payments.captures) == 1, len(purchase_unit.payments.captures)
+            capture = purchase_unit.payments.captures[0]
+            logger.info(f"{capture.status=!r}")
 
             # TODO
-            assert float(capture["amount"]["value"]) == order_skel["total"]
-            assert capture["invoice_id"] == order_skel["order_uid"]
-            assert capture["status"] == "COMPLETED"
+            assert float(capture.amount.value) == order_skel["total"]
+            assert capture.invoice_id == order_skel["order_uid"]
+            assert capture.status == OrderStatus.COMPLETED
+            assert order.status == OrderStatus.COMPLETED
 
             # if str(payment.invoiceId) != str(order_skel["order_uid"]):
             #     raise e.InvalidStateError(f'{payment.invoiceId} != {order_skel["order_uid"]}')
@@ -179,7 +191,7 @@ class PayPalCheckout(PaymentProviderAbstract):
             # if payment.state == PaymentState.COMPLETED and payment.amountCharged == order_skel["total"]:
             #     return True, payment
 
-            return True, order
+            return True, ApiHelper.json_serialize(order, should_encode=False)
 
         return False, payment_results
 
