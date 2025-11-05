@@ -118,7 +118,9 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
     # @log_unzer_error
     def check_payment_deferred(self, order_key: db.Key) -> None:
         """Check the status for a payment deferred"""
+        logger.debug(f"Checking payment for {order_key=!r} deferred")
         order_skel = self.shop.order.skel().read(order_key)
+        logger.debug(f"Checking payment for {order_skel=!r} deferred")
         is_paid, payment = self.check_payment_state(order_skel)
         if is_paid and order_skel["is_paid"]:
             logger.info(f'Order {order_skel["key"]!r} already marked as paid. Nothing to do.')

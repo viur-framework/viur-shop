@@ -122,7 +122,7 @@ class PayPalCheckout(PaymentProviderAbstract):
                             #     )
                             # ],
                             reference_id=str(order_skel["key"].id_or_name),
-                            custom_id=order_skel["order_uid"],
+                            custom_id=str(order_skel["key"].id_or_name),
                             invoice_id=order_skel["order_uid"],
                         )
                     ],
@@ -184,9 +184,13 @@ class PayPalCheckout(PaymentProviderAbstract):
 
             logger.info(f"{toolkit.vars_full(order)=!r}")
             logger.info(f"{order.status=!r}")
+            if order.status != OrderStatus.COMPLETED:
+                continue
+
             assert len(order.purchase_units) == 1, len(order.purchase_units)
             purchase_unit: PurchaseUnit = order.purchase_units[0]
             logger.debug(f"{purchase_unit=!r}")
+            assert hasattr(purchase_unit, "payments"), "Not payment@puchase_unit"
             logger.debug(f"{purchase_unit.payments=!r}")
             logger.debug(f"{purchase_unit.payments.captures=!r}")
             # logger.info(f"{purchase_unit.status=!r}")
@@ -195,9 +199,13 @@ class PayPalCheckout(PaymentProviderAbstract):
             capture = purchase_unit.payments.captures[0]
             logger.info(f"{capture.status=!r}")
 
+            if capture.invoice_id != order_skel["order_uid"]:
+                logger.warning(f"{capture.invoice_id=} != {order_skel["order_uid"]=}")
+                continue
+
             # TODO
             assert float(capture.amount.value) == order_skel["total"]
-            assert capture.invoice_id == order_skel["order_uid"]
+            assert capture.invoice_id == order_skel["order_uid"], f"{capture.invoice_id=} != {order_skel["order_uid"]=}"
             assert capture.status == OrderStatus.COMPLETED
             assert order.status == OrderStatus.COMPLETED
 
@@ -242,19 +250,21 @@ class PayPalCheckout(PaymentProviderAbstract):
         #     logger.warning(f"Unallowed IP address {ip}")
         #     raise errors.Forbidden
 
-        if payload.get("event_type") == "CHECKOUT.ORDER.COMPLETED":
-
-            try:
-                order_short_key = payload["resource"]["purchase_units"][0]["reference_id"]
-            except (KeyError, TypeError, IndexError) as exc:
-                logger.exception(exc)
-                raise errors.BadRequest("Invalid payment reference_id")
+        if payload.get("event_type") == "PAYMENT.CAPTURE.COMPLETED":
+            # try:
+            #     order_short_key = payload["resource"]["purchase_units"][0]["reference_id"]
+            # except (KeyError, TypeError, IndexError) as exc:
+            #     logger.exception(exc)
+            #     raise errors.BadRequest("Invalid payment reference_id")
+            custom_id = payload["resource"]["custom_id"]
+            invoice_id = payload["resource"]["invoice_id"]
 
             order_skel = self.shop.order.skel()
-            if not order_skel.read(order_short_key):
-                logger.warning(f"Cannot load order skel with {order_short_key=}. Not from us?")
-                # return None
-                raise errors.BadRequest("Unknown order")
+            if not order_skel.read(custom_id):
+                logger.warning(f"Cannot load order skel with {custom_id=} (short-key). Not from us?")
+                if not (order_skel := order_skel.all().filter("order_uid =", invoice_id).getSkel()):
+                    logger.warning(f"Cannot load order skel with {invoice_id=} (order_uid). Not from us?")
+                    raise errors.BadRequest("Unknown order")
 
             # Do this with a delay, otherwise there may be an interference with the return_hook
             logger.info(f'Check payment for {order_skel["key"]!r} deferred')
