@@ -414,8 +414,8 @@ class Order(ShopModuleAbstract, List):
         order_skel: "SkeletonInstance",
     ) -> list[ClientError]:
         errors = []
-        # if order_skel["is_ordered"]:
-        #     errors.append(ClientError("already is_ordered"))
+        if order_skel["is_ordered"]:
+            errors.append(ClientError("already is_ordered"))
         if not order_skel["cart"]:
             errors.append(ClientError("cart is missing"))
         if not order_skel["cart"] or not order_skel["cart"]["dest"]["shipping_address"]:
