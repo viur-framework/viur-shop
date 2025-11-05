@@ -321,6 +321,7 @@ class UnzerAbstract(PaymentProviderAbstract):
 
         Endpoint to which customers are redirected once they have processed a payment on the payment server.
         """
+        # TODO: move to abstract?
         order_key = self.shop.api._normalize_external_key(order_key, "order_key")
         order_skel = self.shop.order.viewSkel()
         if not order_skel.read(order_key):

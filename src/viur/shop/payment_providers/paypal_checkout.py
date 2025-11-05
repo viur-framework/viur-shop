@@ -1,10 +1,10 @@
+import enum
 import json
 import logging
 import typing as t  # noqa
 
 from apimatic_core.utilities.api_helper import ApiHelper
 from paypalserversdk.controllers.orders_controller import OrdersController
-from paypalserversdk.controllers.payments_controller import PaymentsController
 from paypalserversdk.http.api_response import ApiResponse
 from paypalserversdk.http.auth.o_auth_2 import ClientCredentialsAuthCredentials
 from paypalserversdk.logging.configuration.api_logging_configuration import (
@@ -92,19 +92,12 @@ class PayPalCheckout(PaymentProviderAbstract):
         self,
         order_skel: SkeletonInstance_T[OrderSkel],
     ) -> t.Any:
-        orders_controller: OrdersController = self.client.orders
-        payments_controller: PaymentsController = self.client.payments
-
         """
         Create an order to start the transaction.
 
         @see https://developer.paypal.com/docs/api/orders/v2/#orders_create
         """
-
-        # request_body = request.get_json()
-        # # use the cart information passed from the front-end to calculate the order amount detals
-        # cart = request_body["cart"]
-        order = orders_controller.create_order(
+        order = self.client.orders.create_order(
             {
                 "body": OrderRequest(
                     intent=CheckoutPaymentIntent.CAPTURE,
@@ -117,32 +110,18 @@ class PayPalCheckout(PaymentProviderAbstract):
                                 #     item_total=Money(currency_code="EUR", value=order_skel["total"])
                                 # ),
                             ),
-                            # items=[
-                            #     Item(
-                            #         name="T-Shirt",
-                            #         unit_amount=Money(currency_code="EUR", value="100"),
-                            #         quantity="1",
-                            #         description="Super Fresh Shirt",
-                            #         sku="sku01",
-                            #         category=ItemCategory.PHYSICAL_GOODS,
-                            #     )
-                            # ],
                             reference_id=str(order_skel["key"].id_or_name),
                             custom_id=str(order_skel["key"].id_or_name),
                             invoice_id=order_skel["order_uid"],
                         )
                     ],
-
                 )
             }
         )
         # TODO: store this order.id -- it's the payment_id
         logger.debug(f"Order created: {order}.")
-        logger.debug(f"{order=}")
         logger.debug(f"{order.body=}")
-        # logger.debug(f"{ApiHelper.json_serialize(order.body)=}")
         logger.debug(f"{ApiHelper.json_serialize(order.body, should_encode=False)=}")
-        # logger.debug(f"{ApiHelper.to_dictionary(order.body)=}")
 
         order_skel = self._append_payment_to_order_skel(
             order_skel,
@@ -168,67 +147,65 @@ class PayPalCheckout(PaymentProviderAbstract):
         payment_results = []
         payment_src: PaymentTransaction
         for idx, payment_src in enumerate(order_skel["payment"]["payments"], start=1):
-            if not (payment_id := payment_src.get("payment_id")):
-                logger.error(f"Payment #{idx} has no payment_id")
-                continue
-                raise InvalidStateError(f"Payment #{idx} has no payment_id")
-                # Fetch by order short key (orderId)
-                order_id = str(order_skel["key"].id_or_name)
-                logger.debug(f"{order_id=}")
-                payment = self.client.getPayment(order_id)
-                logger.debug(f"{payment=}")
-                order = None
-            else:
-                logger.debug(f"{payment_id=}")
+            payment_id = payment_src["payment_id"]
+            logger.debug(f"{payment_id=}")
 
-                order: ApiResponse = self.client.orders.get_order(dict(id=payment_id))
-                logger.info(f"order: {order!r}")
-
-            payment_results.append(order)
-
+            order: ApiResponse = self.client.orders.get_order(dict(id=payment_id))
+            logger.info(f"order: {order!r}")
             order: Order = order.body
+            payment_results.append(order)
 
             logger.info(f"{toolkit.vars_full(order)=!r}")
             logger.info(f"{order.status=!r}")
-            if order.status != OrderStatus.COMPLETED:
-                continue
 
-            assert len(order.purchase_units) == 1, len(order.purchase_units)
+            if order.status != OrderStatus.COMPLETED:
+                logger.info(f"Payment #{idx} is not completed ({order.status=!r})")
+                continue  # This payment is incomplete
+
+            if (purchase_units_length := len(order.purchase_units)) != 1:
+                logger.info(f"Payment #{idx} has an invalid amount of purchase_units ({purchase_units_length=})")
+                continue  # This payment is invalid
+
             purchase_unit: PurchaseUnit = order.purchase_units[0]
             logger.debug(f"{purchase_unit=!r}")
-            assert hasattr(purchase_unit, "payments"), "Not payment@puchase_unit"
+
+            if not hasattr(purchase_unit, "payments"):
+                logger.info(f"Payment #{idx} has purchase_unit(s), but without payment ({purchase_unit=})")
+                continue  # This payment is incomplete
+
             logger.debug(f"{purchase_unit.payments=!r}")
             logger.debug(f"{purchase_unit.payments.captures=!r}")
-            # logger.info(f"{purchase_unit.status=!r}")
 
-            assert len(purchase_unit.payments.captures) == 1, len(purchase_unit.payments.captures)
+            if (captures_length := len(purchase_unit.payments.captures)) != 1:
+                logger.info(
+                    f"Payment #{idx} has purchase_unit(s) with an invalid amount of captures ({captures_length=})")
+                continue  # This payment is invalid
+
             capture = purchase_unit.payments.captures[0]
             logger.info(f"{capture.status=!r}")
 
             if capture.invoice_id != order_skel["order_uid"]:
-                logger.warning(f"{capture.invoice_id=} != {order_skel["order_uid"]=}")
+                logger.info(f"Payment #{idx} has a capture that does not match the order_uid "
+                            f"({capture.invoice_id=} != {order_skel["order_uid"]=})")
                 continue
 
-            # TODO
-            assert float(capture.amount.value) == order_skel["total"]
-            assert capture.invoice_id == order_skel["order_uid"], f"{capture.invoice_id=} != {order_skel["order_uid"]=}"
-            assert capture.status == OrderStatus.COMPLETED
-            assert order.status == OrderStatus.COMPLETED
+            if capture.status != OrderStatus.COMPLETED:
+                logger.info(f"Payment #{idx} has a capture that is not completed ({capture.status=!r})")
+                continue  # This payment is incomplete
 
-            # if str(payment.invoiceId) != str(order_skel["order_uid"]):
-            #     raise e.InvalidStateError(f'{payment.invoiceId} != {order_skel["order_uid"]}')
-            #
-            # if payment.state == PaymentState.COMPLETED and payment.amountCharged == order_skel["total"]:
-            #     return True, payment
+            if capture.invoice_id != order_skel["order_uid"]:
+                logger.info(f"Payment #{idx} has a capture that does not match the order_uid "
+                            f"({capture.invoice_id=} != {order_skel["order_uid"]=})")
+                continue
 
-            return True, ApiHelper.json_serialize(order, should_encode=False)
+            if capture.invoice_id != order_skel["order_uid"]:
+                logger.error(f"Payment #{idx} has a fully captured payment, but amount does not match"
+                             f"({capture.amount.value=} != {order_skel["total"]})")
+                raise InvalidStateError(f"Payment #{idx} has been captured with invalid amount")
+
+            return True, order
 
         return False, payment_results
-
-        order = self.client.orders.get_order(dict(id=payment_src["order_id"]))
-        logger.info(f"order: {order!r}")
-
-        return None, []  # TODO
 
     @exposed
     def return_handler(self):
@@ -257,11 +234,6 @@ class PayPalCheckout(PaymentProviderAbstract):
         #     raise errors.Forbidden
 
         if payload.get("event_type") == "PAYMENT.CAPTURE.COMPLETED":
-            # try:
-            #     order_short_key = payload["resource"]["purchase_units"][0]["reference_id"]
-            # except (KeyError, TypeError, IndexError) as exc:
-            #     logger.exception(exc)
-            #     raise errors.BadRequest("Invalid payment reference_id")
             custom_id = payload["resource"]["custom_id"]
             invoice_id = payload["resource"]["invoice_id"]
 
@@ -305,9 +277,9 @@ class PayPalCheckout(PaymentProviderAbstract):
 
         result = []
         for payment_src in payments:
-            if not (payment_id := payment_src.get("order_id")):
+            if not (payment_id := payment_src.get("payment_id")):
                 result.append({
-                    "error": "order_id missing",
+                    "error": "payment_id missing",
                 })
                 continue
             if (client_id := payment_src.get("client_id")) and client_id != self._client_id:
@@ -322,29 +294,15 @@ class PayPalCheckout(PaymentProviderAbstract):
             order = self.client.orders.get_order(dict(id=payment_src["order_id"]))
             logger.info(f"order: {order!r}")
 
-            #
-            # logger.info(f"payment: {payment!r}")
-            # txn = payment.getChargedTransactions()
-            # logger.info(f"charged transactions: {txn!r}")
-            # customer = payment.customerId and self.client.getCustomer(payment.customerId)
-            # logger.info(f"customer: {customer!r}")
-            # basket = payment.basketId and self.client.getBasket(payment.basketId)
-            # logger.info(f"basket: {basket!r}")
-
             result.append({
-                "order": ApiHelper.json_serialize(order.body, should_encode=False),
-                # "payment": dict(payment),
-                # "transactions": [dict(t) for t in txn],
-                # "customer": customer and dict(customer),
-                # "basket": basket and dict(basket),
+                "order": order.body,
             })
 
         result = {
-            "payments": result,
+            "payments": payments,
             "payment_state": skel and self.check_payment_state(skel),
         }
 
-        return JsonResponse(result)
         return JsonResponse(self.model_to_dict(result))
 
     @exposed
@@ -353,48 +311,49 @@ class PayPalCheckout(PaymentProviderAbstract):
         self,
         order_key: str | db.Key,
         order_id: str,
-    ):
+    ) -> JsonResponse[dict[str, dict[str, t.Any]]]:
         """
         Capture payment for the created order to complete the transaction.
 
         @see https://developer.paypal.com/docs/api/orders/v2/#orders_capture
         """
-
         order_key = self.shop.api._normalize_external_key(order_key, "order_key")
         order_skel = self.shop.order.editSkel()
         if not order_skel.read(order_key):
             raise errors.NotFound
 
-        # order_skel = self._append_payment_to_order_skel(
-        #     order_skel,
-        #     PaymentTransaction(**{
-        #         "client_id": self._client_id,
-        #         "order_id": order_id,
-        #         "payment_id": order_id,
-        #         "charged": False,  # TODO: Set value
-        #         "aborted": False,  # TODO: Set value
-        #     })
-        # )
-        # return JsonResponse(order_skel)
-
         for idx, payment_src in enumerate(order_skel["payment"]["payments"], start=1):
-            if (payment_id := payment_src.get("payment_id")) == order_id:
+            if (payment_id := payment_src["payment_id"]) == order_id:
                 logger.info(f"payment #{idx} {payment_id=}: {payment_src=}")
                 # TODO: set charged
                 break
         else:
-            raise InvalidStateError(f"payment #{order_id} not found")
+            raise InvalidStateError(f"payment {order_id=} not found")
 
         orders_controller: OrdersController = self.client.orders
-        order = orders_controller.capture_order(
-            {"id": order_id, "prefer": "return=representation"}
-        )
+        order = orders_controller.capture_order({
+            "id": order_id,
+            "prefer": "return=representation",
+        })
         logger.debug(f"Order {order_id} captured successfully.")
-        logger.debug(f"{order=}")
         logger.debug(f"{order.body=}")
 
-        self.check_payment_deferred(order_skel["key"])
+        self.check_payment_deferred(order_skel["key"], _call_deferred=False)
+        order_skel.read(order_key)  # refresh
 
-        return JsonResponse(
-            ApiHelper.json_serialize(order.body, should_encode=False)
-        )
+        return JsonResponse({
+            "skel": order_skel,
+            "payment": ApiHelper.json_serialize(order.body, should_encode=False),
+        })
+
+    @classmethod
+    def model_to_dict(cls, obj):
+        """Convert any nested PayPal model to dict representation"""
+        obj = ApiHelper.json_serialize(obj, should_encode=False)  # Convert to dict first, then process recursively
+        if isinstance(obj, dict):
+            return {k: cls.model_to_dict(v) for k, v in obj.items()}
+        elif isinstance(obj, list | tuple):
+            return [cls.model_to_dict(v) for v in obj]
+        elif isinstance(obj, enum.Enum):
+            return f"{obj!r}"
+        return obj
