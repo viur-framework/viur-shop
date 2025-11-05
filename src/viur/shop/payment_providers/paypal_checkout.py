@@ -53,18 +53,16 @@ class PayPalCheckout(PaymentProviderAbstract):
         client_id: str,
         client_secret: str,
         sandbox: bool = False,
+        client_logging_configuration: LoggingConfiguration | None | t.Literal["DEBUG"] = None,
         **kwargs: t.Any,
     ) -> None:
         super().__init__(**kwargs)
         self._client_id = client_id
         self._client_secret = client_secret
         self._sandbox = sandbox
-        self.client: PaypalServersdkClient = PaypalServersdkClient(
-            client_credentials_auth_credentials=ClientCredentialsAuthCredentials(
-                o_auth_client_id=client_id,
-                o_auth_client_secret=client_secret,
-            ),
-            logging_configuration=LoggingConfiguration(
+
+        if client_logging_configuration == "DEBUG":
+            client_logging_configuration = LoggingConfiguration(
                 log_level=logging.INFO,
                 # Disable masking of sensitive headers for Sandbox testing.
                 # This should be set to True (the default if unset) in production.
@@ -75,7 +73,15 @@ class PayPalCheckout(PaymentProviderAbstract):
                 response_logging_config=ResponseLoggingConfiguration(
                     log_headers=True, log_body=True
                 ),
+            )
+
+        self.client: PaypalServersdkClient = PaypalServersdkClient(
+            client_credentials_auth_credentials=ClientCredentialsAuthCredentials(
+                o_auth_client_id=client_id,
+                o_auth_client_secret=client_secret,
             ),
+            timeout=30,
+            logging_configuration=client_logging_configuration,
         )
 
     # --- Internal Checks & Actions during the payment flow -------------------
