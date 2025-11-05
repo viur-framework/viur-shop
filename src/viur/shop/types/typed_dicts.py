@@ -5,6 +5,7 @@ class PaymentTransactionSpecific(t.TypedDict):
     # must be set in payment provider
     payment_id: str
 
+
 class PaymentTransaction(PaymentTransactionSpecific):
     # set in abstract
     payment_provider: str
