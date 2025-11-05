@@ -103,7 +103,7 @@ class Api(ShopModuleAbstract):
         parent_cart_key = self._normalize_external_key(
             parent_cart_key, "parent_cart_key")
         assert isinstance(quantity_mode, QuantityMode)
-        if not self.shop.cart.get_article(article_key, parent_cart_key):
+        if not self.shop.cart.get_article(article_key, parent_cart_key, must_be_listed=bool(quantity)):
             raise errors.NotFound(f"{parent_cart_key} has no article with {article_key=}")
         return JsonResponse(self.shop.cart.add_or_update_article(
             article_key=article_key,
