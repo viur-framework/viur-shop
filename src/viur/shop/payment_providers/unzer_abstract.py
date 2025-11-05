@@ -10,7 +10,7 @@ from unzer.model.base import BaseModel
 from unzer.model.customer import Salutation as UnzerSalutation
 from unzer.model.payment import PaymentState
 from unzer.model.webhook import Events, IP_ADDRESS
-from viur.core import CallDeferred, access, current, db, errors, exposed, force_post
+from viur.core import access, current, db, errors, exposed, force_post
 from viur.core.skeleton import SkeletonInstance
 
 from viur import toolkit
@@ -369,6 +369,8 @@ class UnzerAbstract(PaymentProviderAbstract):
         current.request.get().response.status = "204 No Content"
         return ""
 
+    # TODO: remove
+    '''
     @CallDeferred
     @log_unzer_error
     def check_payment_deferred(self, order_key: db.Key) -> None:
@@ -382,6 +384,7 @@ class UnzerAbstract(PaymentProviderAbstract):
             self.shop.order.set_paid(order_skel)
         else:
             logger.info(f'Order {order_skel["key"]!r} is not paid')
+    '''
 
     @exposed
     @access("root")

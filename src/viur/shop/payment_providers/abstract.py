@@ -2,7 +2,7 @@ import abc
 import functools
 import uuid
 
-from viur.core import Module, current, translate, utils
+from viur.core import CallDeferred, Module, current, db, translate, utils
 from viur.core.prototypes.instanced_module import InstancedModule
 from viur.core.skeleton import SkeletonInstance
 
@@ -114,6 +114,20 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
         """
         ...
 
+    @CallDeferred
+    # @log_unzer_error
+    def check_payment_deferred(self, order_key: db.Key) -> None:
+        """Check the status for a payment deferred"""
+        order_skel = self.shop.order.skel().read(order_key)
+        is_paid, payment = self.check_payment_state(order_skel)
+        if is_paid and order_skel["is_paid"]:
+            logger.info(f'Order {order_skel["key"]!r} already marked as paid. Nothing to do.')
+        elif is_paid:
+            logger.info(f'Mark order {order_skel["key"]!r} as paid')
+            self.shop.order.set_paid(order_skel)
+        else:
+            logger.info(f'Order {order_skel["key"]!r} is not paid')
+
     @abc.abstractmethod
     # @exposed
     def return_handler(self):
@@ -165,7 +179,7 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
         self,
         order_skel: SkeletonInstance_T[OrderSkel] | None,
     ) -> PaymentProviderResult:
-        """Serialize this Payment Provder for the API
+        """Serialize this Payment Provider for the API
 
         Used by :meth:`Order.get_payment_providers` and :meth:`Order.payment_providers_list`
         Can be subclasses to expose more information via API.

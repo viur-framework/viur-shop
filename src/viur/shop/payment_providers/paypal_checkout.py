@@ -1,3 +1,4 @@
+import json
 import logging
 import typing as t  # noqa
 
@@ -19,14 +20,14 @@ from paypalserversdk.models.order_status import OrderStatus
 from paypalserversdk.models.purchase_unit import PurchaseUnit
 from paypalserversdk.models.purchase_unit_request import PurchaseUnitRequest
 from paypalserversdk.paypal_serversdk_client import PaypalServersdkClient
-from viur.core import access, db, errors, exposed
+from viur.core import access, current, db, errors, exposed, force_post
 from viur.core.skeleton import SkeletonInstance
 
 from viur import toolkit
 from . import PaymentProviderAbstract
-from ..skeletons import OrderSkel
 from ..globals import SHOP_LOGGER
-from ..types import InvalidStateError, JsonResponse, PaymentTransaction, error_handler, SkeletonInstance_T
+from ..skeletons import OrderSkel
+from ..types import InvalidStateError, JsonResponse, PaymentTransaction, SkeletonInstance_T, error_handler
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -220,8 +221,47 @@ class PayPalCheckout(PaymentProviderAbstract):
         raise errors.NotImplemented()
 
     @exposed
-    def webhook(self):
-        raise errors.NotImplemented()
+    @force_post
+    @error_handler
+    def webhook(self, *args, **kwargs):
+        """Webhook for PayPal.
+
+        Listens to all events, but handle payment-complete as backup currently only.
+        """
+        try:
+            payload = json.loads(current.request.get().request.body)
+        except ValueError:
+            raise errors.BadRequest("Invalid payload")
+        logger.info(f"Received request via webhook. {args=}, {kwargs=}")
+        logger.info(f"{payload=}")
+        logger.info(f"headers={dict(current.request.get().request.headers)!r}")
+
+        # ip = current.request.get().request.remote_addr
+        # logger.info(f"{ip=}")
+        # if ip not in IP_ADDRESS:
+        #     logger.warning(f"Unallowed IP address {ip}")
+        #     raise errors.Forbidden
+
+        if payload.get("event_type") == "CHECKOUT.ORDER.COMPLETED":
+
+            try:
+                order_short_key = payload["resource"]["purchase_units"][0]["reference_id"]
+            except (KeyError, TypeError, IndexError) as exc:
+                logger.exception(exc)
+                raise errors.BadRequest("Invalid payment reference_id")
+
+            order_skel = self.shop.order.skel()
+            if not order_skel.read(order_short_key):
+                logger.warning(f"Cannot load order skel with {order_short_key=}. Not from us?")
+                # return None
+                raise errors.BadRequest("Unknown order")
+
+            # Do this with a delay, otherwise there may be an interference with the return_hook
+            logger.info(f'Check payment for {order_skel["key"]!r} deferred')
+            self.check_payment_deferred(order_skel["key"], _countdown=60)
+
+        current.request.get().response.status = "204 No Content"
+        return ""
 
     @exposed
     @access("root")
