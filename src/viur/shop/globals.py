@@ -1,3 +1,7 @@
+"""
+Global constants and settings for the viur-shop.
+"""
+
 import logging
 import typing as t
 

@@ -1,5 +1,4 @@
 import abc
-import enum
 import functools
 import json
 import typing as t  # noqa
@@ -149,6 +148,8 @@ class UnzerAbstract(PaymentProviderAbstract):
         if callable(self._sandbox):
             return self._sandbox()
         return self._sandbox
+
+    # --- Internal Checks & Actions during the payment flow -------------------
 
     def can_checkout(
         self,
@@ -309,6 +310,8 @@ class UnzerAbstract(PaymentProviderAbstract):
                 return True, payment
 
         return False, payment_results
+
+    # --- API Endpoints  ------------------------------------------------------
 
     @exposed
     @log_unzer_error
@@ -528,14 +531,8 @@ class UnzerAbstract(PaymentProviderAbstract):
         }.get(salutation, UnzerSalutation.UNKNOWN)
 
     @classmethod
-    def model_to_dict(cls, obj):
+    def model_to_dict(cls, obj: t.Any) -> t.Any:
         """Convert any nested unzer model to dict representation"""
         if isinstance(obj, BaseModel):
             obj = dict(obj)  # Convert to dict first, then process recursively
-        if isinstance(obj, dict):
-            return {k: cls.model_to_dict(v) for k, v in obj.items()}
-        elif isinstance(obj, list | tuple):
-            return [cls.model_to_dict(v) for v in obj]
-        elif isinstance(obj, enum.Enum):
-            return f"{obj!r}"
-        return obj
+        return super().model_to_dict(obj)

@@ -1,4 +1,3 @@
-import enum
 import json
 import logging
 import typing as t  # noqa
@@ -78,6 +77,8 @@ class PayPalCheckout(PaymentProviderAbstract):
                 ),
             ),
         )
+
+    # --- Internal Checks & Actions during the payment flow -------------------
 
     def get_checkout_start_data(
         self,
@@ -193,12 +194,7 @@ class PayPalCheckout(PaymentProviderAbstract):
                 logger.info(f"Payment #{idx} has a capture that is not completed ({capture.status=!r})")
                 continue  # This payment is incomplete
 
-            if capture.invoice_id != order_skel["order_uid"]:
-                logger.info(f"Payment #{idx} has a capture that does not match the order_uid "
-                            f"({capture.invoice_id=} != {order_skel["order_uid"]=})")
-                continue
-
-            if capture.invoice_id != order_skel["order_uid"]:
+            if float(capture.amount.value) != order_skel["total"]:
                 logger.error(f"Payment #{idx} has a fully captured payment, but amount does not match"
                              f"({capture.amount.value=} != {order_skel["total"]})")
                 raise InvalidStateError(f"Payment #{idx} has been captured with invalid amount")
@@ -206,6 +202,8 @@ class PayPalCheckout(PaymentProviderAbstract):
             return True, order
 
         return False, payment_results
+
+    # --- API Endpoints  ------------------------------------------------------
 
     @exposed
     def return_handler(self):
@@ -217,7 +215,7 @@ class PayPalCheckout(PaymentProviderAbstract):
     def webhook(self, *args, **kwargs):
         """Webhook for PayPal.
 
-        Listens to all events, but handle payment-complete as backup currently only.
+        Listens to all events, but handle PAYMENT.CAPTURE.COMPLETED as backup currently only.
         """
         try:
             payload = json.loads(current.request.get().request.body)
@@ -227,6 +225,11 @@ class PayPalCheckout(PaymentProviderAbstract):
         logger.info(f"{payload=}")
         logger.info(f"headers={dict(current.request.get().request.headers)!r}")
 
+        # TODO: PayPal has many large IP-Ranges
+        #  https://www.paypal.com/li/cshelp/article/what-are-the-internet-protocol-ip-addresses-for-paypal-server-endpoints-ts1056
+        #  Verifying the request source might be more safe, but since we use this webhook only as trigger
+        #  for an payment check (that load the state from the API-Server anyway),
+        #  this is not really a security issue.
         # ip = current.request.get().request.remote_addr
         # logger.info(f"{ip=}")
         # if ip not in IP_ADDRESS:
@@ -315,6 +318,8 @@ class PayPalCheckout(PaymentProviderAbstract):
         """
         Capture payment for the created order to complete the transaction.
 
+        Has to be called by the Frontend after the user has approved the payment.
+
         @see https://developer.paypal.com/docs/api/orders/v2/#orders_capture
         """
         order_key = self.shop.api._normalize_external_key(order_key, "order_key")
@@ -347,13 +352,7 @@ class PayPalCheckout(PaymentProviderAbstract):
         })
 
     @classmethod
-    def model_to_dict(cls, obj):
+    def model_to_dict(cls, obj: t.Any) -> t.Any:
         """Convert any nested PayPal model to dict representation"""
         obj = ApiHelper.json_serialize(obj, should_encode=False)  # Convert to dict first, then process recursively
-        if isinstance(obj, dict):
-            return {k: cls.model_to_dict(v) for k, v in obj.items()}
-        elif isinstance(obj, list | tuple):
-            return [cls.model_to_dict(v) for v in obj]
-        elif isinstance(obj, enum.Enum):
-            return f"{obj!r}"
-        return obj
+        return super().model_to_dict(obj)

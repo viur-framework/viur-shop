@@ -1,4 +1,5 @@
 import abc
+import enum
 import functools
 import uuid
 
@@ -59,10 +60,14 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
         """Define the description of the payment provider"""
         return translate(f"viur.shop.payment_provider.{self.name}.descr", self.name)
 
+    # --- Internal Checks & Actions during the payment flow -------------------
+    # --- (controlled by the order module) ------------------------------------
+
     def is_available(
         self: t.Self,
         order_skel: SkeletonInstance_T[OrderSkel] | None,
     ) -> bool:
+        """Decide whether the payment provider is available."""
         return True
 
     def can_checkout(
@@ -131,20 +136,30 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
         else:
             logger.info(f'Order {order_skel["key"]!r} is not paid')
 
+    # --- API Endpoints  ------------------------------------------------------
+
     @abc.abstractmethod
     # @exposed
     def return_handler(self):
+        """Frontend Endpoint where the might be redirected to by the payment provider during the payment flow"""
         ...
 
     @abc.abstractmethod
     # @exposed
     def webhook(self):
+        """API Endpoint (Webhook) to listen for events from payment provider"""
         ...
 
     @abc.abstractmethod
     # @exposed
     def get_debug_information(self):
+        """Provide information about the payment of an order.
+
+        Only for debugging purposes. It's not an API endpoint.
+        """
         ...
+
+    # --- utils ---------------------------------------------------------------
 
     def _append_payment_to_order_skel(
         self,
@@ -193,6 +208,18 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
             image_path=self.image_path,
             is_available=self.is_available(order_skel),
         )
+
+    @classmethod
+    def model_to_dict(cls, obj: t.Any) -> t.Any:
+        """Convert any nested model to a JSON-compatible representation
+        """
+        if isinstance(obj, dict):
+            return {k: cls.model_to_dict(v) for k, v in obj.items()}
+        elif isinstance(obj, list | tuple):
+            return [cls.model_to_dict(v) for v in obj]
+        elif isinstance(obj, enum.Enum):
+            return f"{obj!r}"
+        return obj
 
 
 PaymentProviderAbstract.html = True
