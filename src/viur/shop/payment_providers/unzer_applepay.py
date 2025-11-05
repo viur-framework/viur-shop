@@ -2,8 +2,8 @@ import typing as t
 
 import unzer
 from unzer.model import PaymentType
-
 from viur.core.skeleton import SkeletonInstance
+
 from .unzer_abstract import UnzerAbstract
 from ..globals import SHOP_LOGGER
 

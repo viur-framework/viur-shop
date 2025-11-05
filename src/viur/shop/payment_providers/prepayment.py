@@ -1,9 +1,9 @@
 import typing as t
 
 from deprecated.sphinx import deprecated
-
 from viur.core import errors, exposed
 from viur.core.skeleton import SkeletonInstance
+
 from . import PaymentProviderAbstract
 from ..globals import SHOP_LOGGER
 from ..skeletons import OrderSkel

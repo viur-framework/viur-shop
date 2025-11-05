@@ -1,7 +1,6 @@
 from .abstract import PaymentProviderAbstract
 from .amazon_pay import AmazonPay
 from .invoice import Invoice
-from .paypal_plus import PayPalPlus
 from .prepayment import PrePayment, Prepayment
 
 try:
@@ -20,3 +19,12 @@ else:
     from .unzer_paylater_invoice import UnzerPaylaterInvoice
     from .unzer_paypal import UnzerPayPal
     from .unzer_sofort import UnzerSofort
+
+try:
+    import paypalserversdk
+except ImportError:
+    # The paypal extra was not enabled, we don't import the related providers
+    ...
+else:
+    del paypalserversdk
+    from .paypal_checkout import PayPalCheckout

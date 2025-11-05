@@ -1,5 +1,4 @@
 import abc
-import enum
 import functools
 import json
 import typing as t  # noqa
@@ -10,10 +9,10 @@ from unzer.model.base import BaseModel
 from unzer.model.customer import Salutation as UnzerSalutation
 from unzer.model.payment import PaymentState
 from unzer.model.webhook import Events, IP_ADDRESS
+from viur.core import access, current, db, errors, exposed, force_post
+from viur.core.skeleton import SkeletonInstance
 
 from viur import toolkit
-from viur.core import CallDeferred, access, current, db, errors, exposed, force_post
-from viur.core.skeleton import SkeletonInstance
 from viur.shop.skeletons import OrderSkel
 from viur.shop.types import *
 from . import PaymentProviderAbstract
@@ -150,6 +149,8 @@ class UnzerAbstract(PaymentProviderAbstract):
             return self._sandbox()
         return self._sandbox
 
+    # --- Internal Checks & Actions during the payment flow -------------------
+
     def can_checkout(
         self,
         order_skel: SkeletonInstance,
@@ -216,7 +217,7 @@ class UnzerAbstract(PaymentProviderAbstract):
     def get_checkout_start_data(
         self,
         order_skel: SkeletonInstance,
-    ) -> t.Any:
+    ) -> dict[str, t.Any]:
         return {
             "public_key": self.public_key,
             "sandbox": self.sandbox,
@@ -287,6 +288,7 @@ class UnzerAbstract(PaymentProviderAbstract):
         :return: A tuple: [is_paid-boolean, payment-data]
         """
         payment_results = []
+        payment_src: PaymentTransaction
         for idx, payment_src in enumerate(order_skel["payment"]["payments"], start=1):
             if not (payment_id := payment_src.get("payment_id")):
                 logger.error(f"Payment #{idx} has no payment_id")
@@ -309,6 +311,8 @@ class UnzerAbstract(PaymentProviderAbstract):
 
         return False, payment_results
 
+    # --- API Endpoints  ------------------------------------------------------
+
     @exposed
     @log_unzer_error
     @error_handler
@@ -320,6 +324,7 @@ class UnzerAbstract(PaymentProviderAbstract):
 
         Endpoint to which customers are redirected once they have processed a payment on the payment server.
         """
+        # TODO: move to abstract?
         order_key = self.shop.api._normalize_external_key(order_key, "order_key")
         order_skel = self.shop.order.viewSkel()
         if not order_skel.read(order_key):
@@ -368,6 +373,8 @@ class UnzerAbstract(PaymentProviderAbstract):
         current.request.get().response.status = "204 No Content"
         return ""
 
+    # TODO: remove
+    '''
     @CallDeferred
     @log_unzer_error
     def check_payment_deferred(self, order_key: db.Key) -> None:
@@ -381,6 +388,7 @@ class UnzerAbstract(PaymentProviderAbstract):
             self.shop.order.set_paid(order_skel)
         else:
             logger.info(f'Order {order_skel["key"]!r} is not paid')
+    '''
 
     @exposed
     @access("root")
@@ -459,14 +467,12 @@ class UnzerAbstract(PaymentProviderAbstract):
 
         order_skel = self._append_payment_to_order_skel(
             order_skel,
-            {
+            PaymentTransaction(**{
                 "public_key": self.public_key,
                 "type_id": type_id,
                 "charged": False,  # TODO: Set value
                 "aborted": False,  # TODO: Set value
-                "client_ip": current.request.get().request.client_addr,
-                "user_agent": current.request.get().request.user_agent,
-            }
+            })
         )
         return JsonResponse(order_skel)
 
@@ -525,14 +531,8 @@ class UnzerAbstract(PaymentProviderAbstract):
         }.get(salutation, UnzerSalutation.UNKNOWN)
 
     @classmethod
-    def model_to_dict(cls, obj):
+    def model_to_dict(cls, obj: t.Any) -> t.Any:
         """Convert any nested unzer model to dict representation"""
         if isinstance(obj, BaseModel):
             obj = dict(obj)  # Convert to dict first, then process recursively
-        if isinstance(obj, dict):
-            return {k: cls.model_to_dict(v) for k, v in obj.items()}
-        elif isinstance(obj, list | tuple):
-            return [cls.model_to_dict(v) for v in obj]
-        elif isinstance(obj, enum.Enum):
-            return f"{obj!r}"
-        return obj
+        return super().model_to_dict(obj)

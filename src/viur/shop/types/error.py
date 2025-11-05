@@ -151,6 +151,7 @@ def error_handler(
             except core_errors.HTTPException as exc:
                 raise exc
             except Exception as exc:  # noqa
+                logger.exception(exc)
                 return ErrorResponse.from_exception(
                     exception=exc,
                 )
