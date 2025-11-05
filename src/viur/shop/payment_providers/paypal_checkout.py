@@ -24,8 +24,9 @@ from viur.core.skeleton import SkeletonInstance
 
 from viur import toolkit
 from . import PaymentProviderAbstract
+from ..skeletons import OrderSkel
 from ..globals import SHOP_LOGGER
-from ..types import InvalidStateError, JsonResponse, PaymentTransaction, error_handler
+from ..types import InvalidStateError, JsonResponse, PaymentTransaction, error_handler, SkeletonInstance_T
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -82,7 +83,7 @@ class PayPalCheckout(PaymentProviderAbstract):
 
     def checkout(
         self,
-        order_skel: SkeletonInstance,
+        order_skel: SkeletonInstance_T[OrderSkel],
     ) -> t.Any:
         orders_controller: OrdersController = self.client.orders
         payments_controller: PaymentsController = self.client.payments
@@ -135,6 +136,18 @@ class PayPalCheckout(PaymentProviderAbstract):
         # logger.debug(f"{ApiHelper.json_serialize(order.body)=}")
         logger.debug(f"{ApiHelper.json_serialize(order.body, should_encode=False)=}")
         # logger.debug(f"{ApiHelper.to_dictionary(order.body)=}")
+
+        order_skel = self._append_payment_to_order_skel(
+            order_skel,
+            PaymentTransaction(**{
+                "client_id": self._client_id,
+                "order_id": order.body.id,
+                "payment_id": order.body.id,
+                "charged": False,  # TODO: Set value
+                "aborted": False,  # TODO: Set value
+            })
+        )
+
         return ApiHelper.json_serialize(order.body, should_encode=False)
 
     def charge(self):
@@ -296,17 +309,25 @@ class PayPalCheckout(PaymentProviderAbstract):
         if not order_skel.read(order_key):
             raise errors.NotFound
 
-        order_skel = self._append_payment_to_order_skel(
-            order_skel,
-            PaymentTransaction(**{
-                "client_id": self._client_id,
-                "order_id": order_id,
-                "payment_id": order_id,
-                "charged": False,  # TODO: Set value
-                "aborted": False,  # TODO: Set value
-            })
-        )
+        # order_skel = self._append_payment_to_order_skel(
+        #     order_skel,
+        #     PaymentTransaction(**{
+        #         "client_id": self._client_id,
+        #         "order_id": order_id,
+        #         "payment_id": order_id,
+        #         "charged": False,  # TODO: Set value
+        #         "aborted": False,  # TODO: Set value
+        #     })
+        # )
         # return JsonResponse(order_skel)
+
+        for idx, payment_src in enumerate(order_skel["payment"]["payments"], start=1):
+            if (payment_id := payment_src.get("payment_id")) == order_id:
+                logger.info(f"payment #{idx} {payment_id=}: {payment_src=}")
+                # TODO: set charged
+                break
+        else:
+            raise InvalidStateError(f"payment #{order_id} not found")
 
         orders_controller: OrdersController = self.client.orders
         order = orders_controller.capture_order(
