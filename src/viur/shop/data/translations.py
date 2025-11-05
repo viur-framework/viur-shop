@@ -105,6 +105,10 @@ TRANSLATIONS = {
         "_default_text": "Payment in advance",
         "de": "Bezahlen über Vorkasse",
     },
+    "viur.shop.payment_provider.paypal_checkout": {
+        "_default_text": "PayPal",
+        "de": "Bezahlen über PayPal",
+    },
 
     # --- Enums ---------------------------------------------------------------
     # Availability

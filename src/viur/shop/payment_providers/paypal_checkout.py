@@ -27,7 +27,13 @@ from viur import toolkit
 from . import PaymentProviderAbstract
 from ..globals import SHOP_LOGGER
 from ..skeletons import OrderSkel
-from ..types import InvalidStateError, JsonResponse, PaymentTransaction, SkeletonInstance_T, error_handler
+from ..types import (
+    InvalidStateError,
+    JsonResponse,
+    PaymentTransaction,
+    SkeletonInstance_T,
+    error_handler,
+)
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -62,7 +68,7 @@ class PayPalCheckout(PaymentProviderAbstract):
             logging_configuration=LoggingConfiguration(
                 log_level=logging.INFO,
                 # Disable masking of sensitive headers for Sandbox testing.
-                # This should be set to True (the default if unset)in production.
+                # This should be set to True (the default if unset) in production.
                 mask_sensitive_headers=not sandbox,
                 request_logging_config=RequestLoggingConfiguration(
                     log_headers=True, log_body=True
@@ -386,6 +392,8 @@ class PayPalCheckout(PaymentProviderAbstract):
         logger.debug(f"Order {order_id} captured successfully.")
         logger.debug(f"{order=}")
         logger.debug(f"{order.body=}")
+
+        self.check_payment_deferred(order_skel["key"])
 
         return JsonResponse(
             ApiHelper.json_serialize(order.body, should_encode=False)
