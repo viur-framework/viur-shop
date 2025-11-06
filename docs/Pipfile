@@ -13,7 +13,7 @@ furo = "~=2024.4"
 [dev-packages]
 
 [requires]
-python_version = "3.11"
+python_version = "3.13"
 
 [scripts]
 # pipenv run [...]
