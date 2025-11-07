@@ -239,8 +239,9 @@ TRANSLATIONS = {
         "de": "Gilt für einen Artikel",
     },
     "skeleton.discountcondition.application_domain.all": {
-        "en": "Apply to all articles",
-        "de": "Gilt für alle Artikel",
+        "en": "Not specified; applies to all contexts",
+        "de": "Nicht spezifiziert; gilt für alle Kontexte",
+        "fr": "Non spécifié ; s'applique à tous les contextes",
     },
     # CustomerGroup
     "skeleton.discountcondition.scope_customer_group.all": {
