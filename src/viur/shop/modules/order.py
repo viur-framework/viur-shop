@@ -138,7 +138,7 @@ class Order(ShopModuleAbstract, List):
             raise ValueError(f"Invalid {cart_key=}!")
         assert cart_skel.read(cart_key)
         skel.setBoneValue("cart", cart_key)
-        skel["total"] = cart_skel["total"]
+        skel["total"] = cart_skel["total_discount_price"]
         if user := current.user.get():
             # use current user as default value
             skel.setBoneValue("customer", user["key"])
@@ -340,7 +340,7 @@ class Order(ShopModuleAbstract, List):
         order_skel: SkeletonInstance_T[OrderSkel],
     ) -> SkeletonInstance_T[OrderSkel]:
         cart_skel = self.shop.cart.freeze_cart(order_skel["cart"]["dest"]["key"])
-        order_skel["total"] = cart_skel["total"]
+        order_skel["total"] = cart_skel["total_discount_price"]
 
         # Clone the address, so in case the user edits the address, existing orders wouldn't be affected by this
         # TODO: Can we do this copy-on-write instead; clone if an address is edited and replace on used order skels?
