@@ -15,6 +15,7 @@ from ..globals import MAX_FETCH_LIMIT, SENTINEL, SHOP_INSTANCE, SHOP_LOGGER
 from ..services import EVENT_SERVICE, Event
 from ..skeletons.article import ArticleAbstractSkel
 from ..skeletons.cart import CartItemSkel, CartNodeSkel
+from ..types.response import make_json_dumpable
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -438,7 +439,7 @@ class Cart(ShopModuleAbstract, Tree):
     ) -> SkeletonInstance_T[CartNodeSkel] | None:
         if not isinstance(cart_key, db.Key):
             raise TypeError(f"cart_key must be an instance of db.Key")
-        if not isinstance(cart_type, (CartType, type(None))):
+        if cart_type is not SENTINEL and not isinstance(cart_type, (CartType, type(None))):
             raise TypeError(f"cart_type must be an instance of CartType")
         if parent_cart_key is not SENTINEL and not isinstance(parent_cart_key, (db.Key, type(None))):
             raise TypeError(f"parent_cart_key must be an instance of db.Key")
@@ -654,6 +655,7 @@ class Cart(ShopModuleAbstract, Tree):
             "vat": cart_skel["vat"],
             "total_quantity": cart_skel["total_quantity"],
             "shipping": cart_skel["shipping"],
+            "discount": make_json_dumpable(cart_skel["discount"]),
         }
         cart_skel["is_frozen"] = True
         cart_skel.write()

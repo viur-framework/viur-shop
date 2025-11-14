@@ -155,12 +155,12 @@ class Api(ShopModuleAbstract):
         self,
         *,
         parent_cart_key: str | db.Key = None,
-        cart_type: CartType = None,
-        name: str = None,
-        customer_comment: str = None,
-        shipping_address_key: str | db.Key = None,
-        shipping_key: str | db.Key = None,
-        discount_key: str | db.Key = None,
+        cart_type: CartType = SENTINEL,
+        name: str = SENTINEL,
+        customer_comment: str = SENTINEL,
+        shipping_address_key: str | db.Key = SENTINEL,
+        shipping_key: str | db.Key = SENTINEL,
+        discount_key: str | db.Key = SENTINEL,
         **kwargs,
     ):
         """
@@ -206,12 +206,12 @@ class Api(ShopModuleAbstract):
         self,
         *,
         cart_key: str | db.Key,
-        cart_type: CartType = None,  # TODO: necessary?
+        cart_type: CartType = SENTINEL,  # TODO: necessary?
         name: str = None,
-        customer_comment: str = None,
-        shipping_address_key: str | db.Key = None,
+        customer_comment: str = SENTINEL,
+        shipping_address_key: str | db.Key = SENTINEL,
         shipping_key: str | db.Key = SENTINEL,
-        discount_key: str | db.Key = None,  # TODO: use sentinel?
+        discount_key: str | db.Key = SENTINEL,
         **kwargs,
     ):
         """
