@@ -207,7 +207,7 @@ class Api(ShopModuleAbstract):
         *,
         cart_key: str | db.Key,
         cart_type: CartType = SENTINEL,  # TODO: necessary?
-        name: str = None,
+        name: str = SENTINEL,
         customer_comment: str = SENTINEL,
         shipping_address_key: str | db.Key = SENTINEL,
         shipping_key: str | db.Key = SENTINEL,
@@ -267,15 +267,20 @@ class Api(ShopModuleAbstract):
     def cart_clear(
         self,
         *,
-        cart_key: str | db.Key,
-        remove_sub_carts: bool = False,
+        cart_key: str | db.Key | t.Literal["BASKET"] = SENTINEL,
+        keep_sub_carts: bool = False,
     ):
         """Remove direct or all children
 
-        :param remove_sub_carts: Remove child leafs, keep nodes
+        :param cart_key: Key of the (sub) cart (node) from which
+            the children should be removed.
+            Use "BASKET" as key to use the basket of the current session.
+        :param keep_sub_carts: Keep child nodes, remove only leafs
         """
+        if cart_key == "BASKET":
+            cart_key = self.shop.cart.get_current_session_cart_key(create_if_missing=False)
         cart_key = self._normalize_external_key(cart_key, "cart_key")
-        raise errors.NotImplemented  # TODO
+        return JsonResponse(self.shop.cart.cart_clear(cart_key, keep_sub_carts=keep_sub_carts))
 
     @exposed
     def basket_list(
