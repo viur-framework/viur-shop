@@ -559,11 +559,11 @@ class Cart(ShopModuleAbstract, Tree):
                           default_variables={"cart_key": cart_key})
             )
 
-        for leaf_skel in toolkit.iter_skel(self.viewSkel("leaf").all().filter("parententry =", cart_skel["key"])):
+        for leaf_skel in toolkit.iter_skel(self.editSkel("leaf").all().filter("parententry =", cart_skel["key"])):
             leaf_skel.delete()
 
         if not keep_sub_carts:
-            for node_skel in toolkit.iter_skel(self.viewSkel("node").all().filter("parententry =", cart_skel["key"])):
+            for node_skel in toolkit.iter_skel(self.editSkel("node").all().filter("parententry =", cart_skel["key"])):
                 self.cart_clear(node_skel["key"], keep_sub_carts=keep_sub_carts)
                 node_skel.delete()
 
