@@ -33,7 +33,7 @@ from viur.core import current, utils
 from viur.core.skeleton import RefSkel, SkeletonInstance, skeletonByKind
 from .enums import *
 from .exceptions import DispatchError, InvalidStateError
-from ..globals import SENTINEL, SHOP_INSTANCE, SHOP_LOGGER, Sentinel
+from ..globals import DEBUG_DISCOUNTS, SENTINEL, SHOP_INSTANCE, SHOP_LOGGER, Sentinel
 from ..services import HOOK_SERVICE, Hook
 from ..types import SkeletonInstance_T
 
@@ -285,9 +285,9 @@ class DiscountValidator:
                 self._is_fulfilled = any(cv.is_fulfilled for cv in self.condition_validator_instances)
             elif self.discount_skel["condition_operator"] == ConditionOperator.ALL:
                 logger.debug("Checking for all")
-                logger.debug(f"{self.condition_validator_instances=}")
-
-                pprint.pprint(self.condition_validator_instances)
+                if DEBUG_DISCOUNTS.get():
+                    logger.debug(f"{self.condition_validator_instances=}")
+                    pprint.pprint(self.condition_validator_instances)
                 self._is_fulfilled = all(cv.is_fulfilled for cv in self.condition_validator_instances)
             else:
                 raise InvalidStateError(f'Invalid condition operator: {self.discount_skel["condition_operator"]}')
