@@ -1,17 +1,24 @@
+import enum
 import functools
 import typing as t  # noqa
 
 import unzer
-from viur.core import current, db, errors, exposed
-from viur.core.skeleton import SkeletonInstance
+from unzer import PaymentResponse
 
 from viur import toolkit
+from viur.core import current, db, errors, exposed
+from viur.core.skeleton import SkeletonInstance
 from viur.shop.skeletons import OrderSkel
 from viur.shop.types import *
 from .unzer_abstract import UnzerAbstract, log_unzer_error
 from ..globals import MAX_FETCH_LIMIT, SHOP_LOGGER
 
 logger = SHOP_LOGGER.getChild(__name__)
+
+
+class ChargeMode(enum.IntEnum):
+    CHARGE_DIRECTLY = enum.auto()
+    CHARGE_MANUAL = enum.auto()
 
 
 class UnzerPaylaterInvoice(UnzerAbstract):
@@ -22,6 +29,15 @@ class UnzerPaylaterInvoice(UnzerAbstract):
     """
 
     name: t.Final[str] = "unzer-paylater_invoice"
+
+    def __init__(
+        self,
+        *args: t.Any,
+        charge_mode: ChargeMode = ChargeMode.CHARGE_DIRECTLY,
+        **kwargs: t.Any,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.charge_mode = charge_mode
 
     def can_order(
         self,
@@ -56,15 +72,10 @@ class UnzerPaylaterInvoice(UnzerAbstract):
         logger.debug(f"{payment=} [authorize response]")
         unzer_session["paymentId"] = payment.paymentId
         unzer_session["redirectUrl"] = payment.redirectUrl
-        processing_data = payment.processing.asDict()
-
-        payment = payment.charge(
-            amount=order_skel["total"]
-        )
-        logger.debug(f"{payment=} [charge response]")
-
         logger.debug(f"{unzer_session=}")
         current.session.get().markChanged()
+
+        processing_data = payment.processing.asDict()
 
         def set_payment(skel: SkeletonInstance):
             skel["payment"]["payments"][-1]["payment_id"] = payment.paymentId
@@ -76,7 +87,24 @@ class UnzerPaylaterInvoice(UnzerAbstract):
             skel=order_skel,
         )
 
+        if self.charge_mode == ChargeMode.CHARGE_DIRECTLY:
+            order_skel, payment = self.charge(order_skel=order_skel, payment=payment)
+
         return unzer_session
+
+    def charge(
+        self,
+        order_skel: SkeletonInstance_T[OrderSkel],
+        payment: PaymentResponse | None = None,
+    ) -> tuple[SkeletonInstance_T[OrderSkel], PaymentResponse]:
+        if payment is None:
+            payment = self.client.getPayment(order_skel["payments"][-1]["payment_id"])
+
+        payment = payment.charge(
+            amount=order_skel["total"]
+        )
+        logger.debug(f"{payment=} [charge response]")
+        return order_skel, payment
 
     def get_customer(self, order_skel: SkeletonInstance) -> unzer.Customer:
         customer = self.customer_from_order_skel(order_skel)
