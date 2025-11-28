@@ -942,5 +942,12 @@ TRANSLATIONS = {
         "de": "Name",
         "en": "Name",
     },
+
+    # --- Errors --------------------------------------------------------------
+    "viur.shop.error.cart.is_frozen": {
+        # note: {{cart_key}} is a substitution variable for translations, not for an f-string!
+        "en": r"The cart {{cart_key}} can no longer be edited.",
+        "de": r"Der Warenkorb {{cart_key}} kann nicht mehr bearbeitet werden.",
+    }
 }
 """Initial translations used inside the viur-shop backend"""

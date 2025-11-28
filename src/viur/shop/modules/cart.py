@@ -2,7 +2,7 @@ import typing as t  # noqa
 
 import viur.shop.types.exceptions as e
 from viur import toolkit
-from viur.core import conf, current, db, errors, exposed
+from viur.core import conf, current, db, errors, exposed, translate
 from viur.core.bones import BaseBone
 from viur.core.prototypes import Tree
 from viur.core.prototypes.tree import SkelType
@@ -15,6 +15,7 @@ from ..globals import MAX_FETCH_LIMIT, SENTINEL, SHOP_INSTANCE, SHOP_LOGGER
 from ..services import EVENT_SERVICE, Event
 from ..skeletons.article import ArticleAbstractSkel
 from ..skeletons.cart import CartItemSkel, CartNodeSkel
+from ..types.response import make_json_dumpable
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -438,7 +439,7 @@ class Cart(ShopModuleAbstract, Tree):
     ) -> SkeletonInstance_T[CartNodeSkel] | None:
         if not isinstance(cart_key, db.Key):
             raise TypeError(f"cart_key must be an instance of db.Key")
-        if not isinstance(cart_type, (CartType, type(None))):
+        if cart_type is not SENTINEL and not isinstance(cart_type, (CartType, type(None))):
             raise TypeError(f"cart_type must be an instance of CartType")
         if parent_cart_key is not SENTINEL and not isinstance(parent_cart_key, (db.Key, type(None))):
             raise TypeError(f"parent_cart_key must be an instance of db.Key")
@@ -542,6 +543,31 @@ class Cart(ShopModuleAbstract, Tree):
                 # del self.session["session_cart_key"]
                 # current.session.get().markChanged()
         EVENT_SERVICE.call(Event.CART_CHANGED, skel=skel, deleted=True)
+
+    def cart_clear(
+        self,
+        cart_key: db.Key,
+        *,
+        keep_sub_carts: bool = False,
+    ) -> None:
+        cart_skel = self.editSkel("node")
+        if not cart_skel.read(cart_key):
+            raise errors.NotFound
+        if cart_skel["is_frozen"]:
+            raise errors.Forbidden(
+                translate("viur.shop.error.cart.is_frozen",
+                          default_variables={"cart_key": cart_key})
+            )
+
+        for leaf_skel in toolkit.iter_skel(self.editSkel("leaf").all().filter("parententry =", cart_skel["key"])):
+            leaf_skel.delete()
+
+        if not keep_sub_carts:
+            for node_skel in toolkit.iter_skel(self.editSkel("node").all().filter("parententry =", cart_skel["key"])):
+                self.cart_clear(node_skel["key"], keep_sub_carts=keep_sub_carts)
+                node_skel.delete()
+
+        EVENT_SERVICE.call(Event.CART_CHANGED, skel=cart_skel, cleared=True)
 
     # --- Hooks ---------------------------------------------------------------
 
@@ -654,6 +680,7 @@ class Cart(ShopModuleAbstract, Tree):
             "vat": cart_skel["vat"],
             "total_quantity": cart_skel["total_quantity"],
             "shipping": cart_skel["shipping"],
+            "discount": make_json_dumpable(cart_skel["discount"]),
         }
         cart_skel["is_frozen"] = True
         cart_skel.write()
