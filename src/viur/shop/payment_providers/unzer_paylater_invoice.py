@@ -1,4 +1,3 @@
-import enum
 import functools
 import typing as t  # noqa
 
@@ -16,11 +15,6 @@ from ..globals import MAX_FETCH_LIMIT, SHOP_LOGGER
 logger = SHOP_LOGGER.getChild(__name__)
 
 
-class ChargeMode(enum.IntEnum):
-    CHARGE_DIRECTLY = enum.auto()
-    CHARGE_MANUAL = enum.auto()
-
-
 class UnzerPaylaterInvoice(UnzerAbstract):
     """
     Unzer Paylater Invoice payment method integration for the ViUR Shop.
@@ -33,11 +27,11 @@ class UnzerPaylaterInvoice(UnzerAbstract):
     def __init__(
         self,
         *args: t.Any,
-        charge_mode: ChargeMode = ChargeMode.CHARGE_DIRECTLY,
+        charge_directly: bool = True,
         **kwargs: t.Any,
     ) -> None:
         super().__init__(*args, **kwargs)
-        self.charge_mode = charge_mode
+        self.charge_directly = charge_directly
 
     def can_order(
         self,
@@ -87,7 +81,7 @@ class UnzerPaylaterInvoice(UnzerAbstract):
             skel=order_skel,
         )
 
-        if self.charge_mode == ChargeMode.CHARGE_DIRECTLY:
+        if self.charge_directly:
             order_skel, payment = self.charge(order_skel=order_skel, payment=payment)
 
         return unzer_session
@@ -97,8 +91,9 @@ class UnzerPaylaterInvoice(UnzerAbstract):
         order_skel: SkeletonInstance_T[OrderSkel],
         payment: PaymentResponse | None = None,
     ) -> tuple[SkeletonInstance_T[OrderSkel], PaymentResponse]:
+        # TODO: payment by type: by uuid, last payment, by id, by object
         if payment is None:
-            payment = self.client.getPayment(order_skel["payments"][-1]["payment_id"])
+            payment = self.client.getPayment(order_skel["payment"]["payments"][-1]["payment_id"])
 
         payment = payment.charge(
             amount=order_skel["total"]

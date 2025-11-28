@@ -104,7 +104,11 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
         return []
 
     @abc.abstractmethod
-    def charge(self):
+    def charge(
+        self,
+        order_skel: SkeletonInstance_T[OrderSkel],
+        payment: t.Any | None = None,
+    ) -> tuple[SkeletonInstance_T[OrderSkel], t.Any]:
         ...
 
     @abc.abstractmethod

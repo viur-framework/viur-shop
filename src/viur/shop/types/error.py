@@ -44,7 +44,7 @@ class Error:
         code: str,
         message: str | i18n.translate,
         customer_message: str | i18n.translate,
-        exception: Exception,
+        exception: Exception | None = None,
         details: t.Any = None,
     ):
         self.code = code
