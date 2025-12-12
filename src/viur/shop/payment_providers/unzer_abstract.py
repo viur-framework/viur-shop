@@ -238,8 +238,12 @@ class UnzerAbstract(PaymentProviderAbstract):
 
         return errs
 
-    def charge(self):
-        raise errors.NotImplemented()
+    def charge(
+        self,
+        order_skel: SkeletonInstance_T[OrderSkel],
+        payment: t.Any | None = None,
+    ) -> tuple[SkeletonInstance_T[OrderSkel], t.Any]:
+        raise errors.NotImplemented(f"charge method not implemented in {type(self)}")
 
     def get_order_by_pay_id(
         self,
