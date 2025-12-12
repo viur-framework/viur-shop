@@ -78,7 +78,7 @@ class AmazonPay(PaymentProviderAbstract):
         order_skel: SkeletonInstance_T[OrderSkel],
         payment: t.Any | None = None,
     ) -> tuple[SkeletonInstance_T[OrderSkel], t.Any]:
-        raise errors.NotImplemented()
+        raise errors.NotImplemented(f"charge method not implemented in {type(self)}")
 
     def check_payment_state(
         self,
