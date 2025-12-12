@@ -143,8 +143,12 @@ class PayPalCheckout(PaymentProviderAbstract):
 
         return ApiHelper.json_serialize(order.body, should_encode=False)
 
-    def charge(self):
-        raise errors.NotImplemented()
+    def charge(
+        self,
+        order_skel: SkeletonInstance_T[OrderSkel],
+        payment: t.Any | None = None,
+    ) -> tuple[SkeletonInstance_T[OrderSkel], t.Any]:
+        raise errors.NotImplemented(f"charge method not implemented in {type(self)}")
 
     def check_payment_state(
         self,

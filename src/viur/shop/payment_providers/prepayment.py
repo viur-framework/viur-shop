@@ -36,7 +36,11 @@ class Prepayment(PaymentProviderAbstract):
         order_skel = self._append_payment_to_order_skel(order_skel)
         return None
 
-    def charge(self) -> None:
+    def charge(
+        self,
+        order_skel: SkeletonInstance_T[OrderSkel],
+        payment: t.Any | None = None,
+    ) -> tuple[SkeletonInstance_T[OrderSkel], t.Any]:
         # An invoice cannot be charged, The user has to do this on his own
         raise IllegalOperationError("A prepayment cannot be charged")
 

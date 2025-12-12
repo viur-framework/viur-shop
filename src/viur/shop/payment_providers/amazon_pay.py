@@ -1,10 +1,11 @@
-import typing as t
+import typing as t  # noqa
 
 from viur.core import current, errors, exposed
 from viur.core.skeleton import SkeletonInstance
-
+from viur.shop.types import *
 from . import PaymentProviderAbstract
 from ..globals import SHOP_LOGGER
+from ..skeletons import OrderSkel
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -72,8 +73,12 @@ class AmazonPay(PaymentProviderAbstract):
             "sandbox": self.sandbox,
         }
 
-    def charge(self):
-        raise errors.NotImplemented()
+    def charge(
+        self,
+        order_skel: SkeletonInstance_T[OrderSkel],
+        payment: t.Any | None = None,
+    ) -> tuple[SkeletonInstance_T[OrderSkel], t.Any]:
+        raise errors.NotImplemented(f"charge method not implemented in {type(self)}")
 
     def check_payment_state(
         self,
