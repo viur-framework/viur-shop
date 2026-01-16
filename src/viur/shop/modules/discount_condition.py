@@ -6,7 +6,7 @@ import typing as t
 import cachetools
 
 from viur import toolkit
-from viur.core import current, db, tasks
+from viur.core import db, tasks
 from viur.core.prototypes import List
 from viur.core.skeleton import SkeletonInstance
 from .abstract import ShopModuleAbstract
@@ -15,7 +15,7 @@ from ..services import Event, on_event
 from ..types import CodeType, SkeletonInstance_T
 
 if t.TYPE_CHECKING:
-    from ..skeletons import DiscountConditionSkel
+    from ..skeletons import DiscountConditionSkel, OrderSkel
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -180,10 +180,11 @@ class DiscountCondition(ShopModuleAbstract, List):
                 yield cond_skel
 
     def get_discounts_from_cart(self, cart_key: db.Key) -> list[db.Key]:
-        nodes = self.shop.cart.viewSkel("node").all().filter("parentrepo =", cart_key).fetch(MAX_FETCH_LIMIT)
         discounts = []
+        nodes = self.shop.cart.viewSkel("node").all().filter("parentrepo =", cart_key).fetch(MAX_FETCH_LIMIT)
+        nodes.append(self.shop.cart.skel(skelType="node").read(cart_key))  # the root node itself
         for node in nodes:
-            # logger.debug(f"{node = }")
+            # logger.debug(f"Collecting discount (if exist) of {node=}")
             if node["discount"]:
                 discounts.append(node["discount"]["dest"]["key"])
         # TODO: collect used from price and automatically as well
@@ -191,7 +192,7 @@ class DiscountCondition(ShopModuleAbstract, List):
 
     @on_event(Event.ORDER_ORDERED)
     @staticmethod
-    def mark_discount_used(order_skel, payment):
+    def mark_discount_used(order_skel: SkeletonInstance_T["OrderSkel"], payment, *args, **kwargs) -> None:
         """Increase quantity_used on discount of an ordered cart"""
         logger.info(f"Calling mark_discount_used with {order_skel=} {payment=}")
         self = SHOP_INSTANCE.get().discount_condition
