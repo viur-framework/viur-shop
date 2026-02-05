@@ -43,6 +43,7 @@ class TotalFactory:
             return SHOP_INSTANCE.get().cart.get_children(parent_cart_key)
 
     def __call__(self, skel: SkeletonInstance_T["CartNodeSkel"], bone: NumericBone):
+        # skel = toolkit.without_render_preparation(skel)
         children = self._get_children(skel["key"])
         total = 0
         for child in children:
@@ -88,14 +89,16 @@ def add_shipping(factory: TotalFactory, total: float, skel: "SkeletonInstance", 
         total += shipping["dest"]["shipping_cost"] or 0.0
     return total
 
-
+@toolkit.debug
 def get_vat_for_node(skel: "CartNodeSkel", bone: RecordBone) -> list[dict]:
+    # skel = toolkit.without_render_preparation(skel)
     children = SHOP_INSTANCE.get().cart.get_children_from_cache(skel["key"])
     cat2value = collections.defaultdict(lambda: 0)
     cat2rate = {}
     # logger.debug(f"{skel=}")
     for child in children:
-        # logger.debug(f"{child=}")
+        logger.debug(f"{child=}")
+        logger.debug(f"{child.renderPreparation=}")
         if issubclass(child.skeletonCls, CartNodeSkel):
             for entry in child["vat"] or []:
                 # logger.debug(f'{child["shop_vat_rate_category"]} | {entry=}')
@@ -107,6 +110,8 @@ def get_vat_for_node(skel: "CartNodeSkel", bone: RecordBone) -> list[dict]:
                 cat2rate[child["shop_vat_rate_category"]] = child.price_.vat_rate_percentage
             except TypeError as e:
                 logger.warning(e)
+        else:
+            raise TypeError(f"Unknown child type: {child.skeletonCls=}")
 
     if shipping := skel["shipping"]:
         try:
@@ -435,7 +440,9 @@ class CartItemSkel(TreeSkel):
         except KeyError:
             # logger.debug(f'Read article_skel_full {self.article_skel["key"]=}')
             skel = SHOP_INSTANCE.get().article_skel()
-            assert skel.read(self.article_skel["key"])
+            res = skel.read(self.article_skel["key"])
+            print(f"skel.read {res=}")
+            assert res
             CartItemSkel.get_article_cache()[self.article_skel["key"]] = skel
             return skel
 

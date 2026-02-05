@@ -21,11 +21,12 @@ import typing as t  # noqa
 
 from viur import toolkit
 from viur.core import current, db, utils
-from viur.core.skeleton import SkeletonInstance
+from viur.core.skeleton import RefSkel, RelSkel, SkeletonInstance
 from .enums import ApplicationDomain, ConditionOperator, DiscountType
 from .exceptions import InvalidStateError
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 from ..types import ConfigurationError, DiscountValidationContext
+from viur.core.skeleton.utils import is_skeletoninstance_of
 
 if t.TYPE_CHECKING:
     from ..modules import Discount
@@ -70,7 +71,9 @@ class Price:
         super().__init__()
         # logger.debug(f"Creating new price object based on {src_object=}")
         shop = SHOP_INSTANCE.get()
-        if isinstance(src_object, SkeletonInstance) and issubclass(src_object.skeletonCls, shop.cart.leafSkelCls):
+        if is_skeletoninstance_of(src_object, shop.cart.leafSkelCls):
+        # if isinstance(src_object, SkeletonInstance) and (issubclass(src_object.skeletonCls, shop.cart.leafSkelCls)
+        #     or issubclass(src_object.skeletonCls, RefSkel) and issubclass( src_object.skeletonCls.skeletonCls,shop.cart.leafSkelCls)):
             self.is_in_cart = True
             self.cart_leaf = src_object
             self.article_skel = toolkit.without_render_preparation(src_object.article_skel_full)
@@ -80,10 +83,14 @@ class Price:
                 logger.exception(exc)
                 self.cart_discounts = []
             self.cart_discounts = [toolkit.get_full_skel_from_ref_skel(d) for d in self.cart_discounts]
-        elif isinstance(src_object, SkeletonInstance) and issubclass(src_object.skeletonCls, shop.article_skel):
+        elif is_skeletoninstance_of(src_object, shop.article_skel):
+        # elif isinstance(src_object, SkeletonInstance) and (issubclass(src_object.skeletonCls, shop.article_skel)
+        #     or issubclass(src_object.skeletonCls, RefSkel) and issubclass( src_object.skeletonCls.skeletonCls,shop.article_skel)):
             self.is_in_cart = False
             self.article_skel = toolkit.without_render_preparation(src_object)
         else:
+            logger.error(f"Unsupported type {type(src_object)=} | {src_object.skeletonCls=}")
+            logger.error(f"Unsupported type {type(src_object)=} | {type(src_object.skeletonCls)=}")
             raise TypeError(f"Unsupported type {type(src_object)}")
 
         # logger.debug(f"{self.article_skel = }")

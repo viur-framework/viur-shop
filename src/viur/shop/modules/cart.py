@@ -7,7 +7,7 @@ from viur.core.bones import BaseBone
 from viur.core.prototypes import Tree
 from viur.core.prototypes.tree import SkelType
 from viur.core.session import Session
-from viur.core.skeleton import Skeleton, SkeletonInstance
+from viur.core.skeleton import Skeleton, SkeletonInstance, without_render_preparation
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.types import *
 from viur.shop.types.exceptions import InvalidStateError
@@ -206,7 +206,7 @@ class Cart(ShopModuleAbstract, Tree):
     ) -> list[SkeletonInstance]:
         cache = current.request_data.get().setdefault("shop_cache_cart_children", {})
         try:
-            return [toolkit.without_render_preparation(s) for s in cache[parent_cart_key]]
+            return [without_render_preparation(s) for s in cache[parent_cart_key]]
         except KeyError:
             pass
         children = list(self.get_children(parent_cart_key))
