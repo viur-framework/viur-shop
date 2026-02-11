@@ -446,9 +446,7 @@ class CartItemSkel(TreeSkel):
         except KeyError:
             # logger.debug(f'Read article_skel_full {self.article_skel["key"]=}')
             skel = SHOP_INSTANCE.get().article_skel()
-            res = skel.read(self.article_skel["key"])
-            logger.info(f"skel.read {res=}")
-            assert res
+            assert skel.read(self.article_skel["key"]) is not None
             CartItemSkel.get_article_cache()[self.article_skel["key"]] = skel
             return skel
 

@@ -7,10 +7,11 @@ from viur.core.bones import BaseBone
 from viur.core.prototypes import Tree
 from viur.core.prototypes.tree import SkelType
 from viur.core.session import Session
-from viur.core.skeleton import Skeleton, SkeletonInstance, without_render_preparation
+from viur.core.skeleton import Skeleton, SkeletonInstance
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.types import *
 from viur.shop.types.exceptions import InvalidStateError
+
 from ..globals import MAX_FETCH_LIMIT, SENTINEL, SHOP_INSTANCE, SHOP_LOGGER
 from ..services import EVENT_SERVICE, Event
 from ..skeletons.article import ArticleAbstractSkel
@@ -18,6 +19,11 @@ from ..skeletons.cart import CartItemSkel, CartNodeSkel
 from ..types.response import make_json_dumpable
 
 logger = SHOP_LOGGER.getChild(__name__)
+
+if conf.version >= (3, 8, 15):  # TODO: 3,8,16
+    from viur.core.skeleton.utils import without_render_preparation
+else:
+    from viur.toolkit import without_render_preparation
 
 
 class Cart(ShopModuleAbstract, Tree):
