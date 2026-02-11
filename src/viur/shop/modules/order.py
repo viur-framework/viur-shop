@@ -414,8 +414,8 @@ class Order(ShopModuleAbstract, List):
         order_skel: "SkeletonInstance",
     ) -> list[ClientError]:
         errors = []
-        # if order_skel["is_ordered"]:
-        #     errors.append(ClientError("already is_ordered"))
+        if order_skel["is_ordered"]:
+            errors.append(ClientError("already is_ordered"))
         if not order_skel["cart"]:
             errors.append(ClientError("cart is missing"))
         if not order_skel["cart"] or not order_skel["cart"]["dest"]["shipping_address"]:
@@ -477,9 +477,6 @@ class Order(ShopModuleAbstract, List):
 
     def set_rts(self, order_skel: "SkeletonInstance") -> "SkeletonInstance":
         """Set an order to the state *Ready to ship*"""
-        logger.debug(f"{order_skel.skeletonCls=}")
-        logger.debug(f"{order_skel.renderPreparation=}")
-        logger.debug(f"{order_skel=}")
         order_skel = toolkit.set_status(
             key=order_skel["key"],
             skel=order_skel,

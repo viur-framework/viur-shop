@@ -2,17 +2,23 @@ import collections
 import typing as t  # noqa
 
 from viur import toolkit
-from viur.core import current, db, utils
+from viur.core import conf, current, db, utils
 from viur.core.bones import *
 from viur.core.prototypes.tree import TreeSkel
 from viur.core.skeleton import SkeletonInstance
 from viur.shop.types import *
+
 from .vat import VatIncludedSkel
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 from ..skeletons.article import ArticleAbstractSkel
 from ..types.response import make_json_dumpable
 
 logger = SHOP_LOGGER.getChild(__name__)
+
+if conf.version >= (3, 8, 15):  # TODO: 3,8,16
+    from viur.core.skeleton.utils import without_render_preparation
+else:
+    from viur.toolkit import without_render_preparation
 
 Addition = t.Callable[["TotalFactory", float, SkeletonInstance_T["CartNodeSkel"], BaseBone], float]
 
@@ -43,7 +49,7 @@ class TotalFactory:
             return SHOP_INSTANCE.get().cart.get_children(parent_cart_key)
 
     def __call__(self, skel: SkeletonInstance_T["CartNodeSkel"], bone: NumericBone):
-        # skel = toolkit.without_render_preparation(skel)
+        skel = without_render_preparation(skel)
         children = self._get_children(skel["key"])
         total = 0
         for child in children:
@@ -89,16 +95,16 @@ def add_shipping(factory: TotalFactory, total: float, skel: "SkeletonInstance", 
         total += shipping["dest"]["shipping_cost"] or 0.0
     return total
 
-@toolkit.debug
+
+# @toolkit.debug
 def get_vat_for_node(skel: "CartNodeSkel", bone: RecordBone) -> list[dict]:
-    # skel = toolkit.without_render_preparation(skel)
+    skel = without_render_preparation(skel)
     children = SHOP_INSTANCE.get().cart.get_children_from_cache(skel["key"])
     cat2value = collections.defaultdict(lambda: 0)
     cat2rate = {}
     # logger.debug(f"{skel=}")
     for child in children:
-        logger.debug(f"{child=}")
-        logger.debug(f"{child.renderPreparation=}")
+        # logger.debug(f"{child=}")
         if issubclass(child.skeletonCls, CartNodeSkel):
             for entry in child["vat"] or []:
                 # logger.debug(f'{child["shop_vat_rate_category"]} | {entry=}')
@@ -441,7 +447,7 @@ class CartItemSkel(TreeSkel):
             # logger.debug(f'Read article_skel_full {self.article_skel["key"]=}')
             skel = SHOP_INSTANCE.get().article_skel()
             res = skel.read(self.article_skel["key"])
-            print(f"skel.read {res=}")
+            logger.info(f"skel.read {res=}")
             assert res
             CartItemSkel.get_article_cache()[self.article_skel["key"]] = skel
             return skel
