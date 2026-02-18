@@ -49,7 +49,7 @@ else:
         :param accept_ref_skel: If True, ``obj`` can also be just a RefSkelFor``skel_cls``.
             If False, no ``RefSkel`` is accepted.
         """
-        from viur.core.skeleton import RefSkel, Skeleton, SkeletonInstance
+        from viur.core.skeleton import Skeleton, SkeletonInstance
 
         if not issubclass(skel_cls, Skeleton):
             raise TypeError(f"{skel_cls=} is not a Skeleton.")
@@ -112,8 +112,8 @@ class Price:
             self.is_in_cart = False
             self.article_skel = toolkit.without_render_preparation(src_object)
         else:
-            logger.error(f"Unsupported type {type(src_object)=} | {src_object.skeletonCls=}")
-            raise TypeError(f"Unsupported type {type(src_object)}")
+            logger.error(msg := f"Unsupported type {type(src_object)=} | {getattr(src_object, "skeletonCls", "N/A")=}")
+            raise TypeError(msg)
 
         # logger.debug(f"{self.article_skel = }")
         # logger.debug(f"{self.article_skel.renderPreparation=} | {hex(id(self.article_skel))}")
