@@ -22,7 +22,6 @@ import typing as t  # noqa
 from viur import toolkit
 from viur.core import conf, current, db, utils
 from viur.core.skeleton import SkeletonInstance
-
 from .enums import ApplicationDomain, ConditionOperator, DiscountType
 from .exceptions import InvalidStateError
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
@@ -33,7 +32,7 @@ if t.TYPE_CHECKING:
 
 logger = SHOP_LOGGER.getChild(__name__)
 
-if conf.version >= (3, 8, 15):  # TODO: 3,8,16
+if conf.version >= (3, 8, 16):
     from viur.core.skeleton.utils import is_skeletoninstance_of
 else:
     def is_skeletoninstance_of(

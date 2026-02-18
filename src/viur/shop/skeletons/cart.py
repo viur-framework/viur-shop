@@ -15,7 +15,7 @@ from ..types.response import make_json_dumpable
 
 logger = SHOP_LOGGER.getChild(__name__)
 
-if conf.version >= (3, 8, 15):  # TODO: 3,8,16
+if conf.version >= (3, 8, 16):
     from viur.core.skeleton.utils import without_render_preparation
 else:
     from viur.toolkit import without_render_preparation
