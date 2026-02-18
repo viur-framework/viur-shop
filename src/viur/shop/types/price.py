@@ -49,7 +49,7 @@ else:
         :param accept_ref_skel: If True, ``obj`` can also be just a RefSkelFor``skel_cls``.
             If False, no ``RefSkel`` is accepted.
         """
-        from . import RefSkel, Skeleton, SkeletonInstance
+        from viur.core.skeleton import RefSkel, Skeleton, SkeletonInstance
 
         if not issubclass(skel_cls, Skeleton):
             raise TypeError(f"{skel_cls=} is not a Skeleton.")
