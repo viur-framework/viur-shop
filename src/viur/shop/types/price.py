@@ -20,7 +20,7 @@ import json
 import typing as t  # noqa
 
 from viur import toolkit
-from viur.core import current, db, utils
+from viur.core import conf, current, db, utils
 from viur.core.skeleton import SkeletonInstance
 from .enums import ApplicationDomain, ConditionOperator, DiscountType
 from .exceptions import InvalidStateError
@@ -31,6 +31,34 @@ if t.TYPE_CHECKING:
     from ..modules import Discount
 
 logger = SHOP_LOGGER.getChild(__name__)
+
+if conf.version >= (3, 8, 16):
+    from viur.core.skeleton.utils import is_skeletoninstance_of
+else:
+    def is_skeletoninstance_of(
+        obj: t.Any,
+        skel_cls: type["Skeleton"],
+        *,
+        accept_ref_skel: bool = True,
+    ) -> bool:
+        """
+        Checks whether an object is an SkeletonInstance that belongs to a specific Skeleton class.
+
+        :param obj: The object to check.
+        :param skel_cls: The skeleton class that will be checked against ``obj``.
+        :param accept_ref_skel: If True, ``obj`` can also be just a RefSkelFor``skel_cls``.
+            If False, no ``RefSkel`` is accepted.
+        """
+        from viur.core.skeleton import Skeleton, SkeletonInstance
+
+        if not issubclass(skel_cls, Skeleton):
+            raise TypeError(f"{skel_cls=} is not a Skeleton.")
+
+        if not isinstance(obj, SkeletonInstance):
+            return False
+        if issubclass(obj.skeletonCls, skel_cls):
+            return True
+        return False
 
 # TODO: Use decimal package instead of floats?
 #       -> decimal mode in NumericBone?
@@ -70,7 +98,7 @@ class Price:
         super().__init__()
         # logger.debug(f"Creating new price object based on {src_object=}")
         shop = SHOP_INSTANCE.get()
-        if isinstance(src_object, SkeletonInstance) and issubclass(src_object.skeletonCls, shop.cart.leafSkelCls):
+        if is_skeletoninstance_of(src_object, shop.cart.leafSkelCls):
             self.is_in_cart = True
             self.cart_leaf = src_object
             self.article_skel = toolkit.without_render_preparation(src_object.article_skel_full)
@@ -80,11 +108,12 @@ class Price:
                 logger.exception(exc)
                 self.cart_discounts = []
             self.cart_discounts = [toolkit.get_full_skel_from_ref_skel(d) for d in self.cart_discounts]
-        elif isinstance(src_object, SkeletonInstance) and issubclass(src_object.skeletonCls, shop.article_skel):
+        elif is_skeletoninstance_of(src_object, shop.article_skel):
             self.is_in_cart = False
             self.article_skel = toolkit.without_render_preparation(src_object)
         else:
-            raise TypeError(f"Unsupported type {type(src_object)}")
+            logger.error(msg := f"Unsupported type {type(src_object)=} | {getattr(src_object, "skeletonCls", "N/A")=}")
+            raise TypeError(msg)
 
         # logger.debug(f"{self.article_skel = }")
         # logger.debug(f"{self.article_skel.renderPreparation=} | {hex(id(self.article_skel))}")

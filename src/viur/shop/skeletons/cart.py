@@ -2,17 +2,23 @@ import collections
 import typing as t  # noqa
 
 from viur import toolkit
-from viur.core import current, db, utils
+from viur.core import conf, current, db, utils
 from viur.core.bones import *
 from viur.core.prototypes.tree import TreeSkel
 from viur.core.skeleton import SkeletonInstance
 from viur.shop.types import *
+
 from .vat import VatIncludedSkel
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 from ..skeletons.article import ArticleAbstractSkel
 from ..types.response import make_json_dumpable
 
 logger = SHOP_LOGGER.getChild(__name__)
+
+if conf.version >= (3, 8, 16):
+    from viur.core.skeleton.utils import without_render_preparation
+else:
+    from viur.toolkit import without_render_preparation
 
 Addition = t.Callable[["TotalFactory", float, SkeletonInstance_T["CartNodeSkel"], BaseBone], float]
 
@@ -43,6 +49,7 @@ class TotalFactory:
             return SHOP_INSTANCE.get().cart.get_children(parent_cart_key)
 
     def __call__(self, skel: SkeletonInstance_T["CartNodeSkel"], bone: NumericBone):
+        skel = without_render_preparation(skel)
         children = self._get_children(skel["key"])
         total = 0
         for child in children:
@@ -89,7 +96,9 @@ def add_shipping(factory: TotalFactory, total: float, skel: "SkeletonInstance", 
     return total
 
 
+# @toolkit.debug
 def get_vat_for_node(skel: "CartNodeSkel", bone: RecordBone) -> list[dict]:
+    skel = without_render_preparation(skel)
     children = SHOP_INSTANCE.get().cart.get_children_from_cache(skel["key"])
     cat2value = collections.defaultdict(lambda: 0)
     cat2rate = {}
@@ -107,6 +116,8 @@ def get_vat_for_node(skel: "CartNodeSkel", bone: RecordBone) -> list[dict]:
                 cat2rate[child["shop_vat_rate_category"]] = child.price_.vat_rate_percentage
             except TypeError as e:
                 logger.warning(e)
+        else:
+            raise TypeError(f"Unknown child type: {child.skeletonCls=}")
 
     if shipping := skel["shipping"]:
         try:
@@ -435,7 +446,7 @@ class CartItemSkel(TreeSkel):
         except KeyError:
             # logger.debug(f'Read article_skel_full {self.article_skel["key"]=}')
             skel = SHOP_INSTANCE.get().article_skel()
-            assert skel.read(self.article_skel["key"])
+            assert skel.read(self.article_skel["key"]) is not None
             CartItemSkel.get_article_cache()[self.article_skel["key"]] = skel
             return skel
 

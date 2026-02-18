@@ -19,6 +19,11 @@ from ..types.response import make_json_dumpable
 
 logger = SHOP_LOGGER.getChild(__name__)
 
+if conf.version >= (3, 8, 16):
+    from viur.core.skeleton.utils import without_render_preparation
+else:
+    from viur.toolkit import without_render_preparation
+
 
 class Cart(ShopModuleAbstract, Tree):
     moduleName = "cart"
@@ -206,7 +211,7 @@ class Cart(ShopModuleAbstract, Tree):
     ) -> list[SkeletonInstance]:
         cache = current.request_data.get().setdefault("shop_cache_cart_children", {})
         try:
-            return [toolkit.without_render_preparation(s) for s in cache[parent_cart_key]]
+            return [without_render_preparation(s) for s in cache[parent_cart_key]]
         except KeyError:
             pass
         children = list(self.get_children(parent_cart_key))
