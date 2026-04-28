@@ -274,6 +274,8 @@ class CartNodeSkel(TreeSkel):
     shipping_address = RelationalBone(
         kind="{{viur_shop_modulename}}_address",
         module="{{viur_shop_modulename}}/address",
+        # keep shipping address persistent:
+        updateLevel=RelationalUpdateLevel.OnValueAssignment,
         refKeys={
             "*",
         },
