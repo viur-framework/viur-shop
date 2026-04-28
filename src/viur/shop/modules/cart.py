@@ -675,6 +675,7 @@ class Cart(ShopModuleAbstract, Tree):
             "vat": cart_skel["vat"],
             "total_quantity": cart_skel["total_quantity"],
             "shipping": cart_skel["shipping"],
+            "shipping_address": cart_skel["shipping_address"]["dest"].dump(),
             "discount": make_json_dumpable(cart_skel["discount"]),
         }
         cart_skel["is_frozen"] = True
