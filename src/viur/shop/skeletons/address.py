@@ -153,10 +153,3 @@ class AddressSkel(Skeleton):
         required=True,
         multiple=True,
     )
-
-    cloned_from = RelationalBone(
-        kind="{{viur_shop_modulename}}_address",
-        module="{{viur_shop_modulename}}/address",
-        readOnly=True,  # set by the system
-        consistency=RelationalConsistency.Ignore,
-    )
