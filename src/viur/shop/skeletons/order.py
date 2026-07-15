@@ -95,6 +95,16 @@ class OrderSkel(Skeleton):
     is_checkout_in_progress = BooleanBone(
     )
 
+    checkout_order_started = DateBone(
+    )
+    """When the final ``checkout_order`` step claimed this order.
+
+    Set before the payment provider is called and acts as a guard against
+    concurrent or repeated ``checkout_order`` calls charging twice.
+    Cleared again if the payment provider call fails; a stale claim (crash
+    after the provider call) expires after
+    :attr:`Order.CHECKOUT_ORDER_CLAIM_TIMEOUT`."""
+
     state = SelectBone(
         values=OrderState,
         multiple=True,
