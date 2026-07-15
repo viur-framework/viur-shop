@@ -86,7 +86,6 @@ class Cart(ShopModuleAbstract, Tree):
             logger.critical(f"Invalid session_cart_key {self.current_session_cart_key} ?! Not in DB!")
             self.detach_session_cart()
             return self.current_session_cart
-            raise InvalidStateError(f"Invalid session_cart_key {self.current_session_cart_key} ?! Not in DB!")
         return skel  # type: ignore
 
     def _ensure_current_session_cart(self) -> db.Key:
