@@ -532,12 +532,33 @@ class Cart(ShopModuleAbstract, Tree):
         self,
         cart_key: db.Key,
     ) -> None:
+        """
+        Remove a cart node with its entire subtree.
+
+        The subtree is deleted bottom-up and **before** the node itself:
+        leafs first, then sub-nodes, the given node last.  This order keeps
+        the tree consistent at any point in time -- if the process crashes
+        in between, no children can be left behind whose ``parententry``
+        points to an already deleted node (orphaned entries).  A repeated
+        call simply continues the work (idempotent).
+
+        Frozen carts belong to an order and cannot be removed.
+
+        :param cart_key: Key of the cart node to remove.
+        :raises errors.NotFound: If the cart node does not exist.
+        :raises errors.Forbidden: If the cart node is frozen.
+        """
         skel = self.editSkel("node")
         if not skel.read(cart_key):
             raise errors.NotFound
-        # This delete could fail if the cart is used by an order
+        if skel["is_frozen"]:
+            raise errors.Forbidden(
+                translate("viur.shop.error.cart.is_frozen",
+                          default_variables={"cart_key": cart_key})
+            )
+        self._delete_children(cart_key)
+        # This delete could fail if the cart is used by an order (PreventDeletion)
         skel.delete()
-        self.deleteRecursive(cart_key)
         if skel["parententry"] is None or skel["is_root_node"]:
             logger.info(f"{skel['key']} was a root node!")
             # raise NotImplementedError("Cannot delete root node")
@@ -547,6 +568,26 @@ class Cart(ShopModuleAbstract, Tree):
                 # del self.session["session_cart_key"]
                 # current.session.get().markChanged()
         EVENT_SERVICE.call(Event.CART_CHANGED, skel=skel, deleted=True)
+
+    def _delete_children(self, parent_cart_key: db.Key) -> None:
+        """
+        Delete all children of a cart node bottom-up and synchronously.
+
+        Leafs of *parent_cart_key* are deleted first, then each sub-node is
+        processed recursively (its own children before the sub-node itself).
+        In contrast to the deferred :meth:`deleteRecursive` of the Tree
+        prototype this runs synchronously: a lost cleanup task can therefore
+        no longer leave orphaned children behind, whose broken
+        ``parententry`` chain would crash price computations and
+        ``update_relations`` tasks later.
+
+        :param parent_cart_key: Key of the cart node whose subtree gets deleted.
+        """
+        for leaf_skel in toolkit.iter_skel(self.editSkel("leaf").all().filter("parententry =", parent_cart_key)):
+            leaf_skel.delete()
+        for node_skel in toolkit.iter_skel(self.editSkel("node").all().filter("parententry =", parent_cart_key)):
+            self._delete_children(node_skel["key"])
+            node_skel.delete()
 
     def cart_clear(
         self,
@@ -771,19 +812,33 @@ except AttributeError:  # backward compatibility for viur-core
 
 @Session.on_delete
 def delete_guest_cart(session: db.Entity) -> None:
-    """Delete carts from guest sessions to avoid orphaned carts"""
+    """
+    Delete carts from guest sessions to avoid orphaned carts.
+
+    Runs as :meth:`Session.on_delete` hook.  Any failure is logged and
+    swallowed: this hook must never prevent the session deletion itself.
+    Carts that are referenced by an order, already gone or frozen are
+    left alone.
+    """
     if session["user"] != Session.GUEST_USER:
         return
     try:
         cart = session["data"]["shop"]["cart"]["session_cart_key"]
     except (KeyError, TypeError):
         return
-    if (
-        SHOP_INSTANCE.get().order.skel().all()
-            .filter("cart.dest.__key__", cart)
-            .getSkel()
-    ) is not None:
-        # Is used by an order
-        return
-    SHOP_INSTANCE.get().cart.cart_remove(cart)
-    logger.debug(f"Deleted {cart=} and children after deleting {session=}")
+    try:
+        if (
+            SHOP_INSTANCE.get().order.skel().all()
+                .filter("cart.dest.__key__", cart)
+                .getSkel()
+        ) is not None:
+            # Is used by an order
+            return
+        SHOP_INSTANCE.get().cart.cart_remove(cart)
+        logger.debug(f"Deleted {cart=} and children after deleting {session=}")
+    except errors.NotFound:
+        logger.info(f"Cart {cart!r} of deleted session doesn't exist (anymore); nothing to do")
+    except errors.Forbidden:
+        logger.info(f"Cart {cart!r} of deleted session is frozen; keeping it")
+    except Exception:
+        logger.exception(f"Failed to delete guest cart {cart!r}; keeping it")
