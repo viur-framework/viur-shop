@@ -135,7 +135,11 @@ class Order(ShopModuleAbstract, List):
         skel = self.addSkel()
         cart_skel = self.shop.cart.viewSkel("node")
         if not self.shop.cart.is_valid_node(cart_key, root_node=True):
-            raise core_errors.NotAcceptable("cart_key is not a valid basket for the current user")
+            raise e.InvalidArgumentException(
+                "cart_key",
+                cart_key,
+                "cart_key is not a valid root cart for the current user",
+            )
         assert cart_skel.read(cart_key)
         skel.setBoneValue("cart", cart_key)
         skel["total"] = cart_skel["total_discount_price"]
