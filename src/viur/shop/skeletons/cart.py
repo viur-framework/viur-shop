@@ -460,11 +460,20 @@ class CartItemSkel(TreeSkel):
         )
 
     @property
-    def parent_skel(self) -> SkeletonInstance:
+    def parent_skel(self) -> SkeletonInstance | None:
+        """
+        Skeleton of the parent cart node of this entry.
+
+        :return: The parent node skeleton or ``None`` if this entry has no
+            ``parententry`` or the parent node does not exist anymore
+            (orphaned entry).
+        """
         if not (pk := self["parententry"]):
             return None
         skel = SHOP_INSTANCE.get().cart.viewSkel("node")
-        assert skel.read(pk)
+        if not skel.read(pk):
+            logger.warning(f"Parent node {pk=} of {self['key']!r} doesn't exist (anymore)")
+            return None
         return skel
 
     @property
