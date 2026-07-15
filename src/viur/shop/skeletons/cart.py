@@ -312,7 +312,13 @@ class CartNodeSkel(TreeSkel):
             "supplier",
             "delivery_time_range",
         ],
+        consistency=RelationalConsistency.SetNull,
     )
+    """Selected shipping for this cart node.
+
+    Uses ``SetNull`` consistency: when the referenced shipping entry gets
+    deleted, the relation is cleared instead of silently keeping a dangling
+    reference with stale ``shipping_cost`` values in the totals."""
     shipping_status = SelectBone(
         values=ShippingStatus,
         defaultValue=ShippingStatus.CHEAPEST
@@ -330,7 +336,14 @@ class CartNodeSkel(TreeSkel):
             "percentage",
             "condition"
         ],
+        consistency=RelationalConsistency.SetNull,
     )
+    """Discount applied to this cart node.
+
+    Uses ``SetNull`` consistency: when the referenced discount gets deleted,
+    the relation is cleared -- a dangling reference would still be applied
+    with its cached refKey values by ``add_discount`` and crash the discount
+    evaluation in the price calculation."""
 
     project_data = JsonBone(
     )
