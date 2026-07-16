@@ -187,7 +187,6 @@ class UnzerAbstract(PaymentProviderAbstract):
                 customerId=customer.key,
                 orderId=order_skel["key"].id_or_name,
                 invoiceId=order_skel["order_uid"],
-                basketId=self.get_basket_id(order_skel),
             )
         )
         logger.debug(f"{payment=} [charge response]")
@@ -214,21 +213,6 @@ class UnzerAbstract(PaymentProviderAbstract):
         order_skel: SkeletonInstance,
     ) -> PaymentType:
         ...
-
-    def get_basket_id(
-        self,
-        order_skel: SkeletonInstance,
-    ) -> str | None:
-        """Return the Unzer basket id for this payment, or ``None``.
-
-        Most Unzer payment types don't require a basket. Providers that do
-        (e.g. Klarna) override this to build the basket from the order's cart
-        and create it via the Unzer API, returning the resulting basket id.
-
-        :param order_skel: The order to derive the basket from.
-        :return: The created basket id, or ``None`` if no basket is required.
-        """
-        return None
 
     def get_checkout_start_data(
         self,
