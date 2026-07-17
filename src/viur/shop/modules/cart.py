@@ -397,9 +397,10 @@ class Cart(ShopModuleAbstract, Tree):
         if skel["is_frozen"] or parent_skel["is_frozen"]:
             # Neither an ordered (frozen) item may be moved away
             # nor may an item be moved into a frozen cart
+            frozen_cart_key = parent_cart_key if skel["is_frozen"] else new_parent_cart_key
             raise errors.Forbidden(
                 translate("viur.shop.error.cart.is_frozen",
-                          default_variables={"cart_key": parent_skel["key"]})
+                          default_variables={"cart_key": frozen_cart_key})
             )
         skel["parententry"] = new_parent_cart_key
         skel.write()
