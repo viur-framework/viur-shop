@@ -96,6 +96,18 @@ TRANSLATIONS = {
         "en": "Buy Now Pay Later (BNPL)",
         "de": "Jetzt kaufen, später bezahlen",
     },
+    "viur.shop.payment_provider.unzer-klarna": {
+        "_default_text": "Klarna via Unzer",
+        "_hint": "viur-shop payment provider: unzer-klarna",
+        "de": "Klarna über Unzer",
+        "fr": "Klarna via Unzer",
+    },
+    "viur.shop.payment_provider.unzer-klarna.descr": {
+        "_default_text": "Flexible payment with Klarna",
+        "en": "Flexible payment with Klarna",
+        "de": "Flexibel bezahlen mit Klarna",
+        "fr": "Paiement flexible avec Klarna",
+    },
     "viur.shop.payment_provider.prepayment": {
         "_default_text": "Prepayment",
         "_hint": "viur-shop Prepayment",

@@ -196,7 +196,7 @@ class ConditionValidator:
             f"<{self.__class__.__name__} with {self.is_fulfilled=} "
             f"for {self.discount_skel=}, {_skel_repr(self.condition_skel)}, "
             f"cart_skel={_skel_repr(self.cart_skel)}, "
-            f"article_skel={_skel_repr(self.article_skel)}"
+            f"article_skel={_skel_repr(self.article_skel)} "
             f"using {self.applicable_scopes=}>"
         )
 
@@ -306,7 +306,7 @@ class DiscountValidator:
             f"<{self.__class__.__name__} with {self.is_fulfilled=} "
             f"for {_skel_repr(self.discount_skel)}, "
             f"cart_skel={_skel_repr(self.cart_skel)}, "
-            f"article_skel={_skel_repr(self.article_skel)}"
+            f"article_skel={_skel_repr(self.article_skel)} "
             f"using {self.condition_validator_instances=}>"
         )
 
