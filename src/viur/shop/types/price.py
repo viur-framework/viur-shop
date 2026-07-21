@@ -321,8 +321,9 @@ class Price:
                 country=country,
                 category=toolkit.without_render_preparation(self.article_skel)["shop_vat_rate_category"],
             )
-        except ConfigurationError as e:  # TODO(discussion): Or re-raise or implement fallback?
-            logger.warning(f"No vat rate for article :: {e}")
+        except (ConfigurationError, ValueError) as e:  # TODO(discussion): Or re-raise or implement fallback?
+            # ValueError: e.g. an invalid country code from a dangling shipping_address relation
+            logger.error(f"No vat rate for article :: {e}")
             vat_rate = 0.0
         return (vat_rate or 0.0) / 100
 
@@ -453,6 +454,12 @@ class Price:
         """
         Request-local price cache to avoid recalculating prices during one request lifecycle.
 
+        In contexts without request data (e.g. some task or test contexts)
+        an unshared, empty dict is returned -- prices are then simply not
+        cached instead of crashing.
+
         :return: Dictionary keyed by skeleton key, with cached `Price` objects.
         """
+        if current.request_data.get() is None:
+            return {}
         return current.request_data.get().setdefault("viur.shop", {}).setdefault("price_cache", {})

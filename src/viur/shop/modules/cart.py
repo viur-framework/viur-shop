@@ -101,8 +101,16 @@ class Cart(ShopModuleAbstract, Tree):
                 self._set_basket_txn(user_key=user["key"], basket_key=root_node["key"])
         return self.session["session_cart_key"]
 
-    def detach_session_cart(self) -> db.Key:
-        key = self.session["session_cart_key"]
+    def detach_session_cart(self) -> db.Key | None:
+        """
+        Unlink the current cart from the session (and the user's basket).
+
+        The cart entity itself is kept.  Tolerates a session that has no
+        ``session_cart_key`` (anymore) instead of raising a ``KeyError``.
+
+        :return: The key of the detached cart, or ``None`` if none was set.
+        """
+        key = self.session.get("session_cart_key")
         self.session["session_cart_key"] = None
         current.session.get().markChanged()
         if user := current.user.get():
@@ -299,6 +307,12 @@ class Cart(ShopModuleAbstract, Tree):
             skel = self.copy_article_values(article_skel, skel)
         else:
             parent_skel = skel.parent_skel
+        if parent_skel and parent_skel["is_frozen"]:
+            # The cart belongs to a placed order and must not change anymore
+            raise errors.Forbidden(
+                translate("viur.shop.error.cart.is_frozen",
+                          default_variables={"cart_key": parent_skel["key"]})
+            )
         if quantity == 0 and quantity_mode in (QuantityMode.INCREASE, QuantityMode.DECREASE):
             raise e.InvalidArgumentException(
                 "quantity",
@@ -387,6 +401,14 @@ class Cart(ShopModuleAbstract, Tree):
                 "new_parent_cart_key", new_parent_cart_key,
                 f"Target cart node is inside a different repo"
             )
+        if skel["is_frozen"] or parent_skel["is_frozen"]:
+            # Neither an ordered (frozen) item may be moved away
+            # nor may an item be moved into a frozen cart
+            frozen_cart_key = parent_cart_key if skel["is_frozen"] else new_parent_cart_key
+            raise errors.Forbidden(
+                translate("viur.shop.error.cart.is_frozen",
+                          default_variables={"cart_key": frozen_cart_key})
+            )
         skel["parententry"] = new_parent_cart_key
         skel.write()
         EVENT_SERVICE.call(Event.ARTICLE_CHANGED, skel=skel, deleted=False)
@@ -453,6 +475,12 @@ class Cart(ShopModuleAbstract, Tree):
         # if not self.canEdit(skel):
         #     raise errors.Forbidden
         assert skel.read(cart_key)
+        if skel["is_frozen"]:
+            # The cart belongs to a placed order and must not change anymore
+            raise errors.Forbidden(
+                translate("viur.shop.error.cart.is_frozen",
+                          default_variables={"cart_key": cart_key})
+            )
         skel = self._cart_set_values(
             skel=skel,
             parent_cart_key=parent_cart_key,
@@ -654,12 +682,18 @@ class Cart(ShopModuleAbstract, Tree):
         :param cart_key: Key of the (sub-)cart skeleton.
         :return: The frozen CartNode skeleton.
         """
+        # Iterate the children without a fetch limit: a partially frozen
+        # cart would keep recomputing (and thereby changing) the totals of
+        # the unfrozen entries after the order has been placed.
         child: SkeletonInstance_T[CartNodeSkel | CartItemSkel]
-        for child in self.get_children(cart_key):
-            if issubclass(child.skeletonCls, CartNodeSkel):
-                self.freeze_cart(child["key"])
-            else:
-                self.freeze_leaf(child)
+        for skel_type in ("node", "leaf"):
+            for child in toolkit.iter_skel(
+                self.viewSkel(skel_type).all().filter("parententry =", cart_key)
+            ):
+                if skel_type == "node":
+                    self.freeze_cart(child["key"])
+                else:
+                    self.freeze_leaf(child)
 
         self.clear_children_cache()
 
