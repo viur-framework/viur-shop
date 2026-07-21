@@ -2,8 +2,10 @@ import logging
 import time
 import typing as t  # noqa
 
+import datetime
+
 from viur import toolkit
-from viur.core import current, db, errors as core_errors, exposed, force_post
+from viur.core import current, db, errors as core_errors, exposed, force_post, utils
 from viur.core.prototypes import List
 from viur.shop.types import *
 from viur.shop.types.results import PaymentProviderResult
@@ -300,7 +302,6 @@ class Order(ShopModuleAbstract, List):
             return JsonResponse({
                 "errors": errors,
             }, status_code=400)
-            raise e.InvalidStateError(", ".join(errors))
 
         order_skel = self.freeze_order(order_skel)
         try:
@@ -406,17 +407,96 @@ class Order(ShopModuleAbstract, List):
             return JsonResponse({
                 "errors": errors,
             }, status_code=400)
-            raise e.InvalidStateError(", ".join(error_))
 
-        order_skel = HOOK_SERVICE.dispatch(Hook.ORDER_ASSIGN_UID, self._default_assign_uid)(order_skel)
-        # TODO: charge order if it should directly be charged
-        pp_res = self.get_payment_provider_by_name(order_skel["payment_provider"]).checkout(order_skel)
+        # Claim the order before talking to the payment provider: a repeated
+        # checkout_order call (double click, crash between the provider call
+        # and set_ordered, replayed request) must not trigger a second charge.
+        try:
+            order_skel = self._claim_checkout_order(order_skel)
+        except e.InvalidStateError as exc:
+            logging.warning(f"Rejecting checkout_order for {order_key!r}: {exc}")
+            return JsonResponse({
+                "errors": [ClientError("checkout_order is already in progress")],
+            }, status_code=409)
+
+        claimed_at = order_skel["checkout_order_started"]
+        try:
+            if not order_skel["order_uid"]:
+                # Only assign once: payment providers use order_uid as the
+                # invoice/reference id; reassigning it on a retry (e.g. after
+                # an expired claim was overtaken) would break webhook/return
+                # reconciliation and defeat provider-side idempotency.
+                order_skel = HOOK_SERVICE.dispatch(Hook.ORDER_ASSIGN_UID, self._default_assign_uid)(order_skel)
+            # TODO: charge order if it should directly be charged
+            pp_res = self.get_payment_provider_by_name(order_skel["payment_provider"]).checkout(order_skel)
+        except Exception:
+            # Release the claim so the user may retry immediately -- but only
+            # if it is still *our* claim. A concurrent retry may already have
+            # overtaken an (apparently) expired claim; releasing that newer
+            # claim unconditionally would reopen the double-charge window
+            # this claim mechanism is meant to close.
+            def release_precondition(skel: "SkeletonInstance") -> None:
+                if skel["checkout_order_started"] != claimed_at:
+                    raise e.InvalidStateError("checkout_order claim was overtaken by a concurrent request")
+
+            try:
+                toolkit.set_status(
+                    key=order_skel["key"],
+                    skel=order_skel,
+                    precondition=release_precondition,
+                    values={"checkout_order_started": None},
+                )
+            except e.InvalidStateError as exc:
+                logging.warning(f"Not releasing checkout_order claim for {order_key!r}: {exc}")
+            raise
+        # set_ordered() fires Event.ORDER_CHANGED on the actual transition already
         order_skel = self.set_ordered(order_skel, pp_res)
-        EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=order_skel, deleted=False)
         return JsonResponse({
             "skel": order_skel,
             "payment": pp_res,
         })
+
+    CHECKOUT_ORDER_CLAIM_TIMEOUT: t.Final[datetime.timedelta] = datetime.timedelta(minutes=15)
+    """How long a `checkout_order` claim blocks further attempts.
+
+    If a claimed checkout neither completed (``is_ordered``) nor released its
+    claim (crash between the payment provider call and :meth:`set_ordered`),
+    a new attempt is allowed after this period."""
+
+    def _claim_checkout_order(
+        self,
+        order_skel: SkeletonInstance_T[OrderSkel],
+    ) -> SkeletonInstance_T[OrderSkel]:
+        """
+        Mark the order as "checkout_order in progress".
+
+        Sets ``checkout_order_started`` to now, guarded by a precondition:
+        already ordered orders and orders with a non-expired claim are
+        rejected with :exc:`InvalidStateError`.  Together with
+        `toolkit.set_status` this makes the claim a check-and-set --
+        the payment provider gets called at most once per claim period,
+        preventing double charges.
+
+        :param order_skel: Skeleton of the order to claim.
+        :return: The updated order skeleton.
+        :raises InvalidStateError: If the order is already ordered or claimed.
+        """
+
+        def precondition(skel: "SkeletonInstance") -> None:
+            if skel["is_ordered"]:
+                raise e.InvalidStateError("Order already is_ordered")
+            if (started := skel["checkout_order_started"]) is not None:
+                if utils.utcNow() - started < self.CHECKOUT_ORDER_CLAIM_TIMEOUT:
+                    raise e.InvalidStateError(f"checkout_order already started at {started.isoformat()}")
+                logging.warning(f'Overtaking expired checkout_order claim from {started.isoformat()} '
+                                f'of order {skel["key"]!r}')
+
+        return toolkit.set_status(
+            key=order_skel["key"],
+            skel=order_skel,
+            precondition=precondition,
+            values={"checkout_order_started": utils.utcNow()},
+        )
 
     def can_order(
         self,
@@ -462,37 +542,78 @@ class Order(ShopModuleAbstract, List):
         EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=order_skel, deleted=False)
         return order_skel
 
+    def _set_state_once(
+        self,
+        order_skel: "SkeletonInstance",
+        state_bone: str,
+    ) -> tuple["SkeletonInstance", bool]:
+        """
+        Set a boolean state bone of an order to ``True`` exactly once.
+
+        Uses a `set_status` precondition, so the check and the write happen
+        in the same read-modify-write cycle: if the state is already set
+        (e.g. by a concurrently processed payment webhook), nothing is
+        written and the caller gets ``False`` -- it then must not fire the
+        state's events again, keeping side effects like mails or discount
+        accounting from running twice.
+
+        :param order_skel: Skeleton of the order to modify.
+        :param state_bone: Name of the boolean state bone (e.g. ``is_paid``).
+        :return: Tuple of the (possibly updated) skeleton and whether this
+            call actually performed the transition.
+        """
+
+        def precondition(skel: "SkeletonInstance") -> None:
+            if skel[state_bone]:
+                raise e.InvalidStateError(f"Order already has {state_bone} set")
+
+        try:
+            order_skel = toolkit.set_status(
+                key=order_skel["key"],
+                skel=order_skel,
+                precondition=precondition,
+                values={state_bone: True},
+            )
+        except e.InvalidStateError:
+            logger.info(f'Order {order_skel["key"]!r} already has {state_bone} set; skipping transition')
+            return order_skel, False
+        return order_skel, True
+
     def set_ordered(self, order_skel: "SkeletonInstance", payment: t.Any) -> "SkeletonInstance":
-        """Set an order to the state *ordered*"""
-        order_skel = toolkit.set_status(
-            key=order_skel["key"],
-            skel=order_skel,
-            values={"is_ordered": True},
-        )
-        EVENT_SERVICE.call(Event.ORDER_ORDERED, order_skel=order_skel, payment=payment)
-        EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=order_skel, deleted=False)
+        """Set an order to the state *ordered*.
+
+        Idempotent: the ``ORDER_ORDERED`` event fires only on the actual
+        transition, a repeated call changes and triggers nothing.
+        """
+        order_skel, changed = self._set_state_once(order_skel, "is_ordered")
+        if changed:
+            EVENT_SERVICE.call(Event.ORDER_ORDERED, order_skel=order_skel, payment=payment)
+            EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=order_skel, deleted=False)
         return order_skel
 
     def set_paid(self, order_skel: "SkeletonInstance") -> "SkeletonInstance":
-        """Set an order to the state *paid*"""
-        order_skel = toolkit.set_status(
-            key=order_skel["key"],
-            skel=order_skel,
-            values={"is_paid": True},
-        )
-        EVENT_SERVICE.call(Event.ORDER_PAID, order_skel=order_skel)
-        EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=order_skel, deleted=False)
+        """Set an order to the state *paid*.
+
+        Idempotent: the ``ORDER_PAID`` event fires only on the actual
+        transition, a repeated call (e.g. return handler and payment
+        webhook processing the same payment) changes and triggers nothing.
+        """
+        order_skel, changed = self._set_state_once(order_skel, "is_paid")
+        if changed:
+            EVENT_SERVICE.call(Event.ORDER_PAID, order_skel=order_skel)
+            EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=order_skel, deleted=False)
         return order_skel
 
     def set_rts(self, order_skel: "SkeletonInstance") -> "SkeletonInstance":
-        """Set an order to the state *Ready to ship*"""
-        order_skel = toolkit.set_status(
-            key=order_skel["key"],
-            skel=order_skel,
-            values={"is_rts": True},
-        )
-        EVENT_SERVICE.call(Event.ORDER_RTS, order_skel=order_skel)
-        EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=order_skel, deleted=False)
+        """Set an order to the state *Ready to ship*.
+
+        Idempotent: the ``ORDER_RTS`` event fires only on the actual
+        transition, a repeated call changes and triggers nothing.
+        """
+        order_skel, changed = self._set_state_once(order_skel, "is_rts")
+        if changed:
+            EVENT_SERVICE.call(Event.ORDER_RTS, order_skel=order_skel)
+            EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=order_skel, deleted=False)
         return order_skel
 
     # --- Hooks ---------------------------------------------------------------
