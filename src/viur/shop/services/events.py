@@ -119,19 +119,35 @@ class Event(enum.IntEnum):
 
 
 class EventService:
-    observer: t.Final[dict[[Event, list[t.Callable]]]] = collections.defaultdict(list)
+    observer: t.Final[dict[Event, list[t.Callable]]] = collections.defaultdict(list)
 
     def register(self, event: Event, func: t.Callable) -> t.Callable:
+        """
+        Register *func* as observer for *event*.
+
+        :param event: The event to listen for.
+        :param func: The callable invoked by :meth:`call` for this event.
+        :return: The unmodified *func* (also usable via the
+            :func:`on_event` decorator).
+        """
         if not isinstance(event, Event):
             raise TypeError(f"event must be of type Event")
         EventService.observer[event].append(func)
         return func
 
     def unregister(self, func: t.Callable, event: Event = None) -> None:
-        for event_, funcs in EventService.observer:
-            if event is None or event_ == Event:
+        """
+        Remove *func* from the observer list(s).
+
+        :param func: The callable to remove.
+        :param event: Remove it only for this event;
+            with ``None`` (default) it is removed from all events.
+            A callable that is not registered is silently ignored.
+        """
+        for event_, funcs in EventService.observer.items():
+            if event is None or event_ == event:
                 try:
-                    funcs.pop(func, )
+                    funcs.remove(func)
                 except ValueError:
                     pass
 
@@ -141,6 +157,15 @@ class EventService:
         _raise_errors: bool = False,
         *args, **kwargs
     ) -> None:
+        """
+        Call all observers registered for *_event*.
+
+        :param _event: The event whose observers get called.
+        :param _raise_errors: If ``True``, an exception inside an observer
+            is re-raised to the caller (aborting the remaining observers).
+            With ``False`` (default) exceptions are logged and swallowed --
+            callers must not rely on all observers having succeeded.
+        """
         for func in EventService.observer[_event]:
             try:
                 func(*args, **kwargs)
