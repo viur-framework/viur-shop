@@ -302,10 +302,6 @@ class Order(ShopModuleAbstract, List):
             }, status_code=400)
             raise e.InvalidStateError(", ".join(errors))
 
-        if order_skel["cart"]["dest"]["key"] == self.shop.cart.current_session_cart_key:
-            # This is now an order basket and should no longer be modified
-            self.shop.cart.detach_session_cart()
-
         order_skel = self.freeze_order(order_skel)
         try:
             order_skel = HOOK_SERVICE.dispatch(Hook.ORDER_CHECKOUT_START_ADDITION)(order_skel)
@@ -313,6 +309,15 @@ class Order(ShopModuleAbstract, List):
             pass
         order_skel.write()
         self.set_checkout_in_progress(order_skel)
+
+        # Detach only after the checkout start succeeded completely:
+        # if freeze or write fails, the user keeps their session cart --
+        # detaching first would leave them with an empty new basket while
+        # the old cart dangles half-frozen behind the failed order.
+        if order_skel["cart"]["dest"]["key"] == self.shop.cart.current_session_cart_key:
+            # This is now an order basket and should no longer be modified
+            self.shop.cart.detach_session_cart()
+
         EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=order_skel, deleted=False)
         return JsonResponse({
             "skel": order_skel,
