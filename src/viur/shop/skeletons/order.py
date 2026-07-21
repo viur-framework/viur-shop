@@ -37,7 +37,13 @@ class OrderSkel(Skeleton):
         kind="user",
         searchable=True,
         refKeys={"name", "creationdate"},
+        consistency=RelationalConsistency.SetNull,
     )
+    """The user who placed this order.
+
+    Uses ``SetNull`` consistency: deleting a user account clears the
+    relation instead of leaving a dangling reference.  The order itself and
+    its billing/shipping data stay untouched."""
 
     cart = TreeNodeBone(
         kind="{{viur_shop_modulename}}_cart_node",
