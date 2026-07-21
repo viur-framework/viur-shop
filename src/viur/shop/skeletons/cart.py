@@ -438,7 +438,19 @@ class CartItemSkel(TreeSkel):
             "shop_*",
         ],
         consistency=RelationalConsistency.CascadeDeletion,
+        updateLevel=RelationalUpdateLevel.OnValueAssignment,
     )
+    """Relation to the article this cart item stands for.
+
+    The ``shop_*`` refKeys are a snapshot taken when the article is put
+    into the cart (see :meth:`Cart.copy_article_values` and the "frozen
+    copy" bones below); current prices are always computed live through
+    :attr:`price`.  Therefore the relation uses
+    :attr:`RelationalUpdateLevel.OnValueAssignment`: with the default
+    (``Always``), every article write would spawn an ``update_relations``
+    task refreshing *every* cart leaf (including years-old abandoned
+    baskets) that references the article -- without any effect on the
+    prices being displayed or charged."""
 
     quantity = NumericBone(
         min=0,
