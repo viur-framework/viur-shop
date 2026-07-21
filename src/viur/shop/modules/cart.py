@@ -102,8 +102,16 @@ class Cart(ShopModuleAbstract, Tree):
                 self._set_basket_txn(user_key=user["key"], basket_key=root_node["key"])
         return self.session["session_cart_key"]
 
-    def detach_session_cart(self) -> db.Key:
-        key = self.session["session_cart_key"]
+    def detach_session_cart(self) -> db.Key | None:
+        """
+        Unlink the current cart from the session (and the user's basket).
+
+        The cart entity itself is kept.  Tolerates a session that has no
+        ``session_cart_key`` (anymore) instead of raising a ``KeyError``.
+
+        :return: The key of the detached cart, or ``None`` if none was set.
+        """
+        key = self.session.get("session_cart_key")
         self.session["session_cart_key"] = None
         current.session.get().markChanged()
         if user := current.user.get():
