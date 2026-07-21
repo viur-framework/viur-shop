@@ -1,8 +1,10 @@
+import datetime
 import typing as t  # noqa
 
 import viur.shop.types.exceptions as e
 from viur import toolkit
-from viur.core import conf, current, db, errors, exposed, translate
+from viur.core import conf, current, db, errors, exposed, translate, utils
+from viur.core.tasks import CallDeferred, PeriodicTask
 from viur.core.bones import BaseBone
 from viur.core.prototypes import Tree
 from viur.core.prototypes.tree import SkelType
@@ -695,6 +697,162 @@ class Cart(ShopModuleAbstract, Tree):
         leaf_skel["is_frozen"] = True
         leaf_skel.write()
         return leaf_skel
+
+    # --- Garbage collection ----------------------------------------------------
+
+    GC_STALE_CART_MAX_AGE: datetime.timedelta = datetime.timedelta(days=90)
+    """Retention period for the stale cart sweep of :meth:`periodic_cart_gc`.
+
+    Root nodes whose entire tree has not been modified for this period (and
+    that are not frozen and not referenced by any relation, e.g. an order or
+    a user basket) get deleted.  Must be (significantly) longer than the
+    session lifetime: guest session carts are referenced only inside the
+    session entity, which the sweep cannot see."""
+
+    GC_STALE_CARTS_ENABLED: bool = True
+    """Enables the stale cart sweep of :meth:`periodic_cart_gc`.
+
+    Set to ``False`` in a :class:`Cart` subclass to keep abandoned carts."""
+
+    GC_BATCH_SIZE: int = 500
+    """How many entries one :meth:`gc_orphaned_entries` /
+    :meth:`gc_stale_carts` task processes before re-enqueuing itself."""
+
+    @PeriodicTask(datetime.timedelta(days=1))
+    def periodic_cart_gc(self) -> None:
+        """
+        Periodic garbage collection for cart entries.
+
+        Starts two deferred, cursor-batched sweeps:
+
+        *   :meth:`gc_orphaned_entries` -- deletes entries whose
+            ``parententry`` does not exist anymore.  Such orphans should no
+            longer emerge, but historic ones (from lost ``deleteRecursive``
+            tasks) crash price computations and ``update_relations`` tasks.
+        *   :meth:`gc_stale_carts` -- deletes abandoned root nodes (e.g.
+            from expired guest sessions) with their subtree after
+            :attr:`GC_STALE_CART_MAX_AGE`.  Without this sweep, every
+            visitor session leaves an empty ``cart_node`` behind forever.
+        """
+        self.gc_orphaned_entries("leaf")
+        self.gc_orphaned_entries("node")
+        if self.GC_STALE_CARTS_ENABLED:
+            self.gc_stale_carts()
+
+    @CallDeferred
+    def gc_orphaned_entries(self, skel_type: SkelType, cursor: str | None = None) -> None:
+        """
+        Delete cart entries whose parent node does not exist anymore.
+
+        Iterates over all entries of *skel_type* in batches; entries with a
+        ``parententry`` pointing to a missing node are deleted (nodes with
+        their entire subtree).  Root nodes are never touched.
+
+        :param skel_type: ``"leaf"`` or ``"node"``.
+        :param cursor: Datastore cursor for continuing a previous batch.
+        """
+        query = self.editSkel(skel_type).all()
+        if cursor:
+            query.setCursor(cursor)
+        parent2skels: dict[db.Key, list[SkeletonInstance]] = {}
+        for skel in query.fetch(self.GC_BATCH_SIZE):
+            if skel_type == "node" and (skel["is_root_node"] or not skel["parententry"]):
+                continue
+            if skel["parententry"]:
+                parent2skels.setdefault(skel["parententry"], []).append(skel)
+        # db.get with a list returns only the entities that exist
+        existing_parents = {
+            entity.key
+            for entity in db.get(list(parent2skels.keys()))
+            if entity is not None
+        }
+        for parent_key, skels in parent2skels.items():
+            if parent_key in existing_parents:
+                continue
+            for skel in skels:
+                logger.info(f'Deleting orphaned {skel_type} {skel["key"]!r} '
+                            f'(parent {parent_key!r} is gone)')
+                if skel_type == "node":
+                    self._delete_tree(skel["key"])
+                skel.delete()
+        if (next_cursor := query.getCursor()) is not None:
+            self.gc_orphaned_entries(skel_type, next_cursor)
+
+    @CallDeferred
+    def gc_stale_carts(self, cursor: str | None = None) -> None:
+        """
+        Delete abandoned cart root nodes with their subtree.
+
+        A root node is considered abandoned when
+
+        *   it is not frozen (frozen carts belong to orders),
+        *   no relation points to it (orders via ``cart``, users via
+            ``basket``/``wishlist``, ... -- checked in ``viur-relations``) and
+        *   neither itself nor any entry of its subtree was changed within
+            :attr:`GC_STALE_CART_MAX_AGE`.
+
+        Guest session carts are referenced only inside the session entity,
+        not by a relation -- therefore the retention period must clearly
+        exceed the session lifetime, which it does by default (90 days).
+
+        :param cursor: Datastore cursor for continuing a previous batch.
+        """
+        cutoff = utils.utcNow() - self.GC_STALE_CART_MAX_AGE
+        query = self.editSkel("node").all().filter("changedate <", cutoff)
+        if cursor:
+            query.setCursor(cursor)
+        for skel in query.fetch(self.GC_BATCH_SIZE):
+            if not skel["is_root_node"] or skel["is_frozen"]:
+                continue
+            if db.Query("viur-relations").filter("dest.__key__ =", skel["key"]).getEntry() is not None:
+                continue  # referenced by an order, user basket, wishlist, ...
+            if (latest := self._latest_tree_change(skel["key"])) and latest >= cutoff:
+                continue  # subtree still active, only the root node is old
+            logger.info(f'Deleting stale cart {skel["key"]!r} (no activity since {latest or skel["changedate"]})')
+            self._delete_tree(skel["key"])
+            skel.delete()
+        if (next_cursor := query.getCursor()) is not None:
+            self.gc_stale_carts(next_cursor)
+
+    def _latest_tree_change(self, parent_cart_key: db.Key) -> datetime.datetime | None:
+        """
+        Determine the most recent ``changedate`` within a cart subtree.
+
+        :param parent_cart_key: Key of the cart node whose subtree is examined.
+        :return: The latest ``changedate`` of all children (recursively),
+            or ``None`` for a childless node.
+        """
+        latest = None
+        for skel_type in ("leaf", "node"):
+            for skel in toolkit.iter_skel(
+                self.viewSkel(skel_type).all().filter("parententry =", parent_cart_key)
+            ):
+                if latest is None or (skel["changedate"] and skel["changedate"] > latest):
+                    latest = skel["changedate"]
+                if skel_type == "node":
+                    if (sub_latest := self._latest_tree_change(skel["key"])) and (
+                        latest is None or sub_latest > latest
+                    ):
+                        latest = sub_latest
+        return latest
+
+    def _delete_tree(self, parent_cart_key: db.Key) -> None:
+        """
+        Delete all children of a cart node bottom-up and synchronously.
+
+        Leafs first, then sub-nodes recursively (their children before the
+        sub-node itself), so an interrupted run never leaves entries behind
+        whose ``parententry`` points to an already deleted node.  Intentionally
+        fires no events: garbage collection must not trigger cart change
+        listeners.
+
+        :param parent_cart_key: Key of the cart node whose subtree gets deleted.
+        """
+        for leaf_skel in toolkit.iter_skel(self.editSkel("leaf").all().filter("parententry =", parent_cart_key)):
+            leaf_skel.delete()
+        for node_skel in toolkit.iter_skel(self.editSkel("node").all().filter("parententry =", parent_cart_key)):
+            self._delete_tree(node_skel["key"])
+            node_skel.delete()
 
     # -------------------------------------------------------------------------
 
