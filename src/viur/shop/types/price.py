@@ -107,7 +107,18 @@ class Price:
             except Exception as exc:  # FIXME: some entities are broken?
                 logger.exception(exc)
                 self.cart_discounts = []
-            self.cart_discounts = [toolkit.get_full_skel_from_ref_skel(d) for d in self.cart_discounts]
+            # Resolve the ref-skels to full skeletons and drop dangling
+            # relations (the discount entity has been deleted meanwhile,
+            # e.g. with RelationalConsistency.Ignore); an unloadable skel
+            # has no key and would crash the discount evaluation later.
+            cart_discounts = []
+            for ref_skel in self.cart_discounts:
+                full_skel = toolkit.get_full_skel_from_ref_skel(ref_skel)
+                if not full_skel["key"]:
+                    logger.warning(f'Ignoring dangling discount relation {ref_skel["key"]!r}')
+                    continue
+                cart_discounts.append(full_skel)
+            self.cart_discounts = cart_discounts
         elif is_skeletoninstance_of(src_object, shop.article_skel):
             self.is_in_cart = False
             self.article_skel = toolkit.without_render_preparation(src_object)
@@ -310,8 +321,9 @@ class Price:
                 country=country,
                 category=toolkit.without_render_preparation(self.article_skel)["shop_vat_rate_category"],
             )
-        except ConfigurationError as e:  # TODO(discussion): Or re-raise or implement fallback?
-            logger.warning(f"No vat rate for article :: {e}")
+        except (ConfigurationError, ValueError) as e:  # TODO(discussion): Or re-raise or implement fallback?
+            # ValueError: e.g. an invalid country code from a dangling shipping_address relation
+            logger.error(f"No vat rate for article :: {e}")
             vat_rate = 0.0
         return (vat_rate or 0.0) / 100
 
@@ -442,6 +454,12 @@ class Price:
         """
         Request-local price cache to avoid recalculating prices during one request lifecycle.
 
+        In contexts without request data (e.g. some task or test contexts)
+        an unshared, empty dict is returned -- prices are then simply not
+        cached instead of crashing.
+
         :return: Dictionary keyed by skeleton key, with cached `Price` objects.
         """
+        if current.request_data.get() is None:
+            return {}
         return current.request_data.get().setdefault("viur.shop", {}).setdefault("price_cache", {})
