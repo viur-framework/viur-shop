@@ -3,7 +3,7 @@ import typing as t  # noqa
 import viur.shop.types.exceptions as e
 from viur import toolkit
 from viur.core import conf, current, db, errors, exposed, translate
-from viur.core.bones import BaseBone
+from viur.core.bones import BaseBone, RelationalConsistency
 from viur.core.prototypes import Tree
 from viur.core.prototypes.tree import SkelType
 from viur.core.session import Session
@@ -571,9 +571,18 @@ class Cart(ShopModuleAbstract, Tree):
 
         Frozen carts belong to an order and cannot be removed.
 
+        This also checks upfront whether the node is locked by a
+        ``RelationalConsistency.PreventDeletion`` relation (e.g. an order
+        referencing an in-progress checkout cart that has not been frozen
+        yet) and fails before touching any child -- deleting the children
+        first and finding out only at ``skel.delete()`` that the node itself
+        is locked would leave the order pointing at an emptied-out cart.
+
         :param cart_key: Key of the cart node to remove.
         :raises errors.NotFound: If the cart node does not exist.
         :raises errors.Forbidden: If the cart node is frozen.
+        :raises errors.Locked: If the cart node is referenced by a
+            PreventDeletion relation (e.g. an order).
         """
         skel = self.editSkel("node")
         if not skel.read(cart_key):
@@ -583,8 +592,14 @@ class Cart(ShopModuleAbstract, Tree):
                 translate("viur.shop.error.cart.is_frozen",
                           default_variables={"cart_key": cart_key})
             )
+        if (
+            db.Query("viur-relations")
+                .filter("dest.__key__ =", cart_key)
+                .filter("viur_relational_consistency =", RelationalConsistency.PreventDeletion.value)
+                .getEntry()
+        ) is not None:
+            raise errors.Locked("This entry is still referenced by other Skeletons, which prevents deleting!")
         self._delete_children(cart_key)
-        # This delete could fail if the cart is used by an order (PreventDeletion)
         skel.delete()
         if skel["parententry"] is None or skel["is_root_node"]:
             logger.info(f"{skel['key']} was a root node!")
