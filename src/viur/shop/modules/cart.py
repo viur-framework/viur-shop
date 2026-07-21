@@ -655,12 +655,18 @@ class Cart(ShopModuleAbstract, Tree):
         :param cart_key: Key of the (sub-)cart skeleton.
         :return: The frozen CartNode skeleton.
         """
+        # Iterate the children without a fetch limit: a partially frozen
+        # cart would keep recomputing (and thereby changing) the totals of
+        # the unfrozen entries after the order has been placed.
         child: SkeletonInstance_T[CartNodeSkel | CartItemSkel]
-        for child in self.get_children(cart_key):
-            if issubclass(child.skeletonCls, CartNodeSkel):
-                self.freeze_cart(child["key"])
-            else:
-                self.freeze_leaf(child)
+        for skel_type in ("node", "leaf"):
+            for child in toolkit.iter_skel(
+                self.viewSkel(skel_type).all().filter("parententry =", cart_key)
+            ):
+                if skel_type == "node":
+                    self.freeze_cart(child["key"])
+                else:
+                    self.freeze_leaf(child)
 
         self.clear_children_cache()
 
