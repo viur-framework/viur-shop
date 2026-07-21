@@ -10,7 +10,6 @@ from viur.core.session import Session
 from viur.core.skeleton import Skeleton, SkeletonInstance
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.types import *
-from viur.shop.types.exceptions import InvalidStateError
 from ..globals import MAX_FETCH_LIMIT, SENTINEL, SHOP_INSTANCE, SHOP_LOGGER
 from ..services import EVENT_SERVICE, Event
 from ..skeletons.article import ArticleAbstractSkel
@@ -740,16 +739,38 @@ class Cart(ShopModuleAbstract, Tree):
         self,
         leaf_key_or_skel: db.Key | SkeletonInstance,
     ) -> list[SkeletonInstance]:
+        """
+        Collect the discounts of all cart nodes above the given leaf.
+
+        Walks the ``parententry`` chain from the leaf up to the root node and
+        collects the ``discount`` relation of every node on the way.
+
+        The walk is tolerant against broken tree data: if a parent node does
+        not exist anymore (orphaned entry) or the chain contains a cycle, the
+        walk stops at the broken link with a warning and the discounts
+        collected so far are returned.  This keeps computed bones (e.g. the
+        price) usable on orphaned entries instead of raising and thereby
+        crashing deferred tasks (like ``update_relations``) forever.
+
+        :param leaf_key_or_skel: Key or skeleton of the cart leaf to start from.
+        :return: The discount ref-skels found on the ancestor nodes.
+        """
         if isinstance(leaf_key_or_skel, db.Key):
             skel = self.viewSkel("leaf")
             skel.read(leaf_key_or_skel)
         else:
             skel = leaf_key_or_skel
         discounts = []
+        seen_keys = set()
         while (pk := skel["parententry"]):
+            if pk in seen_keys:
+                logger.warning(f"Cyclic parententry chain detected at {pk=}; stopping walk")
+                break
+            seen_keys.add(pk)
             skel = self.viewSkel("node", sub_skel="discount")
             if not skel.read(pk):
-                raise InvalidStateError(f"{pk=} doesn't exist!")
+                logger.warning(f"Parent node {pk=} doesn't exist (anymore); stopping walk at orphaned entry")
+                break
             if discount := skel["discount"]:
                 discounts.append(discount["dest"])
         return discounts
@@ -769,14 +790,24 @@ class Cart(ShopModuleAbstract, Tree):
         EVENT_SERVICE.call(Event.ARTICLE_CHANGED, skel=leaf_skel, deleted=False)
         return new_parent_skel
 
-    def get_cached_cart_skel(self, key: db.Key) -> SkeletonInstance_T[CartNodeSkel]:
+    def get_cached_cart_skel(self, key: db.Key) -> SkeletonInstance_T[CartNodeSkel] | None:
+        """
+        Read a cart node skeleton with request-local caching.
+
+        :param key: Key of the cart node to read.
+        :return: The cached or freshly read node skeleton or ``None`` if the
+            node does not exist (anymore).  Missing nodes are not cached, so a
+            later call re-checks the datastore.
+        """
         cache = current.request_data.get().setdefault("shop_cache_cart_skel", {})
         key = db.keyHelper(key, CartNodeSkel.kindName)
         try:
             parent_skel = cache[key]
         except KeyError:
             parent_skel = self.viewSkel("node")
-            assert parent_skel.read(key)
+            if not parent_skel.read(key):
+                logger.warning(f"Cart node {key=} doesn't exist (anymore)")
+                return None
             cache[key] = parent_skel
         return parent_skel
 
@@ -785,8 +816,31 @@ class Cart(ShopModuleAbstract, Tree):
         start: SkeletonInstance_T[CartNodeSkel | CartItemSkel],
         condition: t.Callable[[SkeletonInstance], bool] = (lambda skel: True),
     ) -> SkeletonInstance_T[CartNodeSkel] | None:
+        """
+        Walk the ``parententry`` chain upwards and return the first ancestor
+        node that satisfies *condition*.
+
+        The walk stops and returns ``None`` when
+
+        *   the root node is reached without a match,
+        *   the current entry has no ``parententry`` (detached entry),
+        *   a parent node does not exist anymore (orphaned entry) or
+        *   the ``parententry`` chain contains a cycle.
+
+        The latter cases are broken tree states which must not crash callers
+        like the price computation running inside deferred tasks.
+
+        :param start: Leaf or node skeleton to start from (itself excluded).
+        :param condition: Predicate evaluated for each ancestor node.
+        :return: The closest matching ancestor node or ``None``.
+        """
+        seen_keys = set()
         while True:
-            parent_skel = self.get_cached_cart_skel(start["parententry"])
+            if not (pk := start["parententry"]) or pk in seen_keys:
+                return None  # detached entry or cyclic parententry chain
+            seen_keys.add(pk)
+            if (parent_skel := self.get_cached_cart_skel(pk)) is None:
+                return None  # orphaned entry, the parent node has been deleted
             if condition(parent_skel):
                 return parent_skel  # type:ignore
             if parent_skel["is_root_node"]:
