@@ -308,6 +308,12 @@ class Cart(ShopModuleAbstract, Tree):
             skel = self.copy_article_values(article_skel, skel)
         else:
             parent_skel = skel.parent_skel
+        if parent_skel and parent_skel["is_frozen"]:
+            # The cart belongs to a placed order and must not change anymore
+            raise errors.Forbidden(
+                translate("viur.shop.error.cart.is_frozen",
+                          default_variables={"cart_key": parent_skel["key"]})
+            )
         if quantity == 0 and quantity_mode in (QuantityMode.INCREASE, QuantityMode.DECREASE):
             raise e.InvalidArgumentException(
                 "quantity",
@@ -396,6 +402,14 @@ class Cart(ShopModuleAbstract, Tree):
                 "new_parent_cart_key", new_parent_cart_key,
                 f"Target cart node is inside a different repo"
             )
+        if skel["is_frozen"] or parent_skel["is_frozen"]:
+            # Neither an ordered (frozen) item may be moved away
+            # nor may an item be moved into a frozen cart
+            frozen_cart_key = parent_cart_key if skel["is_frozen"] else new_parent_cart_key
+            raise errors.Forbidden(
+                translate("viur.shop.error.cart.is_frozen",
+                          default_variables={"cart_key": frozen_cart_key})
+            )
         skel["parententry"] = new_parent_cart_key
         skel.write()
         EVENT_SERVICE.call(Event.ARTICLE_CHANGED, skel=skel, deleted=False)
@@ -462,6 +476,12 @@ class Cart(ShopModuleAbstract, Tree):
         # if not self.canEdit(skel):
         #     raise errors.Forbidden
         assert skel.read(cart_key)
+        if skel["is_frozen"]:
+            # The cart belongs to a placed order and must not change anymore
+            raise errors.Forbidden(
+                translate("viur.shop.error.cart.is_frozen",
+                          default_variables={"cart_key": cart_key})
+            )
         skel = self._cart_set_values(
             skel=skel,
             parent_cart_key=parent_cart_key,

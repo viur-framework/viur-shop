@@ -164,6 +164,16 @@ class OrderSkel(Skeleton):
 
     @classmethod
     def read(cls, skel: SkeletonInstance, *args, **kwargs) -> t.Optional[SkeletonInstance]:
+        """
+        Read the order skeleton.
+
+        For open orders the ``cart`` relation is refreshed to work around
+        race-condition and timing issues with its dest values.  Completed
+        orders (``is_ordered``) are exempt: their cart is frozen and the
+        relation must keep the values from order time -- refreshing it
+        would overwrite them and let the order change retroactively.
+        """
         if res := super().read(skel, *args, **kwargs):
-            cls.refresh_cart(skel)
+            if not skel["is_ordered"]:
+                cls.refresh_cart(skel)
         return res
