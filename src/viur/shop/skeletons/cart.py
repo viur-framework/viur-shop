@@ -48,8 +48,19 @@ class TotalFactory:
         else:
             return SHOP_INSTANCE.get().cart.get_children(parent_cart_key)
 
-    def __call__(self, skel: SkeletonInstance_T["CartNodeSkel"], bone: NumericBone):
+    def __call__(self, skel: SkeletonInstance_T["CartNodeSkel"], bone: NumericBone, bone_name: str):
+        """
+        Compute the total of *bone_name* by aggregating the children.
+
+        Frozen carts (``is_frozen``) return the snapshot stored in
+        ``frozen_values`` at freeze time instead of recomputing: totals of an
+        ordered cart must not change anymore when article prices, discounts
+        or shippings change afterwards.  (Frozen entries written before
+        ``frozen_values`` existed fall back to live computation.)
+        """
         skel = without_render_preparation(skel)
+        if skel["is_frozen"] and (frozen_values := skel["frozen_values"]) and bone_name in frozen_values:
+            return frozen_values[bone_name]
         children = self._get_children(skel["key"])
         total = 0
         for child in children:
@@ -98,7 +109,16 @@ def add_shipping(factory: TotalFactory, total: float, skel: "SkeletonInstance", 
 
 # @toolkit.debug
 def get_vat_for_node(skel: "CartNodeSkel", bone: RecordBone) -> list[dict]:
+    """
+    Compute the VAT shares of a cart node from its children.
+
+    Frozen carts (``is_frozen``) return the snapshot stored in
+    ``frozen_values`` at freeze time instead of recomputing (see
+    :meth:`TotalFactory.__call__`).
+    """
     skel = without_render_preparation(skel)
+    if skel["is_frozen"] and (frozen_values := skel["frozen_values"]) and "vat" in frozen_values:
+        return frozen_values["vat"]
     children = SHOP_INSTANCE.get().cart.get_children_from_cache(skel["key"])
     cat2value = collections.defaultdict(lambda: 0)
     cat2rate = {}
@@ -140,6 +160,35 @@ def get_vat_for_node(skel: "CartNodeSkel", bone: RecordBone) -> list[dict]:
         for cat, value in cat2value.items()
         if cat and value
     ]
+
+
+def get_price_for_leaf(skel: SkeletonInstance_T["CartItemSkel"]) -> dict:
+    """
+    Compute the price dict of a cart leaf.
+
+    Frozen leafs (``is_frozen``) return the price snapshot stored in
+    ``frozen_values`` at freeze time instead of recomputing: the price of an
+    ordered item must not change anymore when the article prices or
+    discounts change afterwards.  (Frozen entries written before
+    ``frozen_values`` existed fall back to live computation.)
+    """
+    if skel["is_frozen"] and (frozen_values := skel["frozen_values"]) and frozen_values.get("price"):
+        return frozen_values["price"]
+    return skel.price_.to_dict()
+
+
+def get_shipping_for_leaf(skel: SkeletonInstance_T["CartItemSkel"]) -> dict | None:
+    """
+    Compute the shipping dict of a cart leaf.
+
+    Frozen leafs return the snapshot stored in ``frozen_values`` at freeze
+    time (see :func:`get_price_for_leaf`).
+    """
+    if skel["is_frozen"] and (frozen_values := skel["frozen_values"]) and "shipping" in frozen_values:
+        return frozen_values["shipping"]
+    return make_json_dumpable(
+        SHOP_INSTANCE.get().shipping.choose_shipping_skel_for_article(skel.article_skel_full)
+    )
 
 
 class RelationalBoneShipping(RelationalBone):
@@ -312,7 +361,13 @@ class CartNodeSkel(TreeSkel):
             "supplier",
             "delivery_time_range",
         ],
+        consistency=RelationalConsistency.SetNull,
     )
+    """Selected shipping for this cart node.
+
+    Uses ``SetNull`` consistency: when the referenced shipping entry gets
+    deleted, the relation is cleared instead of silently keeping a dangling
+    reference with stale ``shipping_cost`` values in the totals."""
     shipping_status = SelectBone(
         values=ShippingStatus,
         defaultValue=ShippingStatus.CHEAPEST
@@ -330,7 +385,14 @@ class CartNodeSkel(TreeSkel):
             "percentage",
             "condition"
         ],
+        consistency=RelationalConsistency.SetNull,
     )
+    """Discount applied to this cart node.
+
+    Uses ``SetNull`` consistency: when the referenced discount gets deleted,
+    the relation is cleared -- a dangling reference would still be applied
+    with its cached refKey values by ``add_discount`` and crash the discount
+    evaluation in the price calculation."""
 
     project_data = JsonBone(
     )
@@ -472,15 +534,11 @@ class CartItemSkel(TreeSkel):
         return Price.get_or_create(self)
 
     price = JsonBone(
-        compute=Compute(lambda skel: skel.price_.to_dict(), ComputeInterval(ComputeMethod.Always))
+        compute=Compute(get_price_for_leaf, ComputeInterval(ComputeMethod.Always))
     )
 
     shipping = JsonBone(
-        compute=Compute(
-            lambda skel: make_json_dumpable(
-                SHOP_INSTANCE.get().shipping.choose_shipping_skel_for_article(skel.article_skel_full)
-            ),
-            ComputeInterval(ComputeMethod.Always)),
+        compute=Compute(get_shipping_for_leaf, ComputeInterval(ComputeMethod.Always)),
     )
 
     is_frozen = BooleanBone(

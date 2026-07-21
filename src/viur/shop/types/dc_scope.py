@@ -259,10 +259,12 @@ class DiscountValidator:
         # We need the full skel with all bones (otherwise the refSkel would be to large)
         for condition in discount_skel["condition"]:
             if not (condition_skel := SHOP_INSTANCE.get().discount_condition.get_skel(condition["dest"]["key"])):
-                logger.warning(f'Broken relation {condition=} in {discount_skel["key"]}?!')
-                raise InvalidStateError(f'Broken relation {condition=} in {discount_skel["key"]}?!')
-                self.condition_skels.append(None)  # TODO
-                self.condition_validator_instances.append(None)  # TODO
+                # A single discount with a broken condition relation must not
+                # crash the evaluation of *all* discounts (e.g. the automatic
+                # discounts); the safe direction is to never apply it.
+                logger.warning(f'Broken condition relation {condition=} in discount {discount_skel["key"]!r}; '
+                               f'treating discount as not fulfilled')
+                self._is_fulfilled = False
                 continue
             cv = ConditionValidator()(
                 cart_skel=cart_skel,
@@ -295,10 +297,21 @@ class DiscountValidator:
 
     @property
     def application_domain(self) -> ApplicationDomain:
+        """
+        The common application domain of all conditions.
+
+        :return: The specific domain of the conditions, or
+            :attr:`ApplicationDomain.ALL` if the conditions declare no
+            specific domain (previously a ``KeyError`` from ``set().pop()``).
+        :raises NotImplementedError: If the conditions declare more than one
+            specific domain.
+        """
         domains = {cm.condition_skel["application_domain"] for cm in self.condition_validator_instances}
         domains.discard(ApplicationDomain.ALL)
         if len(domains) > 1:
             raise NotImplementedError(f"Ambiguous application_domains: {domains=}")
+        if not domains:
+            return ApplicationDomain.ALL
         return domains.pop()
 
     def __repr__(self):
@@ -313,9 +326,17 @@ class DiscountValidator:
 
 @ConditionValidator.register
 class ScopeCode(DiscountConditionScope):
+    """
+    Validates that the given code matches the condition's code.
+
+    Applies to ``UNIVERSAL`` and ``INDIVIDUAL`` code conditions; without a
+    given code such a condition is never fulfilled (a code-bound discount
+    must not be applied automatically).
+    """
+
     def precondition(self) -> bool:
         return (
-            self.condition_skel["code_type"] in {CodeType.INDIVIDUAL, CodeType.INDIVIDUAL}
+            self.condition_skel["code_type"] in {CodeType.INDIVIDUAL, CodeType.UNIVERSAL}
             # and self.cart_skel is not None
         )
 
@@ -326,6 +347,8 @@ class ScopeCode(DiscountConditionScope):
         ):
             # logger.info(f'scope_code UNIVERSAL not reached ({self.condition_skel["scope_code"]=} != {self.code=})')
             logger.debug(f'scope_code {self.condition_skel["scope_code"]=} =?= {self.code=}')
+            if not isinstance(self.code, str) or not self.condition_skel["scope_code"]:
+                return False  # no code given (e.g. automatic discount evaluation)
             return self.condition_skel["scope_code"].lower() == self.code.lower()
         elif (
             self.condition_skel["code_type"] == CodeType.INDIVIDUAL
@@ -481,7 +504,7 @@ class ScopeCustomerGroup(DiscountConditionScope):
         )
         if self.condition_skel["scope_customer_group"] == CustomerGroup.FIRST_ORDER:
             return orders == 0
-        elif self.condition_skel["scope_customer_group"] == CustomerGroup.FIRST_ORDER:
+        elif self.condition_skel["scope_customer_group"] == CustomerGroup.FOLLOW_UP_ORDER:
             return orders > 0
         raise NotImplementedError
 
