@@ -22,15 +22,13 @@ class OrderSkel(Skeleton):
     billing_address = RelationalBone(
         kind="{{viur_shop_modulename}}_address",
         module="{{viur_shop_modulename}}/address",
-        consistency=RelationalConsistency.PreventDeletion,
-        refKeys=[
-            "key", "name", "customer_type", "salutation", "company_name",
-            "firstname", "lastname", "street_name", "street_number",
-            "address_addition", "zip_code", "city", "country",
-            "email", "phone", "birthdate",
-            "is_default", "address_type",
-        ],
         searchable=True,
+        # keep billing address persistent:
+        updateLevel=RelationalUpdateLevel.OnValueAssignment,
+        # keep all fields of the billing address as a copy:
+        refKeys={
+            "*",
+        },
     )
 
     customer = RelationalBone(

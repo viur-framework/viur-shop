@@ -669,16 +669,6 @@ class Cart(ShopModuleAbstract, Tree):
         cart_skel = self.editSkel("node")
         assert cart_skel.read(cart_key)
 
-        # Clone the address, so in case the user edits the address, existing orders wouldn't be affected by this
-        try:
-            sa_key = cart_skel["shipping_address"]["dest"]["key"]
-        except (TypeError, KeyError):  # sub-carts might have no own shipping
-            sa_key = None
-        if sa_key is not None:
-            sa_skel = self.shop.address.clone_address(sa_key)
-            assert sa_skel["key"] != sa_key, f'{sa_skel["key"]} != {sa_key}'
-            cart_skel.setBoneValue("shipping_address", sa_skel["key"])
-
         cart_skel["frozen_values"] = {
             "total": cart_skel["total"],
             "total_raw": cart_skel["total_raw"],
@@ -686,6 +676,12 @@ class Cart(ShopModuleAbstract, Tree):
             "vat": cart_skel["vat"],
             "total_quantity": cart_skel["total_quantity"],
             "shipping": cart_skel["shipping"],
+            # Sub-nodes of the cart tree have no shipping_address (only the
+            # relevant node carries one), so guard against None here.
+            "shipping_address": (
+                cart_skel["shipping_address"]["dest"].dump()
+                if cart_skel["shipping_address"] else None
+            ),
             "discount": make_json_dumpable(cart_skel["discount"]),
         }
         cart_skel["is_frozen"] = True

@@ -305,11 +305,6 @@ TRANSLATIONS = {
         "en": "City",
         "fr": "Ville",
     },
-    "viur.shop.skeleton.address.cloned_from": {
-        "_hint": "bone cloned_from<RelationalBone> in AddressSkel in viur.shop",
-        "de": "Geklont von",
-        "en": "Cloned from",
-    },
     "viur.shop.skeleton.address.company_name": {
         "_hint": "bone company_name<StringBone> in AddressSkel in viur.shop",
         "de": "Firmenname",

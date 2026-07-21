@@ -345,13 +345,6 @@ class Order(ShopModuleAbstract, List):
     ) -> SkeletonInstance_T[OrderSkel]:
         cart_skel = self.shop.cart.freeze_cart(order_skel["cart"]["dest"]["key"])
         order_skel["total"] = cart_skel["total_discount_price"]
-
-        # Clone the address, so in case the user edits the address, existing orders wouldn't be affected by this
-        # TODO: Can we do this copy-on-write instead; clone if an address is edited and replace on used order skels?
-        ba_key = order_skel["billing_address"]["dest"]["key"]
-        ba_skel = self.shop.address.clone_address(ba_key)
-        assert ba_skel["key"] != ba_key, f'{ba_skel["key"]} != {ba_key}'
-        order_skel.setBoneValue("billing_address", ba_skel["key"])
         order_skel.write()
         EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=order_skel, deleted=False)
 
