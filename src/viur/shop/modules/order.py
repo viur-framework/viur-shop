@@ -414,20 +414,38 @@ class Order(ShopModuleAbstract, List):
                 "errors": [ClientError("checkout_order is already in progress")],
             }, status_code=409)
 
+        claimed_at = order_skel["checkout_order_started"]
         try:
-            order_skel = HOOK_SERVICE.dispatch(Hook.ORDER_ASSIGN_UID, self._default_assign_uid)(order_skel)
+            if not order_skel["order_uid"]:
+                # Only assign once: payment providers use order_uid as the
+                # invoice/reference id; reassigning it on a retry (e.g. after
+                # an expired claim was overtaken) would break webhook/return
+                # reconciliation and defeat provider-side idempotency.
+                order_skel = HOOK_SERVICE.dispatch(Hook.ORDER_ASSIGN_UID, self._default_assign_uid)(order_skel)
             # TODO: charge order if it should directly be charged
             pp_res = self.get_payment_provider_by_name(order_skel["payment_provider"]).checkout(order_skel)
         except Exception:
-            # Release the claim, the user may retry immediately
-            toolkit.set_status(
-                key=order_skel["key"],
-                skel=order_skel,
-                values={"checkout_order_started": None},
-            )
+            # Release the claim so the user may retry immediately -- but only
+            # if it is still *our* claim. A concurrent retry may already have
+            # overtaken an (apparently) expired claim; releasing that newer
+            # claim unconditionally would reopen the double-charge window
+            # this claim mechanism is meant to close.
+            def release_precondition(skel: "SkeletonInstance") -> None:
+                if skel["checkout_order_started"] != claimed_at:
+                    raise e.InvalidStateError("checkout_order claim was overtaken by a concurrent request")
+
+            try:
+                toolkit.set_status(
+                    key=order_skel["key"],
+                    skel=order_skel,
+                    precondition=release_precondition,
+                    values={"checkout_order_started": None},
+                )
+            except e.InvalidStateError as exc:
+                logging.warning(f"Not releasing checkout_order claim for {order_key!r}: {exc}")
             raise
+        # set_ordered() fires Event.ORDER_CHANGED on the actual transition already
         order_skel = self.set_ordered(order_skel, pp_res)
-        EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=order_skel, deleted=False)
         return JsonResponse({
             "skel": order_skel,
             "payment": pp_res,
