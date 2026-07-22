@@ -617,11 +617,20 @@ class Cart(ShopModuleAbstract, Tree):
 
         Leafs of *parent_cart_key* are deleted first, then each sub-node is
         processed recursively (its own children before the sub-node itself).
-        In contrast to the deferred :meth:`deleteRecursive` of the Tree
-        prototype this runs synchronously: a lost cleanup task can therefore
-        no longer leave orphaned children behind, whose broken
-        ``parententry`` chain would crash price computations and
-        ``update_relations`` tasks later.
+
+        Deliberately does not call the inherited :meth:`deleteRecursive` of
+        the Tree prototype: that method is ``@CallDeferred`` and only deletes
+        the children, while the node itself is deleted synchronously by the
+        caller right away (see :meth:`Tree.delete` / :meth:`cart_remove`).
+        If that deferred task gets lost (queue purge, crash, or the task
+        being pinned to an App Engine version that no longer exists), the
+        node is gone but its children survive it forever -- orphaned
+        entries whose broken ``parententry`` chain crashes price
+        computations and ``update_relations`` tasks later. Cart trees are
+        small (a handful of nodes/leafs), so there is no need to defer this
+        work at all; running it synchronously, bottom-up and before the
+        node itself is deleted removes the race entirely instead of just
+        narrowing it.
 
         :param parent_cart_key: Key of the cart node whose subtree gets deleted.
         """
