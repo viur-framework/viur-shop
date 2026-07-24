@@ -1,269 +1,316 @@
 TRANSLATIONS = {
     # --- Module names --------------------------------------------------------
     "viur.shop.module.address": {
-        "en": "Addresses",
-        "de": "Adressen",
         "_hint": "modulename: address",
+        "de": "Adressen",
+        "en": "Addresses",
+        "fr": "Adresses",
     },
     "viur.shop.module.api": {
-        "en": "API",
-        "de": "API",
         "_hint": "modulename: api",
+        "de": "API",
+        "en": "API",
+        "fr": "API",
     },
     "viur.shop.module.cart": {
-        "en": "Carts",
-        "de": "Warenkörbe",
         "_hint": "modulename: cart",
+        "de": "Warenkörbe",
+        "en": "Carts",
+        "fr": "Paniers",
     },
     "viur.shop.module.discount": {
-        "en": "Discounts",
-        "de": "Rabatte",
         "_hint": "modulename: discount",
+        "de": "Rabatte",
+        "en": "Discounts",
+        "fr": "Remises",
     },
     "viur.shop.module.discount_condition": {
-        "en": "Discount conditions",
-        "de": "Rabattbedingungen",
         "_hint": "modulename: discount_condition",
+        "de": "Rabattbedingungen",
+        "en": "Discount conditions",
+        "fr": "Conditions de remise",
     },
     "viur.shop.module.order": {
-        "en": "Orders",
-        "de": "Bestellungen",
         "_hint": "modulename: order",
+        "de": "Bestellungen",
+        "en": "Orders",
+        "fr": "Commandes",
     },
     "viur.shop.module.shipping": {
-        "en": "Shipping",
-        "de": "Versand",
         "_hint": "modulename: shipping",
+        "de": "Versand",
+        "en": "Shipping",
+        "fr": "Livraison",
     },
     "viur.shop.module.shipping_config": {
-        "en": "Shipping configuration",
-        "de": "Versandkonfiguration",
         "_hint": "modulename: shipping_config",
+        "de": "Versandkonfiguration",
+        "en": "Shipping configuration",
+        "fr": "Configuration de livraison",
     },
     "viur.shop.module.vat_rate": {
-        "en": "Tax rates",
-        "de": "Steuersätze",
         "_hint": "modulename: vat_rate",
+        "de": "Steuersätze",
+        "en": "Tax rates",
+        "fr": "Taux de TVA",
+    },
+
+    "viur.shop.my_addresses": {
+        "de": "Meine Adressen",
+        "en": "My Addresses",
+        "fr": "Mes adresses",
     },
 
     # --- Payment providers ---------------------------------------------------
     "viur.shop.payment_provider.invoice": {
-        "_default_text": "Invoice",
         "_hint": "viur-shop Invoice",
+        "_default_text": "Invoice",
         "de": "Rechnungskauf",
+        "fr": "Sur facture",
     },
     "viur.shop.payment_provider.unzer-bancontact": {
-        "_default_text": "Bancontact via Unzer",
         "_hint": "viur-shop payment provider: unzer-bancontact",
+        "_default_text": "Bancontact via Unzer",
         "de": "Bancontact über Unzer",
+        "fr": "Bancontact",
     },
     "viur.shop.payment_provider.unzer-card": {
-        "_default_text": "Card via Unzer",
         "_hint": "viur-shop payment provider: unzer-card",
+        "_default_text": "Card via Unzer",
         "de": "Kreditkarte über Unzer",
+        "fr": "Carte de crédit",
     },
     "viur.shop.payment_provider.unzer-ideal": {
-        "_default_text": "iDEAL via Unzer",
         "_hint": "viur-shop payment provider: unzer-ideal",
+        "_default_text": "iDEAL via Unzer",
         "de": "iDEAL über Unzer",
+        "fr": "iDEAL",
     },
     "viur.shop.payment_provider.unzer-paypal": {
-        "_default_text": "PayPal via Unzer",
         "_hint": "viur-shop payment provider: unzer-paypal",
+        "_default_text": "PayPal via Unzer",
+        "de": "PayPal über Unzer",
+        "fr": "PayPal",
     },
     "viur.shop.payment_provider.unzer-sofort": {
-        "_default_text": "Sofort via Unzer",
         "_hint": "viur-shop payment provider: unzer-sofort",
+        "_default_text": "Sofort via Unzer",
         "de": "Sofort über Unzer",
+        "fr": "Sofort via Unzer",
     },
     "viur.shop.payment_provider.unzer-googlepay": {
-        "_default_text": "Google Pay via Unzer",
         "_hint": "viur-shop payment provider: unzer-googlepay",
+        "_default_text": "Google Pay via Unzer",
         "de": "Google Pay über Unzer",
+        "fr": "Google Pay via Unzer",
     },
     "viur.shop.payment_provider.unzer-applepay": {
-        "_default_text": "Apple Pay via Unzer",
         "_hint": "viur-shop payment provider: unzer-applepay",
+        "_default_text": "Apple Pay via Unzer",
         "de": "Apple Pay über Unzer",
+        "fr": "Apple Pay via Unzer",
     },
     "viur.shop.payment_provider.unzer-paylater_invoice": {
-        "_default_text": "Invoice via Unzer",
         "_hint": "viur-shop Unzer Paylater Invoice",
+        "_default_text": "Invoice via Unzer",
         "de": "Rechnungskauf über Unzer",
+        "fr": "Achat sur facture via Unzer",
     },
     "viur.shop.payment_provider.unzer-paylater_invoice.descr": {
         "_default_text": "Buy Now Pay Later (BNPL)",
-        "en": "Buy Now Pay Later (BNPL)",
         "de": "Jetzt kaufen, später bezahlen",
+        "en": "Buy Now Pay Later (BNPL)",
+        "fr": "Acheter maintenant, payer plus tard (BNPL)",
     },
     "viur.shop.payment_provider.prepayment": {
-        "_default_text": "Prepayment",
         "_hint": "viur-shop Prepayment",
+        "_default_text": "Prepayment",
         "de": "Vorkasse",
+        "fr": "Paiement anticipé",
     },
     "viur.shop.payment_provider.prepayment.descr": {
         "_default_text": "Payment in advance",
         "de": "Bezahlen über Vorkasse",
+        "fr": "Paiement anticipé",
     },
     "viur.shop.payment_provider.paypal_checkout": {
         "_default_text": "PayPal",
         "de": "Bezahlen über PayPal",
+        "fr": "PayPal",
     },
 
     # --- Enums ---------------------------------------------------------------
     # Availability
     "instock": {
+        "_hint": "availability: instock",
+        "de": "Lieferbar",
         "en": "Instock",
         "fr": "En stock",
-        "de": "Lieferbar",
-        "_hint": "availability: instock",
     },
     "outofstock": {
+        "_hint": "availability: outofstock",
+        "de": "Zur Zeit nicht lieferbar",
         "en": "Out of stock",
         "fr": "Non disponible actuellement",
-        "de": "Zur Zeit nicht lieferbar",
-        "_hint": "availability: outofstock",
     },
     "limited": {
+        "_hint": "availability: limited",
+        "de": "Lieferung verzögert",
         "en": "Limited",
         "fr": "Limité",
-        "de": "Lieferung verzögert",
-        "_hint": "availability: limited",
     },
     "discontinued": {
+        "_hint": "availability: discontinued",
+        "de": "Nicht mehr verfügbar",
         "en": "Discontinued",
         "fr": "Plus disponible",
-        "de": "Nicht mehr verfügbar",
-        "_hint": "availability: discontinued",
     },
     "preorder": {
+        "_hint": "availability: preorder",
+        "de": "Vorbestellung möglich",
         "en": "Preorder",
         "fr": "Bientôt disponible à nouveau",
-        "de": "Vorbestellung möglich",
-        "_hint": "availability: preorder",
     },
     # Cart type
     "wishlist": {
+        "_hint": "cart type: wishlist",
+        "de": "Merkzettel",
         "en": "Wishlist",
         "fr": "Favoris",
-        "de": "Merkzettel",
-        "_hint": "cart type: wishlist",
     },
     "basket": {
+        "_hint": "cart type: basket",
+        "de": "Warenkorb",
         "en": "Basket",
         "fr": "Panier",
-        "de": "Warenkorb",
-        "_hint": "cart type: basket",
     },
     # VatRateCategory
     "viur.shop.vat_rate_category.standard": {
         "de": "Normalsatz",
+        "en": "Standard rate",
+        "fr": "Taux normal",
     },
     "viur.shop.vat_rate_category.reduced": {
         "de": "Ermäßigter Satz",
+        "en": "Reduced rate",
+        "fr": "Taux réduit",
     },
     "viur.shop.vat_rate_category.super_reduced": {
         "de": "Stark ermäßigter Satz",
+        "en": "Super-reduced rate",
+        "fr": "Taux super-réduit",
     },
     "viur.shop.vat_rate_category.zero": {
         "de": "Nullsatz",
+        "en": "Zero rate",
+        "fr": "Taux zéro",
     },
     # Costumer type
     "skeleton.address.customer_type.private": {
+        "_hint": "costumer type: private",
+        "de": "Privatkunde",
         "en": "Private customer",
         "fr": "Client privé",
-        "de": "Privatkunde",
-        "_hint": "costumer type: private"
     },
     "skeleton.address.customer_type.business": {
+        "_hint": "costumer type: business",
+        "de": "Geschäftskunde",
         "en": "Business customer",
         "fr": "Clientèle commerciale",
-        "de": "Geschäftskunde",
-        "_hint": "costumer type: business"
     },
     # Salutation
     "skeleton.address.salutation.female": {
+        "_hint": "salutation type: female",
+        "de": "Frau",
         "en": "Mrs.",
         "fr": "Madame",
-        "de": "Frau",
-        "_hint": "salutation type: female"
     },
     "skeleton.address.salutation.male": {
+        "_hint": "salutation type: male",
+        "de": "Herr",
         "en": "Mr.",
         "fr": "Monsieur",
-        "de": "Herr",
-        "_hint": "salutation type: male",
     },
     "skeleton.address.salutation.other": {
+        "_hint": "salutation type: other",
+        "de": "Divers",
         "en": "Various",
         "fr": "Autres",
-        "de": "Divers",
-        "_hint": "salutation type: other"
     },
     # Address type
     "skeleton.address.address_type.shipping": {
+        "_hint": "address type: shipping",
+        "de": "Lieferadresse",
         "en": "Shipping address",
         "fr": "Adresse de livraison",
-        "de": "Lieferadresse",
-        "_hint": "address type: shipping",
     },
     "skeleton.address.address_type.billing": {
+        "_hint": "address type: billing",
+        "de": "Rechnungsadresse",
         "en": "Billing address",
         "fr": "Adresse de facturation",
-        "de": "Rechnungsadresse",
-        "_hint": "address type: billing",
     },
     # Code type
     "skeleton.discountcondition.code_type.none": {
-        "en": "No code",
-        "de": "Kein Code",
         "_hint": "code type: none",
+        "de": "Kein Code",
+        "en": "No code",
+        "fr": "Aucun code",
     },
     "skeleton.discountcondition.code_type.individual": {
-        "en": "Individual code",
-        "de": "Individueller Code",
         "_hint": "code type: individual",
+        "de": "Individueller Code",
+        "en": "Individual code",
+        "fr": "Code individuel",
     },
     "skeleton.discountcondition.code_type.universal": {
-        "en": "Universal code",
-        "de": "Universeller Code",
         "_hint": "code type: universal",
+        "de": "Universeller Code",
+        "en": "Universal code",
+        "fr": "Code universel",
     },
     # Application domain
     "skeleton.discountcondition.application_domain.basket": {
-        "en": "Apply to basket",
         "de": "Auf den Warenkorb anwenden",
+        "en": "Apply to basket",
+        "fr": "Appliquer au panier",
     },
     "skeleton.discountcondition.application_domain.article": {
-        "en": "Apply to article",
         "de": "Gilt für einen Artikel",
+        "en": "Apply to article",
+        "fr": "Appliquer à l'article",
     },
     "skeleton.discountcondition.application_domain.all": {
-        "en": "Not specified; applies to all contexts",
         "de": "Nicht spezifiziert; gilt für alle Kontexte",
+        "en": "Not specified; applies to all contexts",
         "fr": "Non spécifié ; s'applique à tous les contextes",
     },
     # CustomerGroup
     "skeleton.discountcondition.scope_customer_group.all": {
-        "en": "All customers",
         "de": "Alle Kunden",
+        "en": "All customers",
+        "fr": "Tous les clients",
     },
     "skeleton.discountcondition.scope_customer_group.first_order": {
-        "en": "First order",
         "de": "Erstbestellung",
+        "en": "First order",
+        "fr": "Première commande",
     },
     "skeleton.discountcondition.scope_customer_group.follow_up_order": {
-        "en": "Follow-Up order",
         "de": "Folgebestellung (\"Stammkunden\")",
+        "en": "Follow-Up order",
+        "fr": "Commande de suivi",
     },
     # ConditionOperator
     "viur.shop.condition_operator.one_of": {
-        "en": "One condition must be satisfied (logical or)",
         "de": "Eine Bedingung muss erfüllt sein (logisches oder)",
+        "en": "One condition must be satisfied (logical or)",
+        "fr": "Une condition doit être remplie (ou logique)",
     },
     "viur.shop.condition_operator.all": {
-        "en": "All conditions must be satisfied (logical and)",
         "de": "Alle Bedingungen müssen erfüllt sein (logisches und)",
+        "en": "All conditions must be satisfied (logical and)",
+        "fr": "Toutes les conditions doivent être remplies (et logique)",
     },
     # DiscountType
     "viur.shop.discount_type.percentage": {
@@ -298,6 +345,13 @@ TRANSLATIONS = {
         "_hint": "bone address_type<SelectBone> in AddressSkel in viur.shop",
         "de": "Anschriftart",
         "en": "Address type",
+        "fr": "Type d'adresse",
+    },
+    "viur.shop.skeleton.address.birthdate": {
+        "_hint": "bone birthdate<DateBone> in AddressSkel in viur.shop",
+        "de": "Geburtsdatum",
+        "en": "Birthdate",
+        "fr": "Date de naissance",
     },
     "viur.shop.skeleton.address.city": {
         "_hint": "bone city<StringBone> in AddressSkel in viur.shop",
@@ -309,6 +363,7 @@ TRANSLATIONS = {
         "_hint": "bone company_name<StringBone> in AddressSkel in viur.shop",
         "de": "Firmenname",
         "en": "Company name",
+        "fr": "Nom de l'entreprise",
     },
     "viur.shop.skeleton.address.country": {
         "_hint": "bone country<SelectCountryBone> in AddressSkel in viur.shop",
@@ -320,11 +375,13 @@ TRANSLATIONS = {
         "_hint": "bone customer<RelationalBone> in AddressSkel in viur.shop",
         "de": "Kunde",
         "en": "Customer",
+        "fr": "Client",
     },
     "viur.shop.skeleton.address.customer_type": {
         "_hint": "bone customer_type<SelectBone> in AddressSkel in viur.shop",
         "de": "Kundentyp",
         "en": "Customer type",
+        "fr": "Type de client",
     },
     "viur.shop.skeleton.address.firstname": {
         "_hint": "bone firstname<StringBone> in AddressSkel in viur.shop",
@@ -336,6 +393,7 @@ TRANSLATIONS = {
         "_hint": "bone is_default<BooleanBone> in AddressSkel in viur.shop",
         "de": "Standard Adresse",
         "en": "Default adress",
+        "fr": "Adresse par défaut",
     },
     "viur.shop.skeleton.address.lastname": {
         "_hint": "bone lastname<StringBone> in AddressSkel in viur.shop",
@@ -347,6 +405,7 @@ TRANSLATIONS = {
         "_hint": "bone name<StringBone> in AddressSkel in viur.shop",
         "de": "Zusammengesetzter Name",
         "en": "Combined Name",
+        "fr": "Nom composé",
     },
     "viur.shop.skeleton.address.salutation": {
         "_hint": "bone salutation<SelectBone> in AddressSkel in viur.shop",
@@ -375,27 +434,49 @@ TRANSLATIONS = {
     "viur.shop.skeleton.address.zip_code.invalid": {
         "de": "Diese Postleitzahl ist nicht gültig",
         "en": "This zip code is invalid",
+        "fr": "Ce code postal n'est pas valide",
     },
     "viur.shop.skeleton.articleabstract.shop_price": {
         "_hint": "bone shop_price<RawBone> in ArticleAbstractSkel in viur.shop",
         "de": "Preis",
         "en": "Shop price",
+        "fr": "Prix",
     },
     "viur.shop.skeleton.articleabstract.shop_shipping": {
         "_hint": "bone shop_shipping<RawBone> in ArticleAbstractSkel in viur.shop",
         "de": "Versand",
         "en": "Shop shipping",
+        "fr": "Livraison",
     },
     "viur.shop.skeleton.articleabstract.shop_vat_rate_category": {
         "_hint": "bone shop_vat_rate_category<SelectBone> in ArticleAbstractSkel in viur.shop",
-        "en": "Vat category",
         "de": "Steuersatz-Kategorie",
+        "en": "Vat category",
+        "fr": "Catégorie de TVA",
+    },
+    "viur.shop.skeleton.articleabstract.shop_view_url": {
+        "_hint": "bone shop_view_url<RawBone> in ArticleAbstractSkel in viur.shop",
+        "de": "Ansichts-URL",
+        "en": "Shop view url",
+        "fr": "URL d'affichage",
     },
     "viur.shop.skeleton.cartitem.article": {
         "_hint": "bone article<RelationalBone> in CartItemSkel in viur.shop",
         "de": "Artikel",
         "en": "Article",
         "fr": "Article",
+    },
+    "viur.shop.skeleton.cartitem.frozen_values": {
+        "_hint": "bone frozen_values<JsonBone> in CartItemSkel in viur.shop",
+        "de": "Eingefrorene Werte",
+        "en": "Frozen values",
+        "fr": "Valeurs figées",
+    },
+    "viur.shop.skeleton.cartitem.is_frozen": {
+        "_hint": "bone is_frozen<BooleanBone> in CartItemSkel in viur.shop",
+        "de": "Ist eingefroren",
+        "en": "Is frozen",
+        "fr": "Est figé",
     },
     "viur.shop.skeleton.cartitem.price": {
         "_hint": "bone price<RawBone> in CartItemSkel in viur.shop",
@@ -407,6 +488,7 @@ TRANSLATIONS = {
         "_hint": "bone project_data<JsonBone> in CartItemSkel in viur.shop",
         "de": "Projektdaten",
         "en": "Project data",
+        "fr": "Données du projet",
     },
     "viur.shop.skeleton.cartitem.quantity": {
         "_hint": "bone quantity<NumericBone> in CartItemSkel in viur.shop",
@@ -418,11 +500,13 @@ TRANSLATIONS = {
         "_hint": "bone shipping<RawBone> in CartItemSkel in viur.shop",
         "de": "Versand",
         "en": "Shipping",
+        "fr": "Livraison",
     },
     "viur.shop.skeleton.cartitem.shop_art_no_or_gtin": {
         "_hint": "bone shop_art_no_or_gtin<StringBone> in CartItemSkel in viur.shop",
         "de": "Artikelnummer oder GTIN",
         "en": "art no or gtin",
+        "fr": "Réf. article ou GTIN",
     },
     "viur.shop.skeleton.cartitem.shop_availability": {
         "_hint": "bone shop_availability<SelectBone> in CartItemSkel in viur.shop",
@@ -446,11 +530,13 @@ TRANSLATIONS = {
         "_hint": "bone shop_is_low_price<BooleanBone> in CartItemSkel in viur.shop",
         "de": "Hat Dauertiefpreis",
         "en": "Has permanent low price",
+        "fr": "A un prix bas permanent",
     },
     "viur.shop.skeleton.cartitem.shop_is_weee": {
         "_hint": "bone shop_is_weee<BooleanBone> in CartItemSkel in viur.shop",
         "de": "Elektrogerät",
         "en": "Electrical appliance",
+        "fr": "Appareil électrique",
     },
     "viur.shop.skeleton.cartitem.shop_listed": {
         "_hint": "bone shop_listed<BooleanBone> in CartItemSkel in viur.shop",
@@ -468,11 +554,13 @@ TRANSLATIONS = {
         "_hint": "bone shop_price_recommended<NumericBone> in CartItemSkel in viur.shop",
         "de": "Unverbindliche Preisempfehlung (UVP)",
         "en": "Recommended price",
+        "fr": "Prix conseillé",
     },
     "viur.shop.skeleton.cartitem.shop_price_retail": {
         "_hint": "bone shop_price_retail<NumericBone> in CartItemSkel in viur.shop",
         "de": "Verkausfspreis",
         "en": "Retail price",
+        "fr": "Prix de vente",
     },
     "viur.shop.skeleton.cartitem.shop_shipping": {
         "_hint": "bone shop_shipping<RelationalBone> in CartItemSkel in viur.shop",
@@ -484,6 +572,7 @@ TRANSLATIONS = {
         "_hint": "bone shop_shipping<RelationalBone> in CartItemSkel in viur.shop",
         "de": "Versand Konfiguration",
         "en": "Shipping configuration",
+        "fr": "Configuration de livraison",
     },
     "viur.shop.skeleton.cartitem.shop_vat": {
         "_hint": "bone shop_vat<RelationalBone> in CartItemSkel in viur.shop",
@@ -493,18 +582,21 @@ TRANSLATIONS = {
     },
     "viur.shop.skeleton.cartitem.shop_vat_rate_category": {
         "_hint": "bone shop_vat_rate_category<SelectBone> in CartItemSkel in viur.shop",
-        "en": "Vat category",
         "de": "Steuersatz-Kategorie",
+        "en": "Vat category",
+        "fr": "Catégorie de TVA",
     },
     "viur.shop.skeleton.cartnode.cart_type": {
         "_hint": "bone cart_type<SelectBone> in CartNodeSkel in viur.shop",
         "de": "Warenkorbtyp",
         "en": "Cart type",
+        "fr": "Type de panier",
     },
     "viur.shop.skeleton.cartnode.customer_comment": {
         "_hint": "bone customer_comment<TextBone> in CartNodeSkel in viur.shop",
         "de": "Kundenkommentar",
         "en": "Customer comment",
+        "fr": "Commentaire du client",
     },
     "viur.shop.skeleton.cartnode.discount": {
         "_hint": "bone discount<RelationalBone> in CartNodeSkel in viur.shop",
@@ -512,10 +604,23 @@ TRANSLATIONS = {
         "en": "Discount",
         "fr": "réduction",
     },
+    "viur.shop.skeleton.cartnode.frozen_values": {
+        "_hint": "bone frozen_values<JsonBone> in CartNodeSkel in viur.shop",
+        "de": "Eingefrorene Werte",
+        "en": "Frozen values",
+        "fr": "Valeurs figées",
+    },
+    "viur.shop.skeleton.cartnode.is_frozen": {
+        "_hint": "bone is_frozen<BooleanBone> in CartNodeSkel in viur.shop",
+        "de": "Ist eingefroren",
+        "en": "Is frozen",
+        "fr": "Est figé",
+    },
     "viur.shop.skeleton.cartnode.is_root_node": {
         "_hint": "bone is_root_node<BooleanBone> in CartNodeSkel in viur.shop",
         "de": "Ist Wurzel Knoten",
         "en": "Is root node",
+        "fr": "Est le nœud racine",
     },
     "viur.shop.skeleton.cartnode.name": {
         "_hint": "bone name<StringBone> in CartNodeSkel in viur.shop",
@@ -527,6 +632,7 @@ TRANSLATIONS = {
         "_hint": "bone project_data<JsonBone> in CartNodeSkel in viur.shop",
         "de": "Projekteigene Daten",
         "en": "Project data",
+        "fr": "Données du projet",
     },
     "viur.shop.skeleton.cartnode.shipping": {
         "_hint": "bone shipping<RelationalBone> in CartNodeSkel in viur.shop",
@@ -544,6 +650,7 @@ TRANSLATIONS = {
         "_hint": "bone shipping_status<SelectBone> in CartNodeSkel in viur.shop",
         "de": "Versand Zustand",
         "en": "Shipping status",
+        "fr": "Statut de livraison",
     },
     "viur.shop.skeleton.cartnode.total": {
         "_hint": "bone total<NumericBone> in CartNodeSkel in viur.shop",
@@ -555,26 +662,37 @@ TRANSLATIONS = {
         "_hint": "bone total_discount_price<NumericBone> in CartNodeSkel in viur.shop",
         "de": "(Zwischen-)Summe rabattierter Preis",
         "en": "Total discount price",
+        "fr": "Prix total remisé",
     },
     "viur.shop.skeleton.cartnode.total_quantity": {
         "_hint": "bone total_quantity<NumericBone> in CartNodeSkel in viur.shop",
         "de": "Gesamtmenge",
         "en": "Total quantity",
+        "fr": "Quantité totale",
+    },
+    "viur.shop.skeleton.cartnode.total_raw": {
+        "_hint": "bone total_raw<NumericBone> in CartNodeSkel in viur.shop",
+        "de": "Summe (roh)",
+        "en": "Total raw",
+        "fr": "Total brut",
     },
     "viur.shop.skeleton.cartnode.vat": {
         "_hint": "bone vat<RecordBone> in CartNodeSkel in viur.shop",
         "de": "Steuern",
         "en": "Vat",
+        "fr": "TVA",
     },
     "viur.shop.skeleton.cartnode.vat_rate": {
         "_hint": "bone vat_rate<RelationalBone> in CartNodeSkel in viur.shop",
         "de": "Mehrwertsteuersatz",
         "en": "Vat rate",
+        "fr": "Taux de TVA",
     },
     "viur.shop.skeleton.cartnode.vat_total": {
         "_hint": "bone vat_total<NumericBone> in CartNodeSkel in viur.shop",
         "de": "Mehrwertsteuer gesamt",
         "en": "Vat total",
+        "fr": "Total TVA",
     },
     "viur.shop.skeleton.discount.absolute": {
         "_hint": "bone absolute<NumericBone> in DiscountSkel in viur.shop",
@@ -598,6 +716,7 @@ TRANSLATIONS = {
         "_hint": "bone condition_operator<SelectBone> in DiscountSkel in viur.shop",
         "de": "Bedingungsoperator",
         "en": "Condition operator",
+        "fr": "Opérateur de condition",
     },
     "viur.shop.skeleton.discount.description": {
         "_hint": "bone description<TextBone> in DiscountSkel in viur.shop",
@@ -609,6 +728,7 @@ TRANSLATIONS = {
         "_hint": "bone discount_type<SelectBone> in DiscountSkel in viur.shop",
         "de": "Rabattart",
         "en": "Discount type",
+        "fr": "Type de remise",
     },
     "viur.shop.skeleton.discount.free_article": {
         "_hint": "bone free_article<RelationalBone> in DiscountSkel in viur.shop",
@@ -638,6 +758,7 @@ TRANSLATIONS = {
         "_hint": "bone code_type<SelectBone> in DiscountConditionSkel in viur.shop",
         "de": "Code-Art",
         "en": "Code type",
+        "fr": "Type de code",
     },
     "viur.shop.skeleton.discountcondition.description": {
         "_hint": "bone description<TextBone> in DiscountConditionSkel in viur.shop",
@@ -649,16 +770,19 @@ TRANSLATIONS = {
         "_hint": "bone individual_codes_amount<NumericBone> in DiscountConditionSkel in viur.shop",
         "de": "Menge einzelner Codes",
         "en": "Individual codes amount",
+        "fr": "Nombre de codes individuels",
     },
     "viur.shop.skeleton.discountcondition.individual_codes_prefix": {
         "_hint": "bone individual_codes_prefix<StringBone> in DiscountConditionSkel in viur.shop",
         "de": "Präfix einzelner Codes",
         "en": "Individual codes prefix",
+        "fr": "Préfixe des codes individuels",
     },
     "viur.shop.skeleton.discountcondition.is_subcode": {
         "_hint": "bone is_subcode<BooleanBone> in DiscountConditionSkel in viur.shop",
         "de": "Ist Untercode",
         "en": "Is subcode",
+        "fr": "Est un sous-code",
     },
     "viur.shop.skeleton.discountcondition.name": {
         "_hint": "bone name<StringBone> in DiscountConditionSkel in viur.shop",
@@ -682,65 +806,78 @@ TRANSLATIONS = {
         "_hint": "bone quantity_volume<NumericBone> in DiscountConditionSkel in viur.shop",
         "de": "Mengen Volumen",
         "en": "Quantity volume",
+        "fr": "Volume de quantité",
     },
     "viur.shop.skeleton.discountcondition.scope_article": {
         "_hint": "bone scope_article<RelationalBone> in DiscountConditionSkel in viur.shop",
         "de": "Geltungsbereich: Artikel",
         "en": "Scope: article",
+        "fr": "Champ d'application : article",
     },
     "viur.shop.skeleton.discountcondition.scope_code": {
         "_hint": "bone scope_code<StringBone> in DiscountConditionSkel in viur.shop",
         "de": "Geltungsbereich: Code",
         "en": "Scope: code",
+        "fr": "Champ d'application : code",
     },
     "viur.shop.skeleton.discountcondition.scope_code.allowed_characters": {
         "de": "Erlaubte Zeichen: {{chars}}",
         "en": "Allowed characters: {{chars}}",
+        "fr": "Caractères autorisés : {{chars}}",
     },
     "viur.shop.skeleton.discountcondition.scope_combinable_low_price": {
         "_hint": "bone scope_combinable_low_price<BooleanBone> in DiscountConditionSkel in viur.shop",
         "de": "Geltungsbereich: kombinierbar mit Dauertiefpreis Artikeln?",
         "en": "Scope: combinable with permanent low price articles?",
+        "fr": "Champ d'application : combinable avec des articles à prix bas permanent ?",
     },
     "viur.shop.skeleton.discountcondition.scope_combinable_other_discount": {
         "_hint": "bone scope_combinable_other_discount<BooleanBone> in DiscountConditionSkel in viur.shop",
         "de": "Geltungsbereich: kombinierbar mit anderen Rabatten?",
         "en": "Scope: combinable with other discounts?",
+        "fr": "Champ d'application : combinable avec d'autres remises ?",
     },
     "viur.shop.skeleton.discountcondition.scope_country": {
         "_hint": "bone scope_country<SelectCountryBone> in DiscountConditionSkel in viur.shop",
         "de": "Geltungsbereich: Land",
         "en": "Scope: country",
+        "fr": "Champ d'application : pays",
     },
     "viur.shop.skeleton.discountcondition.scope_customer_group": {
         "_hint": "bone scope_customer_group<SelectBone> in DiscountConditionSkel in viur.shop",
         "de": "Geltungsbereich: Kundengruppe",
         "en": "Scope: customer group",
+        "fr": "Champ d'application : groupe de clients",
     },
     "viur.shop.skeleton.discountcondition.scope_date_end": {
         "_hint": "bone scope_date_end<DateBone> in DiscountConditionSkel in viur.shop",
         "de": "Geltungsbereich: Enddatum",
         "en": "Scope: end date",
+        "fr": "Champ d'application : date de fin",
     },
     "viur.shop.skeleton.discountcondition.scope_date_start": {
         "_hint": "bone scope_date_start<DateBone> in DiscountConditionSkel in viur.shop",
         "de": "Geltungsbereich: Anfangsdatum",
         "en": "Scope: start date",
+        "fr": "Champ d'application : date de début",
     },
     "viur.shop.skeleton.discountcondition.scope_language": {
         "_hint": "bone scope_language<SelectBone> in DiscountConditionSkel in viur.shop",
         "de": "Geltungsbereich: Sprache",
         "en": "Scope: language",
+        "fr": "Champ d'application : langue",
     },
     "viur.shop.skeleton.discountcondition.scope_minimum_order_value": {
         "_hint": "bone scope_minimum_order_value<NumericBone> in DiscountConditionSkel in viur.shop",
         "de": "Geltungsbereich: Mindestbestellwert",
         "en": "Scope: minimum order value",
+        "fr": "Champ d'application : valeur minimale de commande",
     },
     "viur.shop.skeleton.discountcondition.scope_minimum_quantity": {
         "_hint": "bone scope_minimum_quantity<NumericBone> in DiscountConditionSkel in viur.shop",
         "de": "Geltungsbereich: Mindestmenge",
         "en": "Scope: minimum quantity",
+        "fr": "Champ d'application : quantité minimale",
     },
     "viur.shop.skeleton.order.billing_address": {
         "_hint": "bone billing_address<RelationalBone> in OrderSkel in viur.shop",
@@ -769,6 +906,7 @@ TRANSLATIONS = {
     "viur.shop.skeleton.address.email.invalid": {
         "de": "Diese Email ist nicht gültig",
         "en": "This Email is invalid",
+        "fr": "Cet e-mail n'est pas valide",
     },
     "viur.shop.skeleton.address.phone": {
         "_hint": "bone phone<StringBone> in AddressSkel in viur.shop",
@@ -779,31 +917,49 @@ TRANSLATIONS = {
     "viur.shop.skeleton.address.phone.invalid": {
         "de": "Diese Telefonnummer ist nicht gültig",
         "en": "This phone number is invalid",
+        "fr": "Ce numéro de téléphone n'est pas valide",
+    },
+    "viur.shop.skeleton.order.email": {
+        "_hint": "bone email<EmailBone> in OrderSkel in viur.shop",
+        "de": "Email",
+        "en": "Email",
+        "fr": "E-mail",
+    },
+    "viur.shop.skeleton.order.phone": {
+        "_hint": "bone phone<StringBone> in OrderSkel in viur.shop",
+        "de": "Telefonnummer",
+        "en": "Phone number",
+        "fr": "Numéro de téléphone",
     },
     "viur.shop.skeleton.order.is_checkout_in_progress": {
         "_hint": "bone is_checkout_in_progress<BooleanBone> in OrderSkel in viur.shop",
         "de": "Bestellvorgang läuft",
         "en": "Is checkout in progress",
+        "fr": "Commande en cours",
     },
     "viur.shop.skeleton.order.is_ordered": {
         "_hint": "bone is_ordered<BooleanBone> in OrderSkel in viur.shop",
         "de": "Ist bestellt",
         "en": "Is ordered",
+        "fr": "Est commandé",
     },
     "viur.shop.skeleton.order.is_paid": {
         "_hint": "bone is_paid<BooleanBone> in OrderSkel in viur.shop",
         "de": "Ist bezahlt",
         "en": "Is paid",
+        "fr": "Est payé",
     },
     "viur.shop.skeleton.order.is_rts": {
         "_hint": "bone is_rts<BooleanBone> in OrderSkel in viur.shop",
         "de": "Ist versandbereit",
         "en": "Is rts",
+        "fr": "Prêt à expédier",
     },
     "viur.shop.skeleton.order.order_uid": {
         "_hint": "bone order_uid<StringBone> in OrderSkel in viur.shop",
         "de": "Bestell UID",
         "en": "Order uid",
+        "fr": "UID de commande",
     },
     "viur.shop.skeleton.order.payment": {
         "_hint": "bone payment<JsonBone> in OrderSkel in viur.shop",
@@ -821,6 +977,7 @@ TRANSLATIONS = {
         "_hint": "bone project_data<JsonBone> in OrderSkel in viur.shop",
         "de": "Projektdaten",
         "en": "Project data",
+        "fr": "Données du projet",
     },
     "viur.shop.skeleton.order.state": {
         "_hint": "bone state<SelectBone> in OrderSkel in viur.shop",
@@ -838,16 +995,19 @@ TRANSLATIONS = {
         "_hint": "bone delivery_time_max<NumericBone> in ShippingSkel in viur.shop",
         "de": "Maximale Lieferdauer",
         "en": "Delivery time max",
+        "fr": "Délai de livraison maximal",
     },
     "viur.shop.skeleton.shipping.delivery_time_min": {
         "_hint": "bone delivery_time_min<NumericBone> in ShippingSkel in viur.shop",
         "de": "Kürzeste Lieferdauer",
         "en": "Delivery time min",
+        "fr": "Délai de livraison minimal",
     },
     "viur.shop.skeleton.shipping.delivery_time_range": {
         "_hint": "bone delivery_time_range<StringBone> in ShippingSkel in viur.shop",
         "de": "Lieferzeit Bereich",
         "en": "Delivery time range",
+        "fr": "Plage de délai de livraison",
     },
     "viur.shop.skeleton.shipping.description": {
         "_hint": "bone description<TextBone> in ShippingSkel in viur.shop",
@@ -871,15 +1031,18 @@ TRANSLATIONS = {
         "_hint": "bone art_no<StringBone> in ShippingSkel in viur.shop",
         "de": "Artikelnummer",
         "en": "art no",
+        "fr": "Numéro d'article",
     },
     "viur.shop.skeleton.shipping.description.tooltip": {
         "de": "Wird auch als Kundenkommentar im Frontend ausgegeben",
         "en": "Is also displayed as a customer comment in the frontend",
+        "fr": "Est également affiché comme commentaire client dans le frontend",
     },
     "viur.shop.skeleton.shipping.supplier": {
         "_hint": "bone supplier<SelectBone> in ShippingSkel in viur.shop",
         "de": "Lieferant",
         "en": "Supplier",
+        "fr": "Fournisseur",
     },
     "viur.shop.skeleton.shippingconfig.name": {
         "_hint": "bone name<StringBone> in ShippingConfigSkel in viur.shop",
@@ -891,16 +1054,19 @@ TRANSLATIONS = {
         "_hint": "bone shipping_skel<RelationalBone> in ShippingConfigSkel in viur.shop",
         "de": "Versand",
         "en": "Shipping",
+        "fr": "Livraison",
     },
     "viur.shop.skeleton.shippingpreconditionrel.country": {
         "_hint": "bone country<SelectCountryBone> in ShippingPreconditionRelSkel in viur.shop",
         "de": "Land",
         "en": "Country",
+        "fr": "Pays",
     },
     "viur.shop.skeleton.shippingpreconditionrel.minimum_order_value": {
         "_hint": "bone minimum_order_value<NumericBone> in ShippingPreconditionRelSkel in viur.shop",
         "de": "Mindestbestellwert",
         "en": "Minimum order value",
+        "fr": "Valeur minimale de commande",
     },
     "viur.shop.skeleton.shippingpreconditionrel.zip_code": {
         "_hint": "bone zip_code<StringBone> in ShippingPreconditionRelSkel in viur.shop",
@@ -909,8 +1075,9 @@ TRANSLATIONS = {
         "fr": "Code postal",
     },
     "viur.shop.skeleton.vat.category": {
-        "en": "Vat category",
         "de": "Steuersatz-Kategorie",
+        "en": "Vat category",
+        "fr": "Catégorie de TVA",
     },
     "viur.shop.skeleton.vat.name": {
         "_hint": "bone name<StringBone> in VatSkel in viur.shop",
@@ -924,25 +1091,35 @@ TRANSLATIONS = {
         "en": "Rate (%)",
         "fr": "Taux d'imposition (%)",
     },
+    "viur.shop.skeleton.vatincluded.value": {
+        "_hint": "bone value<NumericBone> in VatIncludedSkel in viur.shop",
+        "de": "Wert",
+        "en": "Value",
+        "fr": "Valeur",
+    },
     "viur.shop.skeleton.vatrate.configuration": {
-        "en": "rate configuration",
         "de": "Steuersatz-Konfiguration",
+        "en": "rate configuration",
+        "fr": "Configuration du taux",
     },
     "viur.shop.skeleton.vatrate.country": {
+        "de": "Land",
         "en": "country",
-        "de": "Land"
+        "fr": "Pays",
     },
     "viur.shop.skeleton.vatrate.name": {
         "_hint": "bone name<StringBone> in VatRateSkel in viur.shop",
         "de": "Name",
         "en": "Name",
+        "fr": "Nom",
     },
 
     # --- Errors --------------------------------------------------------------
     "viur.shop.error.cart.is_frozen": {
+        "de": r"Der Warenkorb {{cart_key}} kann nicht mehr bearbeitet werden.",
         # note: {{cart_key}} is a substitution variable for translations, not for an f-string!
         "en": r"The cart {{cart_key}} can no longer be edited.",
-        "de": r"Der Warenkorb {{cart_key}} kann nicht mehr bearbeitet werden.",
+        "fr": r"Le panier {{cart_key}} ne peut plus être modifié.",
     }
 }
 """Initial translations used inside the viur-shop backend"""
