@@ -201,7 +201,9 @@ class DiscountCondition(ShopModuleAbstract, List):
 
         for discount in discounts:
             d_skel = self.shop.discount.viewSkel()
-            d_skel.read(discount)
+            if not d_skel.read(discount):
+                logger.warning(f"Discount {discount!r} doesn't exist (anymore); cannot mark it as used")
+                continue
             for condition in d_skel["condition"]:
                 # TODO: Increase only "active" conditions in case of OR operator
                 # cond_skel = toolkit.get_full_skel_from_ref_skel(condition["dest"])

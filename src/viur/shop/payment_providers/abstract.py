@@ -126,9 +126,23 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
     @CallDeferred
     # @log_unzer_error
     def check_payment_deferred(self, order_key: db.Key) -> None:
-        """Check the status for a payment deferred"""
+        """
+        Check the status for a payment deferred.
+
+        Queries the payment provider for the current payment state and marks
+        the order as paid if necessary.
+
+        If the order does not exist (anymore) -- e.g. it has been deleted
+        between the webhook call that scheduled this task and its (delayed)
+        execution -- the task logs a warning and returns.  It must not raise
+        in this case: the task queue would retry a raising task forever,
+        although the order can never come back.
+        """
         logger.debug(f"Checking payment for {order_key=!r} deferred")
-        order_skel = self.shop.order.skel().read(order_key)
+        order_skel = self.shop.order.skel()
+        if not order_skel.read(order_key):
+            logger.warning(f"Order {order_key!r} doesn't exist (anymore); skipping deferred payment check")
+            return
         logger.debug(f"Checking payment for {order_skel=!r} deferred")
         # TODO: duplicate check / code?
         is_paid, payment = self.check_payment_state(order_skel)
