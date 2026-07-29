@@ -41,12 +41,12 @@ class SnapshotRelationalBone(RelationalBone):
         self,
         *args: t.Any,
         is_frozen: t.Callable[[SkeletonInstance], bool] = lambda skel: bool(skel["is_frozen"]),
-        updateLevel: RelationalUpdateLevel = RelationalUpdateLevel.Always
+        updateLevel: RelationalUpdateLevel = RelationalUpdateLevel.Always,
         **kwargs: t.Any,
     ) -> None:
         # The live-sync behaviour relies on updateLevel=Always
         if updateLevel != RelationalUpdateLevel.Always:
-            raise ValueError("SnapshotRelationalBone only accepts RelationalUpdateLevel.Always")
+            raise ValueError(f"{type(self).__name__} only accepts RelationalUpdateLevel.Always")
         super().__init__(updateLevel=updateLevel, *args, **kwargs)
         self.is_frozen = is_frozen
 
