@@ -41,15 +41,13 @@ class SnapshotRelationalBone(RelationalBone):
         self,
         *args: t.Any,
         is_frozen: t.Callable[[SkeletonInstance], bool] = lambda skel: bool(skel["is_frozen"]),
+        updateLevel: RelationalUpdateLevel = RelationalUpdateLevel.Always
         **kwargs: t.Any,
     ) -> None:
-        # The live-sync behaviour relies on updateLevel=Always: it keeps the
-        # relation in the update_relations query and prevents refresh() from
-        # short-circuiting. Freezing is handled by refresh() below instead, so
-        # any caller-provided updateLevel would break the contract and is
-        # therefore overridden here.
-        kwargs["updateLevel"] = RelationalUpdateLevel.Always
-        super().__init__(*args, **kwargs)
+        # The live-sync behaviour relies on updateLevel=Always
+        if updateLevel != RelationalUpdateLevel.Always:
+            raise ValueError("SnapshotRelationalBone only accepts RelationalUpdateLevel.Always")
+        super().__init__(updateLevel=updateLevel, *args, **kwargs)
         self.is_frozen = is_frozen
 
     def refresh(self, skel: SkeletonInstance, name: str) -> None:
