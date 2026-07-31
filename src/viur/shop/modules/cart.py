@@ -948,5 +948,9 @@ def delete_guest_cart(session: db.Entity) -> None:
         logger.info(f"Cart {cart!r} of deleted session doesn't exist (anymore); nothing to do")
     except errors.Forbidden:
         logger.info(f"Cart {cart!r} of deleted session is frozen; keeping it")
+    except ValueError as exc:
+        # cart_remove() → skel.delete() raises a plain ValueError when the node
+        # was already deleted by a concurrent request; treat it as already-gone.
+        logger.info(f"Cart {cart!r} of deleted session could not be removed ({exc}); nothing to do")
     except Exception:
         logger.exception(f"Failed to delete guest cart {cart!r}; keeping it")
