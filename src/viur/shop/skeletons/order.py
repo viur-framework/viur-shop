@@ -4,6 +4,7 @@ from viur.core import translate
 from viur.core.bones import *
 from viur.core.skeleton import Skeleton, SkeletonInstance
 from viur.shop.types import *
+from ._bones import SnapshotRelationalBone
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 
 logger = SHOP_LOGGER.getChild(__name__)
@@ -19,16 +20,16 @@ def get_payment_providers() -> dict[str, str | translate]:
 class OrderSkel(Skeleton):
     kindName = "{{viur_shop_modulename}}_order"
 
-    billing_address = RelationalBone(
+    billing_address = SnapshotRelationalBone(
         kind="{{viur_shop_modulename}}_address",
         module="{{viur_shop_modulename}}/address",
         searchable=True,
-        # keep billing address persistent:
-        updateLevel=RelationalUpdateLevel.OnValueAssignment,
         # keep all fields of the billing address as a copy:
         refKeys={
             "*",
         },
+        # keep the copy in sync while the order is open, freeze it once ordered:
+        is_frozen=lambda skel: bool(skel["is_ordered"]),
     )
 
     customer = RelationalBone(
