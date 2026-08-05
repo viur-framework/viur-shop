@@ -8,6 +8,7 @@ from viur.core.prototypes.tree import TreeSkel
 from viur.core.skeleton import SkeletonInstance
 from viur.shop.types import *
 
+from ._bones import SnapshotRelationalBone
 from .vat import VatIncludedSkel
 from ..globals import SHOP_INSTANCE, SHOP_LOGGER
 from ..skeletons.article import ArticleAbstractSkel
@@ -320,14 +321,14 @@ class CartNodeSkel(TreeSkel):
         defaultValue=0,
     )
 
-    shipping_address = RelationalBone(
+    shipping_address = SnapshotRelationalBone(
         kind="{{viur_shop_modulename}}_address",
         module="{{viur_shop_modulename}}/address",
-        # keep shipping address persistent:
-        updateLevel=RelationalUpdateLevel.OnValueAssignment,
         refKeys={
             "*",
         },
+        # keep the copy in sync while the cart is open, freeze it once frozen
+        # (default is_frozen reads the CartNodeSkel.is_frozen bone):
     )
 
     customer_comment = TextBone(
@@ -412,6 +413,9 @@ class CartNodeSkel(TreeSkel):
         Due to race-condition and timing issues, the dest values are not always
         set correctly. This refresh fixes this.
         """
+        # Sub-node / total sub-skeletons don't carry the shipping_address bone.
+        if "shipping_address" not in skel:
+            return skel
         try:
             skel.shipping_address.refresh(skel, skel.shipping_address.name)
         except Exception as exc:
