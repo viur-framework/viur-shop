@@ -5,10 +5,10 @@ import unzer
 from unzer import PaymentResponse
 from unzer.model import Basket, BasketItem, PaymentType
 from unzer.model.payment import PaymentState
-from viur.core import current
-from viur.core.skeleton import SkeletonInstance
 
 from viur import toolkit
+from viur.core import current
+from viur.core.skeleton import SkeletonInstance
 from .unzer_abstract import UnzerAbstract, log_unzer_error
 from ..globals import SHOP_LOGGER
 from ..skeletons.cart import CartNodeSkel
@@ -313,12 +313,6 @@ class UnzerKlarna(UnzerAbstract):
         amount = toolkit.round_decimal(base - Price.apply_discount(discount["dest"], base), 2)
         if not amount:
             return None
-        # TODO: verify against the Unzer/Klarna sandbox:
-        #       - the correct VAT for the voucher (basket discounts may span
-        #         articles with mixed VAT rates; using 0 here so only the gross
-        #         reconciles),
-        #       - whether a negative-amount voucher line is accepted or the
-        #         discount must be expressed via per-item ``amountDiscount``.
         return BasketItem(
             basketItemReferenceId=f'discount-{discount["dest"]["key"].id_or_name}',
             title=discount["dest"]["name"] or "Discount",
