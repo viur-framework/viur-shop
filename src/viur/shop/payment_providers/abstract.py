@@ -1,6 +1,7 @@
 import abc
 import enum
 import functools
+import urllib.parse
 import uuid
 
 from viur.core import CallDeferred, Module, current, db, translate, utils
@@ -37,12 +38,46 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
         *,
         image_path: str | None = None,
         is_available: t.Callable[[t.Self, SkeletonInstance_T[OrderSkel] | None], bool] | None = None,
+        return_url_host: str | t.Callable[[], str | None] | None = None,
     ) -> None:
         super().__init__()
         self.image_path = image_path
+        self._return_url_host = return_url_host
         if is_available is not None:
             assert callable(is_available), f"{is_available=} ({type(is_available)})"
             self.is_available = functools.partial(is_available, self)  # type: ignore[assignment]
+
+    @property
+    def return_url_host(self) -> str:
+        """Scheme and host the customer is redirected back to after the payment.
+
+        Defaults to the host of the current request. Configure it whenever that host
+        is of no use to the payment provider: a local development server is neither
+        publicly reachable nor accepted as a return URL by most providers.
+
+        Can be set to a plain string or to a callable; a callable returning ``None``
+        falls back to the current request as well, so a configuration only has to
+        name the host for the cases where it actually differs.
+        """
+        host = self._return_url_host() if callable(self._return_url_host) else self._return_url_host
+        return host or current.request.get().request.host_url
+
+    def get_return_url(
+        self,
+        order_skel: SkeletonInstance,
+        **params: str,
+    ) -> str:
+        """Build the URL the payment provider sends the customer back to.
+
+        :param order_skel: OrderSkel the payment belongs to.
+        :param params: Additional query parameters to pass through the payment.
+        :return: Absolute URL of this provider's ``return_handler``.
+        """
+        query = urllib.parse.urlencode({
+            "order_key": order_skel["key"].to_legacy_urlsafe().decode("ASCII"),
+            **params,
+        })
+        return f'{self.return_url_host.rstrip("/")}/{self.modulePath.strip("/")}/return_handler?{query}'
 
     @property
     @abc.abstractmethod

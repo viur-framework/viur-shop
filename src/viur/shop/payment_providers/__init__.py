@@ -17,6 +17,8 @@ else:
     from .unzer_googlepay import UnzerGooglepay
     from .unzer_ideal import UnzerIdeal
     from .unzer_klarna import UnzerKlarna
+    from .unzer_openbanking_pis import UnzerOpenbankingPis
+    from .unzer_paylater_installment import UnzerPaylaterInstallment
     from .unzer_paylater_invoice import UnzerPaylaterInvoice
     from .unzer_paypal import UnzerPayPal
     from .unzer_sofort import UnzerSofort

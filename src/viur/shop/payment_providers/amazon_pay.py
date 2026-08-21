@@ -1,6 +1,6 @@
 import typing as t  # noqa
 
-from viur.core import current, errors, exposed
+from viur.core import errors, exposed
 from viur.core.skeleton import SkeletonInstance
 from viur.shop.types import *
 from . import PaymentProviderAbstract
@@ -64,8 +64,7 @@ class AmazonPay(PaymentProviderAbstract):
         self,
         order_skel: SkeletonInstance,
     ) -> t.Any:
-        host = current.request.get().request.host_url
-        return_url = f'{host.rstrip("/")}/{self.modulePath.strip("/")}/return_handler?order_key={order_skel["key"].to_legacy_urlsafe().decode("ASCII")}'
+        return_url = self.get_return_url(order_skel)
         return {
             "merchant_id": self.merchant_id,
             "client_id": self.client_id,

@@ -1,23 +1,25 @@
 import abc
+import collections
 import functools
 import json
 import typing as t  # noqa
 
 import unzer
-from unzer.model import PaymentType
+from unzer.model import Basket, BasketItem, PaymentType
 from unzer.model.base import BaseModel
 from unzer.model.customer import Salutation as UnzerSalutation
 from unzer.model.payment import PaymentState
 from unzer.model.webhook import Events, IP_ADDRESS
-from viur.core import access, current, db, errors, exposed, force_post
-from viur.core.skeleton import SkeletonInstance
 
 from viur import toolkit
+from viur.core import access, current, db, errors, exposed, force_post
+from viur.core.skeleton import SkeletonInstance
 from viur.shop.skeletons import OrderSkel
 from viur.shop.types import *
 from . import PaymentProviderAbstract
-from ..globals import SHOP_LOGGER
+from ..globals import MAX_FETCH_LIMIT, SHOP_LOGGER
 from ..services import HOOK_SERVICE, Hook
+from ..skeletons.cart import CartNodeSkel
 from ..types import error_handler, exceptions as e
 
 logger = SHOP_LOGGER.getChild(__name__)
@@ -56,6 +58,7 @@ class UnzerClientViURShop(unzer.UnzerClient):
         public_key: str | t.Callable[[], str],
         sandbox: bool | t.Callable[[], bool] = False,
         language: str = "en",
+        client_ip: str = None,
     ):
         # completely overwritten to keep properties
         super(unzer.UnzerClient, self).__init__()
@@ -63,6 +66,7 @@ class UnzerClientViURShop(unzer.UnzerClient):
         self._public_key = public_key
         self._sandbox = sandbox
         self.language = language
+        self.client_ip = client_ip
 
     @property
     def private_key(self) -> str:
@@ -100,6 +104,14 @@ class UnzerAbstract(PaymentProviderAbstract):
     Provides common functionality for Unzer-based payment providers,
     including API communication and payment type handling.
     """
+
+    currency_code: str = "EUR"
+    """Currency the basket amounts are reported in."""
+
+    # Unzer basket item types (serialized as ``type``).
+    BASKET_ITEM_GOODS: t.Final[str] = "goods"
+    BASKET_ITEM_SHIPMENT: t.Final[str] = "shipment"
+    BASKET_ITEM_VOUCHER: t.Final[str] = "voucher"
 
     def __init__(
         self,
@@ -173,8 +185,7 @@ class UnzerAbstract(PaymentProviderAbstract):
         customer = self.client.createOrUpdateCustomer(customer)
         logger.debug(f"{customer = } [RESPONSE]")
 
-        host = current.request.get().request.host_url
-        return_url = f'{host.rstrip("/")}/{self.modulePath.strip("/")}/return_handler?order_key={order_skel["key"].to_legacy_urlsafe().decode("ASCII")}'
+        return_url = self.get_return_url(order_skel)
         unzer_session = current.session.get()["unzer"] = {
             "customer_id": customer.key,
         }
@@ -540,3 +551,216 @@ class UnzerAbstract(PaymentProviderAbstract):
         if isinstance(obj, BaseModel):
             obj = dict(obj)  # Convert to dict first, then process recursively
         return super().model_to_dict(obj)
+
+    def get_customer(self, order_skel: SkeletonInstance) -> unzer.Customer:
+        customer = self.customer_from_order_skel(order_skel)
+        logger.debug(f"{customer=}")
+        customer = self.client.createOrUpdateCustomer(customer)
+        logger.debug(f"{customer=} [RESPONSE]")
+        return customer
+
+    def get_risk_data(self, order_skel: SkeletonInstance) -> unzer.RiskData:
+        risk_data = unzer.RiskData(
+            registrationLevel=(unzer.RegistrationLevel.GUEST if order_skel["customer"] is None
+                               else unzer.RegistrationLevel.REGISTERED),
+            customerGroup=unzer.CustomerGroup.NEUTRAL
+        )
+        if order_skel["customer"] is not None:
+            risk_data.registrationDate = order_skel["customer"]["dest"]["creationdate"]
+            orders = (
+                self.shop.order.skel(bones=("is_paid", "total")).all()
+                .filter("customer.dest.__key__ =", order_skel["customer"]["dest"]["key"])
+                .filter("is_paid =", True)
+                .fetch(MAX_FETCH_LIMIT)
+            )
+            risk_data.confirmedOrders = len(orders)
+            risk_data.confirmedAmount = functools.reduce(lambda total, skel: total + skel["total"], orders, 0)
+        return risk_data
+
+    # --- Basket --------------------------------------------------------------
+
+    def get_basket_id(
+        self,
+        order_skel: SkeletonInstance,
+    ) -> str:
+        """Build a basket from the order's cart and create it at Unzer.
+
+        Klarna requires a basket whose line items reconcile to the order
+        total. The basket is built from the entire cart tree and created via
+        the Unzer API; the returned basket id is passed to the authorize
+        request.
+
+        :param order_skel: The order to derive the basket from.
+        :return: The id of the created Unzer basket.
+        """
+        basket = Basket(
+            amountTotalGross=order_skel["total"],
+            currencyCode=self.currency_code,
+            orderId=order_skel["key"].id_or_name,
+            basketItems=self.build_basket_items(order_skel),
+        )
+        return self.client.createBasket(basket).key
+
+    def build_basket_items(
+        self,
+        order_skel: SkeletonInstance,
+    ) -> list[BasketItem]:
+        """Collect the whole cart tree as Unzer basket items.
+
+        The cart is a tree in which every node may apply its own shipping and
+        (basket-domain) discount on top of the accumulated subtree total
+        ("decorator" principle). This walks the entire tree and emits, per
+        node, one item per article leaf plus — if present — a shipping item
+        and a discount (voucher) item. The item grosses therefore reconcile
+        exactly to ``order_skel["total"]`` (== root ``total_discount_price``).
+
+        :param order_skel: The order whose cart is converted.
+        :return: The basket items for the complete cart.
+        """
+        # The order's cart ref lacks the ``discount`` bone we need for
+        # node-level discounts, so read the root node skeleton fully.
+        root_skel = self.shop.cart.viewSkel("node")
+        if not root_skel.read(order_skel["cart"]["dest"]["key"]):
+            raise ValueError(f'Cannot read root cart node for order {order_skel["key"]!r}')
+
+        basket_items: list[BasketItem] = []
+        node_queue = collections.deque([root_skel])
+        while node_queue:
+            node_skel = node_queue.pop()
+            # Sum of the subtree total as seen by the ``total_discount_price``
+            # computation, i.e. the value the node's discount is applied to.
+            node_base = 0.0
+            for child in self.shop.cart.get_children(node_skel["key"]):
+                if issubclass(child.skeletonCls, CartNodeSkel):
+                    node_queue.append(child)
+                    node_base += child["total_discount_price"] or 0.0
+                else:
+                    basket_items.append(self.build_article_item(child))
+                    node_base += (child.price_.current or 0.0) * child["quantity"]
+
+            if item := self.build_discount_item(node_skel, node_base):
+                basket_items.append(item)
+            if item := self.build_shipping_item(node_skel):
+                basket_items.append(item)
+
+        return basket_items
+
+    def build_article_item(
+        self,
+        leaf_skel: SkeletonInstance,
+    ) -> BasketItem:
+        """Convert a single cart leaf (article) into an Unzer basket item.
+
+        Article-level discounts are already contained in ``price_.current``;
+        basket-level discounts are emitted separately, see
+        :meth:`build_discount_item`.
+
+        :param leaf_skel: The cart item (leaf) to convert.
+        :return: The corresponding Unzer basket item.
+        """
+        price = leaf_skel.price_
+        quantity = int(leaf_skel["quantity"])
+        return BasketItem(
+            basketItemReferenceId=leaf_skel["key"].id_or_name,
+            title=leaf_skel["shop_name"] or leaf_skel["key"].id_or_name,
+            quantity=quantity,
+            kind=self.BASKET_ITEM_GOODS,
+            vat=round(price.vat_rate_percentage * 100),
+            amountPerUnit=price.current_net,
+            amountNet=toolkit.round_decimal(price.current_net * quantity, 2),
+            amountVat=toolkit.round_decimal(price.vat_included * quantity, 2),
+            amountGross=toolkit.round_decimal(price.current * quantity, 2),
+        )
+
+    def build_shipping_item(
+        self,
+        node_skel: SkeletonInstance,
+    ) -> BasketItem | None:
+        """Build the shipping basket item for a cart node, if any.
+
+        :param node_skel: The cart node whose shipping is converted.
+        :return: The shipping basket item, or ``None`` if the node has no
+            (chargeable) shipping.
+        """
+        if not (shipping := node_skel["shipping"]):
+            return None
+        gross = shipping["dest"]["shipping_cost"] or 0.0
+        if not gross:
+            return None
+        # Shipping is taxed at the standard rate (see cart.get_vat_for_node).
+        vat_percent = self.get_shipping_vat_percentage(node_skel)
+        net = Price.gross_to_net(gross, vat_percent / 100.0)
+        return BasketItem(
+            basketItemReferenceId=f'shipping-{node_skel["key"].id_or_name}',
+            title=shipping["dest"]["name"] or "Shipping",
+            quantity=1,
+            kind=self.BASKET_ITEM_SHIPMENT,
+            vat=round(vat_percent),
+            amountPerUnit=toolkit.round_decimal(net, 2),
+            amountNet=toolkit.round_decimal(net, 2),
+            amountVat=toolkit.round_decimal(gross - net, 2),
+            amountGross=toolkit.round_decimal(gross, 2),
+        )
+
+    def build_discount_item(
+        self,
+        node_skel: SkeletonInstance,
+        base: float,
+    ) -> BasketItem | None:
+        """Build the discount (voucher) basket item for a cart node, if any.
+
+        Mirrors :func:`cart.add_discount`: only basket-domain discounts reduce
+        the node total (article-domain discounts are already reflected in the
+        article prices). The discount amount is ``base`` minus the discounted
+        ``base``, matching the ``total_discount_price`` computation.
+
+        :param node_skel: The cart node whose discount is converted.
+        :param base: The subtree total the node's discount is applied to.
+        :return: The voucher basket item, or ``None`` if the node has no
+            applicable basket-domain discount.
+        """
+        if not (discount := node_skel["discount"]):
+            return None
+        if not any(
+            condition["dest"]["application_domain"] == ApplicationDomain.BASKET
+            for condition in discount["dest"]["condition"]
+        ):
+            return None
+        amount = toolkit.round_decimal(base - Price.apply_discount(discount["dest"], base), 2)
+        if not amount:
+            return None
+        return BasketItem(
+            basketItemReferenceId=f'discount-{discount["dest"]["key"].id_or_name}',
+            title=discount["dest"]["name"] or "Discount",
+            quantity=1,
+            kind=self.BASKET_ITEM_VOUCHER,
+            vat=0,
+            amountPerUnit=-amount,
+            amountNet=-amount,
+            amountVat=0.0,
+            amountGross=-amount,
+        )
+
+    def get_shipping_vat_percentage(
+        self,
+        node_skel: SkeletonInstance,
+    ) -> float:
+        """Return the standard VAT percentage for a node's shipping.
+
+        :param node_skel: The cart node providing the shipping country.
+        :return: The standard VAT rate in percent (e.g. ``19.0``), or ``0.0``
+            if none is configured.
+        """
+        try:
+            # The referenced skeleton carries its own renderPreparation, which would
+            # turn the select bone's value into a wrapper object instead of the code.
+            country = toolkit.without_render_preparation(node_skel["shipping_address"]["dest"])["country"]
+        except (AttributeError, KeyError, TypeError):
+            country = None
+        try:
+            return self.shop.vat_rate.get_vat_rate_for_country(
+                country=country, category=VatRateCategory.STANDARD,
+            )
+        except Exception as exc:  # noqa: BLE001 -- fall back to 0 % on any config error
+            logger.warning(f"No standard vat rate for shipping: {exc}")
+            return 0.0

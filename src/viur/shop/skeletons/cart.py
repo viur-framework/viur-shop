@@ -142,8 +142,10 @@ def get_vat_for_node(skel: "CartNodeSkel", bone: RecordBone) -> list[dict]:
 
     if shipping := skel["shipping"]:
         try:
-            shipping_country = skel["shipping_address"]["dest"]["country"]
-        except (KeyError, TypeError):
+            # The referenced skeleton carries its own renderPreparation, which would
+            # turn the select bone's value into a wrapper object instead of the code.
+            shipping_country = without_render_preparation(skel["shipping_address"]["dest"])["country"]
+        except (AttributeError, KeyError, TypeError):
             shipping_country = None
         vat_percentage = SHOP_INSTANCE.get().vat_rate.get_vat_rate_for_country(
             country=shipping_country, category=VatRateCategory.STANDARD,

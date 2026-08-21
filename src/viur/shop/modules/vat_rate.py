@@ -49,7 +49,13 @@ class VatRate(ShopModuleAbstract, List):
         country: str | None = None,
         category: VatRateCategory,
     ) -> float:
-        """Get the configured vat rate percentage for a country."""
+        """Get the configured vat rate percentage for a country.
+
+        :param country: The country to look up, as ISO 3166 ALPHA-2 code. Defaults to
+            the country of the current request.
+        :param category: The vat rate category to look up.
+        :return: The vat rate in percent, e.g. ``19.0``.
+        """
         if not isinstance(category, VatRateCategory):
             raise TypeError(f"{category!r} is not a VatRateCategory")
         if country is None:
