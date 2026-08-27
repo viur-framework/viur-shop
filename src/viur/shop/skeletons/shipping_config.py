@@ -34,9 +34,11 @@ class ShippingConfigSkel(Skeleton):
     )
 
     @classmethod
-    def read(cls, skel: SkeletonInstance, *args, **kwargs) -> bool:
-        # Migration after renaming
+    def read(cls, skel: SkeletonInstance, *args, **kwargs) -> t.Optional[SkeletonInstance]:
         res = super().read(skel, *args, **kwargs)
+        if res is None:  # entity does not exist, skel.dbEntity is not set
+            return res
+        # Migration after renaming
         if not skel.dbEntity.get("shipping"):
             skel.dbEntity["shipping"] = skel.dbEntity.get("shipping_skel")
         return res
