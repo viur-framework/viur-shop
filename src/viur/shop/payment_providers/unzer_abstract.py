@@ -676,9 +676,12 @@ class UnzerAbstract(PaymentProviderAbstract):
         amount = toolkit.round_decimal(base - discounted_base, 2)
 
         if amount < 0:
+            # A discount cannot be recovered from a negative difference, so one that
+            # is present is lost here as well -- say so, the cause is not the discount.
+            lost = " and its basket discount is lost" if self.has_basket_discount(node_skel) else ""
             logger.error(
                 f'Cart node {node_skel["key"]!r} costs {-amount} more than its items '
-                f"({base} vs {discounted_base}); the basket will not add up"
+                f"({base} vs {discounted_base}); the basket will not add up{lost}"
             )
         elif self.has_basket_discount(node_skel):
             self.spread_discount(discountable, amount)
@@ -758,15 +761,28 @@ class UnzerAbstract(PaymentProviderAbstract):
         reduce the node total, article-domain ones are already reflected in the
         article prices.
 
+        The discount is read from ``frozen_values`` where the node has them: an
+        ordered cart is frozen, and its stored total reflects the discount as it was
+        at that moment, so the live relation -- which is ``SetNull`` and gets
+        refreshed -- must not decide whether that total contains one.
+
         :param node_skel: The cart node to inspect.
         :return: ``True`` if a basket-domain discount applies to this node.
         """
-        if not (discount := node_skel["discount"]):
+        frozen = node_skel["frozen_values"] or {}
+        if not (discount := frozen.get("discount") or node_skel["discount"]):
             return False
-        return any(
-            condition["dest"]["application_domain"] == ApplicationDomain.BASKET
-            for condition in discount["dest"]["condition"]
-        )
+        for condition in discount["dest"]["condition"]:
+            # `frozen_values` holds the dumped relation, in which the domain is a
+            # plain string, while the live relation yields the enum member. As
+            # `ApplicationDomain` is a plain Enum, `"basket" == ApplicationDomain
+            # .BASKET` is False, so comparing without normalising would report
+            # "no basket discount" for every frozen cart.
+            if (domain := condition["dest"]["application_domain"]) is None:
+                continue
+            if ApplicationDomain(domain) == ApplicationDomain.BASKET:
+                return True
+        return False
 
     @staticmethod
     def spread_discount(
