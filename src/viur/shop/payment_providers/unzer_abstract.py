@@ -1,5 +1,4 @@
 import abc
-import collections
 import functools
 import json
 import typing as t  # noqa
@@ -593,11 +592,14 @@ class UnzerAbstract(PaymentProviderAbstract):
         :param order_skel: The order to derive the basket from.
         :return: The id of the created Unzer basket.
         """
+        basket_items = self.build_basket_items(order_skel)
         basket = Basket(
             amountTotalGross=order_skel["total"],
+            amountTotalDiscount=toolkit.round_decimal(
+                sum(item.amountDiscount or 0.0 for item in basket_items), 2),
             currencyCode=self.currency_code,
             orderId=order_skel["key"].id_or_name,
-            basketItems=self.build_basket_items(order_skel),
+            basketItems=basket_items,
         )
         return self.client.createBasket(basket).key
 
@@ -609,10 +611,8 @@ class UnzerAbstract(PaymentProviderAbstract):
 
         The cart is a tree in which every node may apply its own shipping and
         (basket-domain) discount on top of the accumulated subtree total
-        ("decorator" principle). This walks the entire tree and emits, per
-        node, one item per article leaf plus — if present — a shipping item
-        and a discount (voucher) item. The item grosses therefore reconcile
-        exactly to ``order_skel["total"]`` (== root ``total_discount_price``).
+        ("decorator" principle). The item grosses therefore reconcile exactly to
+        ``order_skel["total"]`` (== root ``total_discount_price``).
 
         :param order_skel: The order whose cart is converted.
         :return: The basket items for the complete cart.
@@ -623,27 +623,70 @@ class UnzerAbstract(PaymentProviderAbstract):
         if not root_skel.read(order_skel["cart"]["dest"]["key"]):
             raise ValueError(f'Cannot read root cart node for order {order_skel["key"]!r}')
 
-        basket_items: list[BasketItem] = []
-        node_queue = collections.deque([root_skel])
-        while node_queue:
-            node_skel = node_queue.pop()
-            # Sum of the subtree total as seen by the ``total_discount_price``
-            # computation, i.e. the value the node's discount is applied to.
-            node_base = 0.0
-            for child in self.shop.cart.get_children(node_skel["key"]):
-                if issubclass(child.skeletonCls, CartNodeSkel):
-                    node_queue.append(child)
-                    node_base += child["total_discount_price"] or 0.0
-                else:
-                    basket_items.append(self.build_article_item(child))
-                    node_base += (child.price_.current or 0.0) * child["quantity"]
-
-            if item := self.build_discount_item(node_skel, node_base):
-                basket_items.append(item)
-            if item := self.build_shipping_item(node_skel):
-                basket_items.append(item)
-
+        basket_items, _ = self.build_node_items(root_skel)
         return basket_items
+
+    def build_node_items(
+        self,
+        node_skel: SkeletonInstance,
+    ) -> tuple[list[BasketItem], float]:
+        """Convert one cart node's subtree into basket items.
+
+        Mirrors the ``total_discount_price`` computation of :class:`CartNodeSkel`
+        (see ``add_discount`` / ``add_shipping`` in ``skeletons.cart``): the
+        node's discount applies to the accumulated subtree — its own article
+        leaves plus the already discounted totals of its child nodes, including
+        their shipping — while its *own* shipping is added afterwards and stays
+        undiscounted.
+
+        The discount *amount* is not recomputed from the discount skeleton but
+        taken as the difference between the items and the node's stored
+        ``total_discount_price``. An ordered cart is frozen, so that stored value
+        is what the customer is charged even if the discount changed afterwards —
+        and it keeps the basket reconciling to ``order_skel["total"]`` whatever
+        the discount type does. Discounts of nested nodes accumulate on the
+        articles below them, innermost first.
+
+        :param node_skel: The cart node to convert.
+        :return: The items of this subtree, and the node's
+            ``total_discount_price``.
+        """
+        discountable: list[BasketItem] = []
+        base = 0.0
+        for child in self.shop.cart.get_children(node_skel["key"]):
+            if issubclass(child.skeletonCls, CartNodeSkel):
+                child_items, child_total = self.build_node_items(child)
+                discountable.extend(child_items)
+                base += child_total
+            else:
+                item = self.build_article_item(child)
+                discountable.append(item)
+                base += item.amountGross
+        # The total bones round at every node, so the discount base has to as well.
+        base = toolkit.round_decimal(base, 2)
+
+        shipping_item = self.build_shipping_item(node_skel)
+        node_total = toolkit.round_decimal(node_skel["total_discount_price"] or 0.0, 2)
+        # The node's own shipping is added after the discount, so back it out again.
+        discounted_base = toolkit.round_decimal(
+            node_total - (shipping_item.amountGross if shipping_item else 0.0), 2)
+        amount = toolkit.round_decimal(base - discounted_base, 2)
+
+        if amount < 0:
+            logger.error(
+                f'Cart node {node_skel["key"]!r} costs {-amount} more than its items '
+                f"({base} vs {discounted_base}); the basket will not add up"
+            )
+        elif self.has_basket_discount(node_skel):
+            self.spread_discount(discountable, amount)
+        elif amount:
+            logger.error(
+                f'Cart node {node_skel["key"]!r} is {amount} off its items '
+                f"({base} vs {discounted_base}) without carrying a basket discount"
+            )
+
+        items = discountable if shipping_item is None else [*discountable, shipping_item]
+        return items, node_total
 
     def build_article_item(
         self,
@@ -652,8 +695,8 @@ class UnzerAbstract(PaymentProviderAbstract):
         """Convert a single cart leaf (article) into an Unzer basket item.
 
         Article-level discounts are already contained in ``price_.current``;
-        basket-level discounts are emitted separately, see
-        :meth:`build_discount_item`.
+        basket-level discounts are spread over the items afterwards, see
+        :meth:`spread_discount`.
 
         :param leaf_skel: The cart item (leaf) to convert.
         :return: The corresponding Unzer basket item.
@@ -702,44 +745,102 @@ class UnzerAbstract(PaymentProviderAbstract):
             amountGross=toolkit.round_decimal(gross, 2),
         )
 
-    def build_discount_item(
-        self,
+    @staticmethod
+    def has_basket_discount(
         node_skel: SkeletonInstance,
-        base: float,
-    ) -> BasketItem | None:
-        """Build the discount (voucher) basket item for a cart node, if any.
+    ) -> bool:
+        """Whether the node carries a discount that reduces its total.
 
-        Mirrors :func:`cart.add_discount`: only basket-domain discounts reduce
-        the node total (article-domain discounts are already reflected in the
-        article prices). The discount amount is ``base`` minus the discounted
-        ``base``, matching the ``total_discount_price`` computation.
+        Mirrors :func:`skeletons.cart.add_discount`: only basket-domain discounts
+        reduce the node total, article-domain ones are already reflected in the
+        article prices.
 
-        :param node_skel: The cart node whose discount is converted.
-        :param base: The subtree total the node's discount is applied to.
-        :return: The voucher basket item, or ``None`` if the node has no
-            applicable basket-domain discount.
+        :param node_skel: The cart node to inspect.
+        :return: ``True`` if a basket-domain discount applies to this node.
         """
         if not (discount := node_skel["discount"]):
-            return None
-        if not any(
+            return False
+        return any(
             condition["dest"]["application_domain"] == ApplicationDomain.BASKET
             for condition in discount["dest"]["condition"]
-        ):
-            return None
-        amount = toolkit.round_decimal(base - Price.apply_discount(discount["dest"], base), 2)
-        if not amount:
-            return None
-        return BasketItem(
-            basketItemReferenceId=f'discount-{discount["dest"]["key"].id_or_name}',
-            title=discount["dest"]["name"] or "Discount",
-            quantity=1,
-            kind=self.BASKET_ITEM_VOUCHER,
-            vat=0,
-            amountPerUnit=-amount,
-            amountNet=-amount,
-            amountVat=0.0,
-            amountGross=-amount,
         )
+
+    @staticmethod
+    def spread_discount(
+        items: list[BasketItem],
+        amount: float,
+    ) -> None:
+        """Spread a node discount over the items it applies to, in whole cents.
+
+        Unzer refuses basket items with negative amounts, in both the v1 and the
+        v3 schema (``API.600.200.131``, plus ``API.600.410.018`` on v1), so a
+        discount cannot be sent as a negative line of its own. It has to be a
+        positive ``amountDiscount`` on the items it reduces, which means the
+        node discount has to be split up.
+
+        The split is proportional to what is left of each item — its gross minus
+        the discounts already spread on it by nested nodes — and is done in whole
+        cents: every item gets the floor of its exact share, and the cents left
+        over by rounding go to the items with the largest fractional part. The
+        parts therefore add up to *amount* exactly, which matters because the v3
+        basket endpoint reconciles the total to the cent (v1 does not check it at
+        all, but the payment methods that hand the basket to a partner system
+        may).
+
+        ``amountGross``, ``amountNet`` and ``amountVat`` of an item stay at their
+        pre-discount values; that is how the API stores them, the reduced value
+        being ``amountGross - amountDiscount``.
+
+        :param items: The items to spread over; modified in place.
+        :param amount: The (positive) discount amount to spread.
+        :raises ValueError: If the amount exceeds what the items can carry, which
+            would force an item below zero.
+        """
+        if amount <= 0:
+            return
+        # An item can only carry a discount down to zero, so weigh by the
+        # remainder after the discounts a nested node already spread on it.
+        weights = [
+            max(toolkit.round_decimal(item.amountGross - (item.amountDiscount or 0.0), 2), 0.0)
+            for item in items
+        ]
+        spreadable = toolkit.round_decimal(sum(weights), 2)
+        if amount > spreadable:
+            raise ValueError(
+                f"Cannot spread a discount of {amount} over items worth {spreadable}"
+            )
+
+        # Work in cents: floor each exact share, then hand out the remaining
+        # cents by the largest fractional part (and never above an item's weight).
+        cents = round(amount * 100)
+        caps = [round(weight * 100) for weight in weights]
+        exact = [cents * weight / spreadable for weight in weights]
+        shares = [min(int(value), cap) for value, cap in zip(exact, caps)]
+        order = sorted(
+            range(len(items)),
+            key=lambda idx: (exact[idx] - int(exact[idx]), weights[idx]),
+            reverse=True,
+        )
+        # One cent per item and pass, so the remainder reaches as many items as there
+        # are cents left. A pass can hand out fewer than it should when items are
+        # capped, hence the loop; without any progress the amount does not fit, which
+        # the check above should already have caught.
+        while (left := cents - sum(shares)) > 0:
+            progressed = False
+            for idx in order:
+                if left <= 0:
+                    break
+                if shares[idx] < caps[idx]:
+                    shares[idx] += 1
+                    left -= 1
+                    progressed = True
+            if not progressed:  # pragma: no cover - ruled out by the ValueError above
+                raise ValueError(f"Cannot spread {amount} over items worth {spreadable}")
+
+        for item, share in zip(items, shares):
+            if share:
+                item.amountDiscount = toolkit.round_decimal(
+                    (item.amountDiscount or 0.0) + share / 100, 2)
 
     def get_shipping_vat_percentage(
         self,
