@@ -12,6 +12,7 @@ from unzer.model.webhook import Events, IP_ADDRESS
 
 from viur import toolkit
 from viur.core import access, current, db, errors, exposed, force_post
+from viur.core.utils.string import unescape
 from viur.core.skeleton import SkeletonInstance
 from viur.shop.skeletons import OrderSkel
 from viur.shop.types import *
@@ -705,7 +706,9 @@ class UnzerAbstract(PaymentProviderAbstract):
         quantity = int(leaf_skel["quantity"])
         return BasketItem(
             basketItemReferenceId=leaf_skel["key"].id_or_name,
-            title=leaf_skel["shop_name"] or leaf_skel["key"].id_or_name,
+            # StringBones store their value HTML-escaped, but the basket is rendered as
+            # plain text by the payment method -- an entity would show up verbatim.
+            title=unescape(leaf_skel["shop_name"] or "") or leaf_skel["key"].id_or_name,
             quantity=quantity,
             kind=self.BASKET_ITEM_GOODS,
             vat=round(price.vat_rate_percentage * 100),
@@ -735,7 +738,7 @@ class UnzerAbstract(PaymentProviderAbstract):
         net = Price.gross_to_net(gross, vat_percent / 100.0)
         return BasketItem(
             basketItemReferenceId=f'shipping-{node_skel["key"].id_or_name}',
-            title=shipping["dest"]["name"] or "Shipping",
+            title=unescape(shipping["dest"]["name"] or "") or "Shipping",
             quantity=1,
             kind=self.BASKET_ITEM_SHIPMENT,
             vat=round(vat_percent),
