@@ -612,8 +612,11 @@ class UnzerAbstract(PaymentProviderAbstract):
 
         The cart is a tree in which every node may apply its own shipping and
         (basket-domain) discount on top of the accumulated subtree total
-        ("decorator" principle). The item grosses therefore reconcile exactly to
-        ``order_skel["total"]`` (== root ``total_discount_price``).
+        ("decorator" principle). A discount is carried by the items it reduces,
+        as ``amountDiscount``, so what reconciles exactly to
+        ``order_skel["total"]`` (== root ``total_discount_price``) is
+        ``sum(amountGross - amountDiscount)``. ``amountGross`` itself stays the
+        pre-discount gross, see :meth:`spread_discount`.
 
         :param order_skel: The order whose cart is converted.
         :return: The basket items for the complete cart.
