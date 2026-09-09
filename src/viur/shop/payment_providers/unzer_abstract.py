@@ -56,7 +56,7 @@ class UnzerClientViURShop(unzer.UnzerClient):
         private_key: str | t.Callable[[], str],
         public_key: str | t.Callable[[], str],
         sandbox: bool | t.Callable[[], bool] = False,
-        language: str = "en",
+        language: str | t.Callable[[], str | None] | None = None,
         client_ip: str = None,
     ):
         # completely overwritten to keep properties
@@ -84,16 +84,6 @@ class UnzerClientViURShop(unzer.UnzerClient):
         if callable(self._sandbox):
             return self._sandbox()
         return self._sandbox
-
-    def _request(self, url, method, headers, payload, auth):
-        # Extend with ViUR Logic:
-        # Before the request is performed, we update the accept-language with
-        # the language of the current request, unless it has been explicitly set.
-        if self.language is None:
-            # language for translation of customerMessage in errors
-            headers["accept-language"] = current.language.get()
-
-        return super()._request(url, method, headers, payload, auth)
 
 
 class UnzerAbstract(PaymentProviderAbstract):
@@ -127,7 +117,10 @@ class UnzerAbstract(PaymentProviderAbstract):
         :param private_key: The private key to use for authentication.
         :param public_key: The public key to use for authentication.
         :param sandbox: Use sandbox mode (development mode).
-        :param language: Enforce this language. If ``None``, the language of the current request is used.
+        :param language: Enforce this language. If ``None``, the language of the current request
+            is used -- resolved per request, since the client outlives a single one.
+            It reaches the ``accept-language`` header and the language of the customer
+            that is created for the order.
         """
         super().__init__(**kwargs)
         self._private_key = private_key
@@ -138,7 +131,9 @@ class UnzerAbstract(PaymentProviderAbstract):
             private_key=private_key,
             public_key=public_key,
             sandbox=sandbox,
-            language=self.language,
+            # Read on every request by the client, so one instance serves visitors
+            # in different languages.
+            language=self.language if self.language is not None else lambda: current.language.get(),
         )
         # logger.debug(f"{self.client.getKeyPair() = }")
 
