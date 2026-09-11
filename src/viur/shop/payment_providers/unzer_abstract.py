@@ -273,11 +273,38 @@ class UnzerAbstract(PaymentProviderAbstract):
         logger.debug(f"Found {payment=!r}")
 
         order_skel = self.shop.order.skel()
-        if not order_skel.read(self.parse_external_id(payment.orderId)):
+        for candidate in self.external_id_candidates(payment.orderId):
+            if order_skel.read(candidate):
+                break
+        else:
             logger.warning(f"Cannot load order skel with {payment.orderId=}. Not from us?")
             return None
 
         return order_skel
+
+    def get_payment_by_order_skel(
+        self,
+        order_skel: SkeletonInstance,
+    ) -> t.Any:
+        """Fetch a payment by its ``orderId`` rather than by its payment id.
+
+        Used as a recovery path when a stored payment has no payment id. Tries the
+        prefixed id first, since that is what :meth:`external_id` writes, and falls
+        back to the bare key for payments created before the prefix existed.
+
+        :param order_skel: The order whose payment is looked up.
+        :return: The payment resource.
+        :raises unzer.model.error.ErrorResponse: If neither spelling is known to Unzer.
+        """
+        order_ids = (self.external_id(order_skel["key"]), str(order_skel["key"].id_or_name))
+        for idx, order_id in enumerate(order_ids, start=1):
+            logger.debug(f"{order_id=}")
+            try:
+                return self.client.getPayment(order_id)
+            except unzer.model.error.ErrorResponse:
+                if idx == len(order_ids):
+                    raise
+                logger.debug(f"No payment for {order_id=}, trying the next spelling")
 
     def check_payment_state(
         self,
@@ -301,10 +328,9 @@ class UnzerAbstract(PaymentProviderAbstract):
         for idx, payment_src in enumerate(order_skel["payment"]["payments"], start=1):
             if not (payment_id := payment_src.get("payment_id")):
                 logger.error(f"Payment #{idx} has no payment_id")
-                # Fetch by order short key (orderId)
-                order_id = str(order_skel["key"].id_or_name)
-                logger.debug(f"{order_id=}")
-                payment = self.client.getPayment(order_id)
+                # Fetch by order short key (orderId). Payments created before
+                # `external_id` carry the bare key, so both spellings are tried.
+                payment = self.get_payment_by_order_skel(order_skel)
                 logger.debug(f"{payment=}")
             else:
                 logger.debug(f"{payment_id=}")
@@ -542,23 +568,22 @@ class UnzerAbstract(PaymentProviderAbstract):
         return f'{"s" if self.client.sandbox else "p"}{key.id_or_name}'
 
     @staticmethod
-    def parse_external_id(value: str) -> str:
-        """Turn an id from Unzer back into a datastore id.
+    def external_id_candidates(value: str) -> tuple[str, ...]:
+        """Every datastore id an id from Unzer could refer to, likeliest last resort last.
 
-        Tolerates a value without the prefix: resources created before
-        :meth:`external_id` was introduced carry the bare key and have to keep
-        resolving to their order.
-
-        Only a prefix followed by digits is stripped, so a key *name* that happens
-        to start with ``s`` or ``p`` survives untouched.
+        The **raw** value comes first on purpose. Stripping blindly would be wrong in
+        both directions: a legacy resource whose key is *named* ``s123`` would resolve
+        to the unrelated order ``123`` -- silently, and to real data. Trying the value
+        as it arrived first means an id that was never prefixed always wins, and the
+        stripped candidate only ever applies when nothing else matched.
 
         :param value: The id as Unzer returns it.
-        :return: The datastore id.
+        :return: The candidates to try, in order.
         """
         value = str(value)
-        if value[:1] in ("s", "p") and value[1:].isdigit():
-            return value[1:]
-        return value
+        if len(value) > 1 and value[:1] in ("s", "p"):
+            return value, value[1:]
+        return (value,)
 
     def address_from_address_skel(
         self,
