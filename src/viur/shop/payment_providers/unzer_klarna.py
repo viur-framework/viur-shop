@@ -66,7 +66,7 @@ class UnzerKlarna(UnzerAbstract):
                 amount=order_skel["total"],
                 returnUrl=return_url,
                 customerId=customer.key,
-                orderId=order_skel["key"].id_or_name,
+                orderId=self.external_id(order_skel["key"]),
                 invoiceId=order_skel["order_uid"],
                 basketId=self.get_basket_id(order_skel),
             )

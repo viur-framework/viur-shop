@@ -190,7 +190,7 @@ class UnzerAbstract(PaymentProviderAbstract):
                 returnUrl=return_url,
                 card3ds=True,
                 customerId=customer.key,
-                orderId=order_skel["key"].id_or_name,
+                orderId=self.external_id(order_skel["key"]),
                 invoiceId=order_skel["order_uid"],
             )
         )
@@ -272,12 +272,52 @@ class UnzerAbstract(PaymentProviderAbstract):
         payment = self.client.getPayment(payment_id)
         logger.debug(f"Found {payment=!r}")
 
-        order_skel = self.shop.order.skel()
-        if not order_skel.read(payment.orderId):
-            logger.warning(f"Cannot load order skel with {payment.orderId=}. Not from us?")
-            return None
+        for candidate in self.external_id_candidates(payment.orderId):
+            order_skel = self.shop.order.skel()
+            if not order_skel.read(candidate):
+                continue
+            # Confirm the hit instead of trusting it. `invoiceId` holds the order
+            # number, which is unique (`order_uid` has a `UniqueValue` lock), so a
+            # mismatch means this is not the order the payment belongs to --
+            # `check_payment_state` compares the same two values at every charge.
+            if payment.invoiceId and str(payment.invoiceId) != str(order_skel["order_uid"]):
+                logger.debug(f"{candidate=} has a different order_uid, trying the next candidate")
+                continue
+            return order_skel
 
-        return order_skel
+        logger.warning(f"Cannot load order skel with {payment.orderId=}. Not from us?")
+        return None
+
+    def get_payment_by_order_skel(
+        self,
+        order_skel: SkeletonInstance,
+    ) -> t.Any:
+        """Fetch a payment by its ``orderId`` rather than by its payment id.
+
+        Used as a recovery path when a stored payment has no payment id. Tries the
+        prefixed id first, since that is what :meth:`external_id` writes, and falls
+        back to the bare key for payments created before the prefix existed.
+
+        Only a *not found* moves on to the next spelling. Anything else is raised
+        immediately: `getPayment` is a GET, which the SDK retries through its whole
+        `retryDelays` chain before giving up, so swallowing an outage here would
+        spend that wait twice -- on a path that a returning customer sits in -- and
+        would surface the error of the wrong id at the end of it.
+
+        :param order_skel: The order whose payment is looked up.
+        :return: The payment resource.
+        :raises unzer.model.error.ErrorResponse: If Unzer knows neither spelling, or
+            on any error other than *not found*.
+        """
+        order_ids = (self.external_id(order_skel["key"]), str(order_skel["key"].id_or_name))
+        for idx, order_id in enumerate(order_ids, start=1):
+            logger.debug(f"{order_id=}")
+            try:
+                return self.client.getPayment(order_id)
+            except unzer.model.error.ErrorResponse as err:
+                if err.statusCode != 404 or idx == len(order_ids):
+                    raise
+                logger.debug(f"No payment for {order_id=}, trying the next spelling")
 
     def check_payment_state(
         self,
@@ -301,10 +341,9 @@ class UnzerAbstract(PaymentProviderAbstract):
         for idx, payment_src in enumerate(order_skel["payment"]["payments"], start=1):
             if not (payment_id := payment_src.get("payment_id")):
                 logger.error(f"Payment #{idx} has no payment_id")
-                # Fetch by order short key (orderId)
-                order_id = str(order_skel["key"].id_or_name)
-                logger.debug(f"{order_id=}")
-                payment = self.client.getPayment(order_id)
+                # Fetch by order short key (orderId). Payments created before
+                # `external_id` carry the bare key, so both spellings are tried.
+                payment = self.get_payment_by_order_skel(order_skel)
                 logger.debug(f"{payment=}")
             else:
                 logger.debug(f"{payment_id=}")
@@ -511,8 +550,61 @@ class UnzerAbstract(PaymentProviderAbstract):
         order_skel: SkeletonInstance,
     ) -> str:
         # TODO: use key of the OrderSkel or AddressSkel?
-        prefix = "s" if self.client.sandbox else "p"
-        return f'{prefix}{order_skel["key"].id_or_name}'
+        return self.external_id(order_skel["key"])
+
+    def external_id(
+        self,
+        key: db.Key,
+    ) -> str:
+        """Build the id sent to Unzer for one of our datastore keys.
+
+        The prefix does two things. It separates sandbox from production, which
+        Unzer needs for the external customer id because the two environments share
+        no customer base.
+
+        And it keeps the value from looking like a card number. Unzer inspects every
+        string in a request body, strips separators, and refuses the whole request
+        with ``API.500.560.003`` when what remains is a Luhn-valid digit string in a
+        card BIN range. A bare datastore key qualifies: ViUR ids are 16 digits, so
+        they can land in a card BIN range, and roughly one in ten numbers is
+        Luhn-valid by chance. Both have to hold -- the ranges are specific subranges
+        rather than whole leading digits, so `4…` is Visa while of the `5…` space only
+        `51`-`55` is Mastercard. Such an id fails *every* time it is sent, so an order
+        carrying one could never be paid.
+
+        A single letter is enough to take the value out of that shape, and the
+        missing hyphen keeps our ids apart from Unzer's own ``s-pay-…`` scheme.
+
+        .. warning::
+            ``invoiceId`` cannot be protected this way: it carries the order number
+            and is compared against ``order_uid`` on every charge, so a prefix would
+            break that comparison and change a customer-visible reference. A project
+            replacing :attr:`~viur.shop.types.Hook.ORDER_ASSIGN_UID` therefore has to
+            keep its order number out of card shape by itself -- a bare 13 to 19 digit
+            number is the one thing it must not be. The shipped default is a grouped
+            timestamp, which passes only because its leading digits are no card BIN.
+
+        :param key: The datastore key to reference.
+        :return: The prefixed id.
+        """
+        return f'{"s" if self.client.sandbox else "p"}{key.id_or_name}'
+
+    @staticmethod
+    def external_id_candidates(value: str) -> tuple[str, ...]:
+        """The datastore ids an id from Unzer could refer to, likeliest first.
+
+        Ids written by :meth:`external_id` carry the prefix, so the stripped value is
+        tried first and resolves in one lookup. The value as it arrived follows for
+        resources created before the prefix existed; those are plain numeric keys and
+        never carry an ``s``/``p``, so they only ever produce that single candidate.
+
+        :param value: The id as Unzer returns it.
+        :return: The candidates to try, in order.
+        """
+        value = str(value)
+        if len(value) > 1 and value[:1] in ("s", "p"):
+            return value[1:], value
+        return (value,)
 
     def address_from_address_skel(
         self,
@@ -593,7 +685,7 @@ class UnzerAbstract(PaymentProviderAbstract):
             amountTotalDiscount=toolkit.round_decimal(
                 sum(item.amountDiscount or 0.0 for item in basket_items), 2),
             currencyCode=self.currency_code,
-            orderId=order_skel["key"].id_or_name,
+            orderId=self.external_id(order_skel["key"]),
             basketItems=basket_items,
         )
         return self.client.createBasket(basket).key
@@ -705,8 +797,10 @@ class UnzerAbstract(PaymentProviderAbstract):
         price = leaf_skel.price_
         quantity = int(leaf_skel["quantity"])
         return BasketItem(
-            basketItemReferenceId=leaf_skel["key"].id_or_name,
-            title=leaf_skel["shop_name"] or leaf_skel["key"].id_or_name,
+            basketItemReferenceId=self.external_id(leaf_skel["key"]),
+            # Same fallback style as the shipping item below. The bare id is fine
+            # here: the label in front of it takes the value out of card shape.
+            title=leaf_skel["shop_name"] or f'Article {leaf_skel["key"].id_or_name}',
             quantity=quantity,
             kind=self.BASKET_ITEM_GOODS,
             vat=round(price.vat_rate_percentage * 100),
