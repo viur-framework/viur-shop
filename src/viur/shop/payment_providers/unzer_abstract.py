@@ -272,15 +272,22 @@ class UnzerAbstract(PaymentProviderAbstract):
         payment = self.client.getPayment(payment_id)
         logger.debug(f"Found {payment=!r}")
 
-        order_skel = self.shop.order.skel()
         for candidate in self.external_id_candidates(payment.orderId):
-            if order_skel.read(candidate):
-                break
-        else:
-            logger.warning(f"Cannot load order skel with {payment.orderId=}. Not from us?")
-            return None
+            order_skel = self.shop.order.skel()
+            if not order_skel.read(candidate):
+                continue
+            # Reading one candidate is not proof: the prefixed spelling of a numeric
+            # key is the literal name another order could carry, so `s123` may find a
+            # legacy order named `s123` when the payment belongs to the new order
+            # `123`. `invoiceId` holds the order number, which is unique, so it
+            # settles which of the two the payment means.
+            if payment.invoiceId and str(payment.invoiceId) != str(order_skel["order_uid"]):
+                logger.debug(f"{candidate=} has a different order_uid, trying the next candidate")
+                continue
+            return order_skel
 
-        return order_skel
+        logger.warning(f"Cannot load order skel with {payment.orderId=}. Not from us?")
+        return None
 
     def get_payment_by_order_skel(
         self,
