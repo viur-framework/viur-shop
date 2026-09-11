@@ -526,10 +526,12 @@ class UnzerAbstract(PaymentProviderAbstract):
         And it keeps the value from looking like a card number. Unzer inspects every
         string in a request body, strips separators, and refuses the whole request
         with ``API.500.560.003`` when what remains is a Luhn-valid digit string in a
-        card BIN range. A bare datastore key qualifies: ViUR ids are 16 digits and
-        start in the 4-6 range covering the Visa, Mastercard and Discover/UnionPay
-        BINs, and roughly one in ten passes Luhn by chance. Such an id fails *every*
-        time it is sent, so an order carrying one could never be paid.
+        card BIN range. A bare datastore key qualifies: ViUR ids are 16 digits, so
+        they can land in a card BIN range, and roughly one in ten numbers is
+        Luhn-valid by chance. Both have to hold -- the ranges are specific subranges
+        rather than whole leading digits, so `4…` is Visa while of the `5…` space only
+        `51`-`55` is Mastercard. Such an id fails *every* time it is sent, so an order
+        carrying one could never be paid.
 
         A single letter is enough to take the value out of that shape, and the
         missing hyphen keeps our ids apart from Unzer's own ``s-pay-…`` scheme.
