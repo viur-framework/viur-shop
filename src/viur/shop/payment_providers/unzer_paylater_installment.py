@@ -150,7 +150,7 @@ class UnzerPaylaterInstallment(UnzerAbstract):
             amount=order_skel["total"],
             returnUrl=self.get_return_url(order_skel),
             customerId=customer.key,
-            orderId=order_skel["key"].id_or_name,
+            orderId=self.external_id(order_skel["key"]),
             invoiceId=order_skel["order_uid"],
             basketId=self.get_basket_id(order_skel),
             additional_transaction_data=unzer.AdditionalTransactionData(

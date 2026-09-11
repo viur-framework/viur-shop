@@ -109,7 +109,7 @@ class UnzerPaylaterInvoice(UnzerAbstract):
             returnUrl=return_url,
             card3ds=True,
             customerId=customer.key,
-            orderId=order_skel["key"].id_or_name,
+            orderId=self.external_id(order_skel["key"]),
             invoiceId=order_skel["order_uid"],
             additional_transaction_data=unzer.AdditionalTransactionData(
                 risk_data=self.get_risk_data(order_skel),
