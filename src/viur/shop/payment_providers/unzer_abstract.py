@@ -190,7 +190,7 @@ class UnzerAbstract(PaymentProviderAbstract):
                 returnUrl=return_url,
                 card3ds=True,
                 customerId=customer.key,
-                orderId=order_skel["key"].id_or_name,
+                orderId=self.external_id(order_skel["key"]),
                 invoiceId=order_skel["order_uid"],
             )
         )
@@ -273,7 +273,7 @@ class UnzerAbstract(PaymentProviderAbstract):
         logger.debug(f"Found {payment=!r}")
 
         order_skel = self.shop.order.skel()
-        if not order_skel.read(payment.orderId):
+        if not order_skel.read(self.parse_external_id(payment.orderId)):
             logger.warning(f"Cannot load order skel with {payment.orderId=}. Not from us?")
             return None
 
@@ -511,8 +511,52 @@ class UnzerAbstract(PaymentProviderAbstract):
         order_skel: SkeletonInstance,
     ) -> str:
         # TODO: use key of the OrderSkel or AddressSkel?
-        prefix = "s" if self.client.sandbox else "p"
-        return f'{prefix}{order_skel["key"].id_or_name}'
+        return self.external_id(order_skel["key"])
+
+    def external_id(
+        self,
+        key: db.Key,
+    ) -> str:
+        """Build the id sent to Unzer for one of our datastore keys.
+
+        The prefix does two things. It separates sandbox from production, which
+        Unzer needs for the external customer id because the two environments share
+        no customer base.
+
+        And it keeps the value from looking like a card number. Unzer inspects every
+        string in a request body, strips separators, and refuses the whole request
+        with ``API.500.560.003`` when what remains is a Luhn-valid digit string in a
+        card BIN range. A bare datastore key qualifies: ViUR ids are 16 digits and
+        start in the 4-6 range covering the Visa, Mastercard and Discover/UnionPay
+        BINs, and roughly one in ten passes Luhn by chance. Such an id fails *every*
+        time it is sent, so an order carrying one could never be paid.
+
+        A single letter is enough to take the value out of that shape, and the
+        missing hyphen keeps our ids apart from Unzer's own ``s-pay-…`` scheme.
+
+        :param key: The datastore key to reference.
+        :return: The prefixed id.
+        """
+        return f'{"s" if self.client.sandbox else "p"}{key.id_or_name}'
+
+    @staticmethod
+    def parse_external_id(value: str) -> str:
+        """Turn an id from Unzer back into a datastore id.
+
+        Tolerates a value without the prefix: resources created before
+        :meth:`external_id` was introduced carry the bare key and have to keep
+        resolving to their order.
+
+        Only a prefix followed by digits is stripped, so a key *name* that happens
+        to start with ``s`` or ``p`` survives untouched.
+
+        :param value: The id as Unzer returns it.
+        :return: The datastore id.
+        """
+        value = str(value)
+        if value[:1] in ("s", "p") and value[1:].isdigit():
+            return value[1:]
+        return value
 
     def address_from_address_skel(
         self,
@@ -593,7 +637,7 @@ class UnzerAbstract(PaymentProviderAbstract):
             amountTotalDiscount=toolkit.round_decimal(
                 sum(item.amountDiscount or 0.0 for item in basket_items), 2),
             currencyCode=self.currency_code,
-            orderId=order_skel["key"].id_or_name,
+            orderId=self.external_id(order_skel["key"]),
             basketItems=basket_items,
         )
         return self.client.createBasket(basket).key
@@ -705,8 +749,10 @@ class UnzerAbstract(PaymentProviderAbstract):
         price = leaf_skel.price_
         quantity = int(leaf_skel["quantity"])
         return BasketItem(
-            basketItemReferenceId=leaf_skel["key"].id_or_name,
-            title=leaf_skel["shop_name"] or leaf_skel["key"].id_or_name,
+            basketItemReferenceId=self.external_id(leaf_skel["key"]),
+            # Same fallback style as the shipping item below. The bare id is fine
+            # here: the label in front of it takes the value out of card shape.
+            title=leaf_skel["shop_name"] or f'Article {leaf_skel["key"].id_or_name}',
             quantity=quantity,
             kind=self.BASKET_ITEM_GOODS,
             vat=round(price.vat_rate_percentage * 100),
