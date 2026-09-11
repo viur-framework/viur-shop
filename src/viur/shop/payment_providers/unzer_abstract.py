@@ -276,11 +276,10 @@ class UnzerAbstract(PaymentProviderAbstract):
             order_skel = self.shop.order.skel()
             if not order_skel.read(candidate):
                 continue
-            # Reading one candidate is not proof: the prefixed spelling of a numeric
-            # key is the literal name another order could carry, so `s123` may find a
-            # legacy order named `s123` when the payment belongs to the new order
-            # `123`. `invoiceId` holds the order number, which is unique, so it
-            # settles which of the two the payment means.
+            # Confirm the hit instead of trusting it. `invoiceId` holds the order
+            # number, which is unique (`order_uid` has a `UniqueValue` lock), so a
+            # mismatch means this is not the order the payment belongs to --
+            # `check_payment_state` compares the same two values at every charge.
             if payment.invoiceId and str(payment.invoiceId) != str(order_skel["order_uid"]):
                 logger.debug(f"{candidate=} has a different order_uid, trying the next candidate")
                 continue
@@ -299,17 +298,24 @@ class UnzerAbstract(PaymentProviderAbstract):
         prefixed id first, since that is what :meth:`external_id` writes, and falls
         back to the bare key for payments created before the prefix existed.
 
+        Only a *not found* moves on to the next spelling. Anything else is raised
+        immediately: `getPayment` is a GET, which the SDK retries through its whole
+        `retryDelays` chain before giving up, so swallowing an outage here would
+        spend that wait twice -- on a path that a returning customer sits in -- and
+        would surface the error of the wrong id at the end of it.
+
         :param order_skel: The order whose payment is looked up.
         :return: The payment resource.
-        :raises unzer.model.error.ErrorResponse: If neither spelling is known to Unzer.
+        :raises unzer.model.error.ErrorResponse: If Unzer knows neither spelling, or
+            on any error other than *not found*.
         """
         order_ids = (self.external_id(order_skel["key"]), str(order_skel["key"].id_or_name))
         for idx, order_id in enumerate(order_ids, start=1):
             logger.debug(f"{order_id=}")
             try:
                 return self.client.getPayment(order_id)
-            except unzer.model.error.ErrorResponse:
-                if idx == len(order_ids):
+            except unzer.model.error.ErrorResponse as err:
+                if err.statusCode != 404 or idx == len(order_ids):
                     raise
                 logger.debug(f"No payment for {order_id=}, trying the next spelling")
 
@@ -569,6 +575,15 @@ class UnzerAbstract(PaymentProviderAbstract):
         A single letter is enough to take the value out of that shape, and the
         missing hyphen keeps our ids apart from Unzer's own ``s-pay-…`` scheme.
 
+        .. warning::
+            ``invoiceId`` cannot be protected this way: it carries the order number
+            and is compared against ``order_uid`` on every charge, so a prefix would
+            break that comparison and change a customer-visible reference. A project
+            replacing :attr:`~viur.shop.types.Hook.ORDER_ASSIGN_UID` therefore has to
+            keep its order number out of card shape by itself -- a bare 13 to 19 digit
+            number is the one thing it must not be. The shipped default is a grouped
+            timestamp, which passes only because its leading digits are no card BIN.
+
         :param key: The datastore key to reference.
         :return: The prefixed id.
         """
@@ -576,20 +591,19 @@ class UnzerAbstract(PaymentProviderAbstract):
 
     @staticmethod
     def external_id_candidates(value: str) -> tuple[str, ...]:
-        """Every datastore id an id from Unzer could refer to, likeliest last resort last.
+        """The datastore ids an id from Unzer could refer to, likeliest first.
 
-        The **raw** value comes first on purpose. Stripping blindly would be wrong in
-        both directions: a legacy resource whose key is *named* ``s123`` would resolve
-        to the unrelated order ``123`` -- silently, and to real data. Trying the value
-        as it arrived first means an id that was never prefixed always wins, and the
-        stripped candidate only ever applies when nothing else matched.
+        Ids written by :meth:`external_id` carry the prefix, so the stripped value is
+        tried first and resolves in one lookup. The value as it arrived follows for
+        resources created before the prefix existed; those are plain numeric keys and
+        never carry an ``s``/``p``, so they only ever produce that single candidate.
 
         :param value: The id as Unzer returns it.
         :return: The candidates to try, in order.
         """
         value = str(value)
         if len(value) > 1 and value[:1] in ("s", "p"):
-            return value, value[1:]
+            return value[1:], value
         return (value,)
 
     def address_from_address_skel(
