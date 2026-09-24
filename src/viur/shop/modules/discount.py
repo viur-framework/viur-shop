@@ -1,17 +1,19 @@
 import io
+import itertools
 import threading
 import typing as t  # noqa
 
 import cachetools
 
-from viur.core import db, errors
+from viur import toolkit
+from viur.core import current, db, errors
 from viur.core.prototypes import List
 from viur.core.skeleton import SkeletonInstance
 from viur.shop import DEBUG_DISCOUNTS
 from viur.shop.types import *
 from .abstract import ShopModuleAbstract
 from ..globals import MAX_FETCH_LIMIT, SHOP_LOGGER
-from ..skeletons import CartItemSkel, DiscountSkel
+from ..skeletons import CartItemSkel, CartNodeSkel, DiscountSkel
 from ..types.dc_scope import DiscountValidator
 
 logger = SHOP_LOGGER.getChild(__name__)
@@ -242,6 +244,175 @@ class Discount(ShopModuleAbstract, List):
             print(buffer.getvalue(), end="", flush=True)
 
         return dv.is_fulfilled, dv
+
+    def revalidate_cart(
+        self,
+        cart_key: db.Key,
+    ) -> list[SkeletonInstance_T[DiscountSkel]]:
+        """
+        Re-validate every discount applied to a cart and remove the invalid ones.
+
+        A discount is validated once, when it is redeemed by :meth:`apply`.
+        Afterwards the relation sits on the cart node and is folded into every
+        price computation without being checked again, so a cart that outlives
+        its discount's validity keeps the reduced total. This method checks the
+        applied discounts against their scopes again -- using
+        :attr:`DiscountValidationContext.REVALIDATE` -- and removes those which
+        are no longer fulfilled.
+
+        Frozen carts (belonging to a placed order) are skipped: their totals are
+        snapshots and must not change anymore.
+
+        In contrast to :meth:`remove`, which removes a discount from the whole
+        cart on behalf of the customer, this removes exactly the nodes that have
+        just been found invalid.
+
+        :param cart_key: Key of the cart *root* node.
+        :return: The discounts that have been removed, one entry per discount
+            even if it was applied to several nodes.
+        :raises TypeError: If ``cart_key`` is not a :class:`db.Key`.
+        :raises errors.NotFound: If the cart node does not exist.
+        """
+        if not isinstance(cart_key, db.Key):
+            raise TypeError(f"cart_key must be an instance of db.Key")
+
+        cart_skel = self.shop.cart.viewSkel("node")
+        if not cart_skel.read(cart_key):
+            raise errors.NotFound
+        if cart_skel["is_frozen"]:
+            logger.debug(f"Skipping revalidation of the frozen cart {cart_key!r}")
+            return []
+
+        # Collect the nodes carrying a discount. The flat parentrepo index
+        # covers the entire tree in one query, so there is no recursive walk
+        # that could run into a cycle; the root node itself has no parentrepo
+        # and is therefore added explicitly (as in
+        # DiscountCondition.get_discounts_from_cart).
+        nodes_by_discount: dict[db.Key, list[SkeletonInstance_T[CartNodeSkel]]] = {}
+        seen_node_keys: set[db.Key] = set()
+        node_skel: SkeletonInstance_T[CartNodeSkel]
+        for node_skel in itertools.chain(
+            (cart_skel,),
+            toolkit.iter_skel(self.shop.cart.viewSkel("node").all().filter("parentrepo =", cart_key)),
+        ):
+            if node_skel["key"] in seen_node_keys or node_skel["is_frozen"] or not node_skel["discount"]:
+                continue
+            seen_node_keys.add(node_skel["key"])
+            nodes_by_discount.setdefault(node_skel["discount"]["dest"]["key"], []).append(node_skel)
+
+        # Validate everything before removing anything: dropping one discount
+        # changes the cart's total and quantity, which feed the scopes of the
+        # next one. Judging all of them by the same state keeps the outcome
+        # independent of the iteration order.
+        invalid_skels: list[SkeletonInstance_T[DiscountSkel]] = []
+        for discount_key, discount_node_skels in nodes_by_discount.items():
+            discount_skel = self.viewSkel()
+            if not discount_skel.read(discount_key):
+                # RelationalConsistency.SetNull should have cleared the relation;
+                # a discount we cannot read is one we cannot judge either.
+                logger.warning(f"Discount {discount_key!r} doesn't exist (anymore); cannot revalidate it")
+                continue
+            if self.is_still_applicable(discount_skel, cart_key=cart_key, node_skels=discount_node_skels):
+                continue
+            invalid_skels.append(discount_skel)
+
+        for discount_skel in invalid_skels:
+            for node_skel in nodes_by_discount[discount_skel["key"]]:
+                logger.info(f'Removing no longer valid discount {discount_skel["key"]!r} '
+                            f'({discount_skel["name"]!r}) from cart node {node_skel["key"]!r}')
+                try:
+                    if discount_skel["discount_type"] == DiscountType.FREE_ARTICLE:
+                        # Drops the node together with the free article below it
+                        self.shop.cart.cart_remove(cart_key=node_skel["key"])
+                    else:
+                        self.shop.cart.cart_update(cart_key=node_skel["key"], discount_key=None)
+                except (errors.NotFound, errors.Forbidden, errors.Locked, AssertionError):
+                    # A concurrent request may have changed the node meanwhile
+                    logger.exception(f'Cannot remove discount {discount_skel["key"]!r} '
+                                     f'from cart node {node_skel["key"]!r}')
+
+        if invalid_skels:
+            self.shop.cart.clear_caches()
+
+        return invalid_skels
+
+    def revalidate_session_basket(self) -> list[SkeletonInstance_T[DiscountSkel]]:
+        """
+        Re-validate the discounts of the current session basket, once per request.
+
+        Called by the read endpoints that render the basket, so a discount that
+        is no longer fulfilled already disappears from the cart the customer
+        looks at, instead of falling away at the checkout only.
+
+        :return: The discounts that have been removed.
+        """
+        request_data = current.request_data.get()
+        if request_data.get("shop_basket_revalidated"):
+            return []
+        # Set before validating: removing a discount reads the cart again,
+        # which must not trigger another revalidation.
+        request_data["shop_basket_revalidated"] = True
+        if (cart_key := self.shop.cart.current_session_cart_key) is None:
+            return []
+        return self.revalidate_cart(cart_key)
+
+    def is_still_applicable(
+        self,
+        discount_skel: SkeletonInstance_T[DiscountSkel],
+        *,
+        cart_key: db.Key,
+        node_skels: list[SkeletonInstance_T[CartNodeSkel]],
+    ) -> bool:
+        """
+        Check whether an already applied discount is still fulfilled.
+
+        The check mirrors the one :meth:`apply` performed when the discount was
+        redeemed: same case distinction, same validation context object. A
+        discount that was accepted back then must not be dropped now for a
+        reason that never applied to it.
+
+        :param discount_skel: The discount to check.
+        :param cart_key: Key of the cart *root* node. The scopes resolve the
+            cart's leafs via ``parentrepo``, which works for the root only.
+        :param node_skels: The cart nodes this discount is applied to.
+        :return: True if the discount may stay on the cart.
+        """
+        if discount_skel["discount_type"] == DiscountType.FREE_ARTICLE:
+            # apply() validated this on cart level only; the free article itself
+            # was never the target of the scopes.
+            return self.can_apply(
+                discount_skel, cart_key=cart_key,
+                context=DiscountValidationContext.REVALIDATE,
+            )[0]
+
+        if any(
+            condition["dest"]["application_domain"] == ApplicationDomain.BASKET
+            for condition in discount_skel["condition"]
+        ):
+            # Same condition under which CartNodeSkel.total_discount_price
+            # applies the reduction (see add_discount in skeletons/cart.py)
+            return self.can_apply(
+                discount_skel, cart_key=cart_key,
+                context=DiscountValidationContext.REVALIDATE,
+            )[0]
+
+        # ApplicationDomain.ARTICLE: apply() checked every leaf on its own and
+        # wrapped the qualifying ones into a node, so check those leafs again.
+        checked_any = False
+        for node_skel in node_skels:
+            leaf_skel: SkeletonInstance_T[CartItemSkel]
+            for leaf_skel in toolkit.iter_skel(
+                self.shop.cart.viewSkel("leaf").all().filter("parententry =", node_skel["key"])
+            ):
+                checked_any = True
+                if not self.can_apply(
+                    discount_skel, cart_key=cart_key, article_skel=leaf_skel.article_skel,
+                    context=DiscountValidationContext.REVALIDATE,
+                )[0]:
+                    return False
+        # A wrapper node whose article has been removed from the cart meanwhile
+        # has no leaf left, so there is nothing the discount could apply to.
+        return checked_any
 
     @property
     @cachetools.cached(cache=cachetools.TTLCache(maxsize=1024, ttl=3600), lock=lock_current_automatically_discounts)
