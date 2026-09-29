@@ -13,6 +13,7 @@ from unzer.model.webhook import Events, IP_ADDRESS
 from viur import toolkit
 from viur.core import access, current, db, errors, exposed, force_post
 from viur.core.skeleton import SkeletonInstance
+from viur.core.utils.string import unescape
 from viur.shop.skeletons import OrderSkel
 from viur.shop.types import *
 from . import PaymentProviderAbstract
@@ -25,6 +26,23 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 P = t.ParamSpec("P")
 R = t.TypeVar("R")
+
+
+def as_plain_text(value: str | None) -> str | None:
+    """Turn a stored bone value back into plain text for an external API.
+
+    :class:`~viur.core.bones.StringBone` persists its values HTML-escaped, so a city
+    named ``Frankfurt (Oder)`` is stored as ``Frankfurt &#40;Oder&#41;``. A payment
+    provider is not a browser: it puts that string on the invoice verbatim, and the
+    inflated length can breach the provider's field limits even though the actual value
+    is well within them. Unzer caps ``city`` at 30 characters, so the six extra
+    characters per pair of brackets are enough to get an otherwise valid address
+    rejected.
+
+    :param value: The value as read from the skeleton.
+    :return: The unescaped value, or the input unchanged when it is empty.
+    """
+    return unescape(value) if value else value
 
 
 def log_unzer_error(func: t.Callable[P, R]) -> t.Callable[P, R]:
@@ -534,8 +552,8 @@ class UnzerAbstract(PaymentProviderAbstract):
         sa = order_skel["cart"]["dest"]["shipping_address"]["dest"]
 
         return unzer.Customer(
-            firstname=ba["firstname"],
-            lastname=ba["lastname"],
+            firstname=as_plain_text(ba["firstname"]),
+            lastname=as_plain_text(ba["lastname"]),
             salutation=self.shop_salutation_to_unzer_salutation(ba["salutation"]),
             customerId=self.customer_id_from_order_skel(order_skel),
             email=ba["email"],
@@ -612,12 +630,14 @@ class UnzerAbstract(PaymentProviderAbstract):
     ) -> unzer.Address:
         logger.debug(f"{address_skel = } ({type(address_skel)})")
         return unzer.Address(
-            firstname=address_skel["firstname"],
-            lastname=address_skel["lastname"],
-            street=f'{address_skel["street_name"]} {address_skel["street_number"]}',
+            firstname=as_plain_text(address_skel["firstname"]),
+            lastname=as_plain_text(address_skel["lastname"]),
+            # Unescaping the joined value also drops the dangling space of a missing
+            # house number, which `street_number` is allowed to be.
+            street=as_plain_text(f'{address_skel["street_name"]} {address_skel["street_number"]}'),
             # TODO: combine this street in the AddressSkel via @property order ComputedBone
             zipCode=address_skel["zip_code"],
-            city=address_skel["city"],
+            city=as_plain_text(address_skel["city"]),
             country=address_skel["country"] and address_skel["country"].upper(),
         )
 
