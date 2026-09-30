@@ -166,6 +166,17 @@ class UnzerAbstract(PaymentProviderAbstract):
             errs.append(ClientError("billing_address is missing"))
         if not order_skel["cart"] or not order_skel["cart"]["dest"]["shipping_address"]:
             errs.append(ClientError("cart.shipping_address is missing"))
+        if errs:
+            # Both addresses have to be there before a customer can be built from them.
+            return errs
+        try:
+            # Unzer caps the address fields well below what a StringBone allows, and
+            # rejects the whole checkout over a single character. Ask the model now,
+            # while the cart is still editable and the customer can go back and fix it,
+            # instead of failing mid-payment with the API's own German message.
+            self.customer_from_order_skel(order_skel).validateBeforeRequest()
+        except ValueError as exc:
+            errs.append(ClientError(str(exc)))
         return errs
 
     @log_unzer_error
