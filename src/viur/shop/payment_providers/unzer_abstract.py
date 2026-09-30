@@ -632,8 +632,6 @@ class UnzerAbstract(PaymentProviderAbstract):
         return unzer.Address(
             firstname=as_plain_text(address_skel["firstname"]),
             lastname=as_plain_text(address_skel["lastname"]),
-            # Unescaping the joined value also drops the dangling space of a missing
-            # house number, which `street_number` is allowed to be.
             street=as_plain_text(f'{address_skel["street_name"]} {address_skel["street_number"]}'),
             # TODO: combine this street in the AddressSkel via @property order ComputedBone
             zipCode=address_skel["zip_code"],
