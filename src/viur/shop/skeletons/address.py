@@ -35,8 +35,18 @@ class AddressSkel(Skeleton):
     )
 
     company_name = StringBone(
-        params={"group": "Customer Info"},
+        params={
+            "group": "Customer Info",
+            "visibleIf": 'customer_type == "business"',
+        },
         searchable=True,
+    )
+
+    commercial_register_number = StringBone(
+        params={
+            "group": "Customer Info",
+            "visibleIf": 'customer_type == "business"',
+        },
     )
 
     firstname = StringBone(

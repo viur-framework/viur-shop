@@ -397,6 +397,12 @@ TRANSLATIONS = {
         "en": "City",
         "fr": "Ville",
     },
+    "viur.shop.skeleton.address.commercial_register_number": {
+        "_hint": "bone commercial_register_number<StringBone> in AddressSkel in viur.shop",
+        "de": "Handelsregisternummer",
+        "en": "Commercial register number",
+        "fr": "Numéro d'immatriculation au registre du commerce",
+    },
     "viur.shop.skeleton.address.company_name": {
         "_hint": "bone company_name<StringBone> in AddressSkel in viur.shop",
         "de": "Firmenname",

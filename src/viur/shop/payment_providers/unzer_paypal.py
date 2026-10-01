@@ -18,6 +18,7 @@ class UnzerPayPal(UnzerAbstract):
     """
 
     name: t.Final[str] = "unzer-paypal"
+    payment_type_class = unzer.PayPal
 
     def get_payment_type(
         self,

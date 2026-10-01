@@ -97,6 +97,13 @@ class UnzerAbstract(PaymentProviderAbstract):
     currency_code: str = "EUR"
     """Currency the basket amounts are reported in."""
 
+    payment_type_class: t.ClassVar[type[PaymentType] | None] = None
+    """The Unzer payment type this provider creates.
+
+    Used to read the keypair configuration of the type, e.g. which customer types
+    it allows. ``None`` skips those checks.
+    """
+
     # Unzer basket item types (serialized as ``type``).
     BASKET_ITEM_GOODS: t.Final[str] = "goods"
     BASKET_ITEM_SHIPMENT: t.Final[str] = "shipment"
@@ -157,6 +164,52 @@ class UnzerAbstract(PaymentProviderAbstract):
 
     # --- Internal Checks & Actions during the payment flow -------------------
 
+    def usability_checks(
+        self,
+    ) -> list[t.Callable[[SkeletonInstance_T[OrderSkel] | None], ClientError | None]]:
+        return [*super().usability_checks(), self.check_customer_type]
+
+    def check_customer_type(
+        self,
+        order_skel: SkeletonInstance_T[OrderSkel] | None,
+    ) -> ClientError | None:
+        """Check the order's customer type against the keypair.
+
+        Decided by ``allowCustomerTypes`` of the keypair alone. Without an order, a
+        billing address, a :attr:`payment_type_class` or the field on the keypair
+        there is nothing to decide on, and the check passes.
+
+        :param order_skel: The order to check, if there is one yet.
+        """
+        if order_skel is None or not order_skel["billing_address"]:
+            return None
+        allowed = self.allowed_customer_types
+        customer_type = self.customer_type_from_order_skel(order_skel)
+        if allowed is None or customer_type in allowed:
+            return None
+        return ClientError(f"PaymentProvider {self.name} is not available for {customer_type} customers")
+
+    @functools.cached_property
+    def allowed_customer_types(self) -> set[unzer.CustomerType] | None:
+        """The customer types the keypair allows for :attr:`payment_type_class`.
+
+        Read from ``keypair/types`` once per provider instance: the provider is
+        asked on every listing of the payment methods, and the keypair
+        configuration does not change at runtime -- a change at Unzer takes effect
+        with the next instance start.
+
+        ``None`` if unknown: no :attr:`payment_type_class`, the type is not
+        configured on the keypair, or the keypair does not carry the field.
+        """
+        if self.payment_type_class is None:
+            return None
+        try:
+            return self.payment_type_class(client=self.client).get_allowed_customer_types()
+        except LookupError:
+            # Not configured on the keypair at all. That is a configuration problem
+            # the payment itself reports; it says nothing about customer types.
+            return None
+
     def can_checkout(
         self,
         order_skel: SkeletonInstance,
@@ -166,6 +219,14 @@ class UnzerAbstract(PaymentProviderAbstract):
             errs.append(ClientError("billing_address is missing"))
         if not order_skel["cart"] or not order_skel["cart"]["dest"]["shipping_address"]:
             errs.append(ClientError("cart.shipping_address is missing"))
+        if not errs and self.customer_type_from_order_skel(order_skel) == unzer.CustomerType.B2B:
+            # Unzer requires more of a business customer than the address skeleton
+            # enforces, e.g. the company name. Reported here rather than as a failed
+            # checkout.
+            try:
+                self.customer_from_order_skel(order_skel).validateBeforeRequest()
+            except ValueError as exc:
+                errs.append(ClientError(str(exc)))
         return errs
 
     @log_unzer_error
@@ -533,6 +594,7 @@ class UnzerAbstract(PaymentProviderAbstract):
         ba = order_skel["billing_address"]["dest"]
         sa = order_skel["cart"]["dest"]["shipping_address"]["dest"]
 
+        company_info = self.company_info_from_order_skel(order_skel)
         return unzer.Customer(
             firstname=ba["firstname"],
             lastname=ba["lastname"],
@@ -543,7 +605,44 @@ class UnzerAbstract(PaymentProviderAbstract):
             birthDate=ba["birthdate"],
             billingAddress=self.address_from_address_skel(ba),
             shippingAddress=self.address_from_address_skel(sa),
+            company=ba["company_name"] if company_info is not None else None,
+            companyData=company_info,
         )
+
+    def customer_type_from_order_skel(
+        self,
+        order_skel: SkeletonInstance_T[OrderSkel],
+    ) -> unzer.CustomerType:
+        """Map the customer type of the billing address to Unzer's.
+
+        :param order_skel: The order to read the billing address from.
+        """
+        ba = order_skel["billing_address"]["dest"]
+        if ba["customer_type"] == CustomerType.BUSINESS:
+            return unzer.CustomerType.B2B
+        return unzer.CustomerType.B2C
+
+    def company_info_from_order_skel(
+        self,
+        order_skel: SkeletonInstance_T[OrderSkel],
+    ) -> unzer.CompanyInfo | None:
+        """Build the company data Unzer needs for a business customer.
+
+        A commercial register number makes it a registered company, its absence an
+        unregistered one. The legal form is required by the Pay later invoice
+        authorize and is not asked in the shop, so a general one is sent: ``company``
+        for a registered business, ``other`` otherwise. Override this to send a more
+        precise legal form or line of business.
+
+        :param order_skel: The order to read the billing address from.
+        :return: The company data, or ``None`` for a private customer.
+        """
+        if self.customer_type_from_order_skel(order_skel) != unzer.CustomerType.B2B:
+            return None
+        ba = order_skel["billing_address"]["dest"]
+        if register_number := ba["commercial_register_number"]:
+            return unzer.CompanyInfo.registered(register_number, companyType=unzer.CompanyType.COMPANY)
+        return unzer.CompanyInfo.notRegistered(companyType=unzer.CompanyType.OTHER)
 
     def customer_id_from_order_skel(
         self,

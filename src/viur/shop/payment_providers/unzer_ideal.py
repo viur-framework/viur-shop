@@ -18,6 +18,7 @@ class UnzerIdeal(UnzerAbstract):
     """
 
     name: t.Final[str] = "unzer-ideal"
+    payment_type_class = unzer.Ideal
 
     def get_payment_type(
         self,

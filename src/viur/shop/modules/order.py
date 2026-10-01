@@ -80,7 +80,7 @@ class Order(ShopModuleAbstract, List):
         instances of `PaymentProviderResult` (dict) containing the details of each provider.
 
         :param only_available: If ``True`` (default), only payment providers that
-            are currently available will be included in the response.
+            can be used for the current order are included, see ``is_usable``.
             If ``False``, all providers will be listed regardless of availability.
         :return: A JSON response with a dictionary of payment providers.
         """
@@ -97,7 +97,7 @@ class Order(ShopModuleAbstract, List):
         }
         if only_available:
             return {name: result for name, result in res.items()
-                    if result["is_available"]}
+                    if result["is_usable"]}
         return res
 
     def order_get(

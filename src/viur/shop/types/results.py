@@ -44,3 +44,6 @@ class PaymentProviderResult(t.TypedDict):
     descr: translate
     image_path: str | None
     is_available: bool
+    """Whether the project allows the provider."""
+    is_usable: bool
+    """Whether the provider can be used for the current order; implies :attr:`is_available`."""
