@@ -49,11 +49,13 @@ class UnzerPaylaterInvoice(UnzerAbstract):
         self,
         order_skel: SkeletonInstance_T[OrderSkel],
     ) -> bool:
-        """Tell whether Unzer needs the date of birth of the billing address.
+        """Tell whether the shop asks for the date of birth of the billing address.
 
-        A private customer always does. A business does not -- measured for both
-        registered and unregistered companies -- as long as it is not reported as
-        a sole proprietor, which :meth:`company_info_from_order_skel` does not do.
+        Asked for a private customer, as before. Not asked for a business: in the
+        Unzer sandbox, registered and unregistered companies were authorized without
+        one, as long as they were not reported as a sole proprietor -- which
+        :meth:`company_info_from_order_skel` does not do. An observation, not a
+        contract; should Unzer ask for it after all, the authorize fails and says so.
 
         :param order_skel: The order to check.
         """

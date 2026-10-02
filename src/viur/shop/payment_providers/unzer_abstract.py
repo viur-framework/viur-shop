@@ -650,13 +650,14 @@ class UnzerAbstract(PaymentProviderAbstract):
         self,
         order_skel: SkeletonInstance_T[OrderSkel],
     ) -> unzer.CompanyInfo | None:
-        """Build the company data Unzer needs for a business customer.
+        """Build the company data sent to Unzer for a business customer.
 
         A commercial register number makes it a registered company, its absence an
-        unregistered one. The legal form is required by the Pay later invoice
-        authorize and is not asked in the shop, so a general one is sent: ``company``
-        for a registered business, ``other`` otherwise. Override this to send a more
-        precise legal form or line of business.
+        unregistered one. The legal form is not asked in the shop, so a general one
+        is sent -- ``company`` for a registered business, ``other`` otherwise --
+        because the Pay later invoice authorize refused a business without one in
+        the Unzer sandbox. Override this to send a more precise legal form or line
+        of business.
 
         :param order_skel: The order to read the billing address from.
         :return: The company data, or ``None`` for a private customer.
