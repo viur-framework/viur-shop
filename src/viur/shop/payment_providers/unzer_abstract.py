@@ -13,6 +13,7 @@ from unzer.model.webhook import Events, IP_ADDRESS
 from viur import toolkit
 from viur.core import access, current, db, errors, exposed, force_post
 from viur.core.skeleton import SkeletonInstance
+from viur.core.utils.string import unescape
 from viur.shop.skeletons import OrderSkel
 from viur.shop.types import *
 from . import PaymentProviderAbstract
@@ -25,6 +26,23 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 P = t.ParamSpec("P")
 R = t.TypeVar("R")
+
+
+def as_plain_text(value: str | None) -> str | None:
+    """Turn a stored bone value back into plain text for an external API.
+
+    :class:`~viur.core.bones.StringBone` persists its values HTML-escaped, so a city
+    named ``Frankfurt (Oder)`` is stored as ``Frankfurt &#40;Oder&#41;``. A payment
+    provider is not a browser: it puts that string on the invoice verbatim, and the
+    inflated length can breach the provider's field limits even though the actual value
+    is well within them. Unzer caps ``city`` at 30 characters, so the six extra
+    characters per pair of brackets are enough to get an otherwise valid address
+    rejected.
+
+    :param value: The value as read from the skeleton.
+    :return: The unescaped value, or the input unchanged when it is empty.
+    """
+    return unescape(value) if value else value
 
 
 def log_unzer_error(func: t.Callable[P, R]) -> t.Callable[P, R]:
@@ -219,14 +237,19 @@ class UnzerAbstract(PaymentProviderAbstract):
             errs.append(ClientError("billing_address is missing"))
         if not order_skel["cart"] or not order_skel["cart"]["dest"]["shipping_address"]:
             errs.append(ClientError("cart.shipping_address is missing"))
-        if not errs and self.customer_type_from_order_skel(order_skel) == unzer.CustomerType.B2B:
-            # Unzer requires more of a business customer than the address skeleton
-            # enforces, e.g. the company name. Reported here rather than as a failed
-            # checkout.
-            try:
-                self.customer_from_order_skel(order_skel).validateBeforeRequest()
-            except ValueError as exc:
-                errs.append(ClientError(str(exc)))
+        if errs:
+            # Both addresses have to be there before a customer can be built from them.
+            return errs
+        try:
+            # Unzer caps the address fields well below what a StringBone allows, and
+            # rejects the whole checkout over a single character. Ask the model now,
+            # while the cart is still editable and the customer can go back and fix it,
+            # instead of failing mid-payment with the API's own German message.
+            # For a business this also reports what Unzer requires beyond the
+            # address skeleton, e.g. the company name.
+            self.customer_from_order_skel(order_skel).validateBeforeRequest()
+        except ValueError as exc:
+            errs.append(ClientError(str(exc)))
         return errs
 
     @log_unzer_error
@@ -596,8 +619,8 @@ class UnzerAbstract(PaymentProviderAbstract):
 
         company_info = self.company_info_from_order_skel(order_skel)
         return unzer.Customer(
-            firstname=ba["firstname"],
-            lastname=ba["lastname"],
+            firstname=as_plain_text(ba["firstname"]),
+            lastname=as_plain_text(ba["lastname"]),
             salutation=self.shop_salutation_to_unzer_salutation(ba["salutation"]),
             customerId=self.customer_id_from_order_skel(order_skel),
             email=ba["email"],
@@ -605,7 +628,7 @@ class UnzerAbstract(PaymentProviderAbstract):
             birthDate=ba["birthdate"],
             billingAddress=self.address_from_address_skel(ba),
             shippingAddress=self.address_from_address_skel(sa),
-            company=ba["company_name"] if company_info is not None else None,
+            company=as_plain_text(ba["company_name"]) if company_info is not None else None,
             companyData=company_info,
         )
 
@@ -640,7 +663,7 @@ class UnzerAbstract(PaymentProviderAbstract):
         if self.customer_type_from_order_skel(order_skel) != unzer.CustomerType.B2B:
             return None
         ba = order_skel["billing_address"]["dest"]
-        if register_number := ba["commercial_register_number"]:
+        if register_number := as_plain_text(ba["commercial_register_number"]):
             return unzer.CompanyInfo.registered(register_number, companyType=unzer.CompanyType.COMPANY)
         return unzer.CompanyInfo.notRegistered(companyType=unzer.CompanyType.OTHER)
 
@@ -711,12 +734,12 @@ class UnzerAbstract(PaymentProviderAbstract):
     ) -> unzer.Address:
         logger.debug(f"{address_skel = } ({type(address_skel)})")
         return unzer.Address(
-            firstname=address_skel["firstname"],
-            lastname=address_skel["lastname"],
-            street=f'{address_skel["street_name"]} {address_skel["street_number"]}',
+            firstname=as_plain_text(address_skel["firstname"]),
+            lastname=as_plain_text(address_skel["lastname"]),
+            street=as_plain_text(f'{address_skel["street_name"]} {address_skel["street_number"]}'),
             # TODO: combine this street in the AddressSkel via @property order ComputedBone
             zipCode=address_skel["zip_code"],
-            city=address_skel["city"],
+            city=as_plain_text(address_skel["city"]),
             country=address_skel["country"] and address_skel["country"].upper(),
         )
 
