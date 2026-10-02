@@ -197,10 +197,8 @@ class UnzerAbstract(PaymentProviderAbstract):
         billing address, a :attr:`payment_type_class` or the field on the keypair
         there is nothing to decide on, and the check passes.
 
-        This is deliberately stricter than Unzer: measured in the sandbox, only the
-        Pay later methods enforce the keypair setting, while e.g. SEPA direct debit
-        and EPS accept a business customer on a keypair that allows ``B2C`` only.
-        The shop follows the configuration rather than relying on that leniency.
+        The keypair alone decides, regardless of what a method supports in general:
+        what it allows is taken as working, what it does not allow is not offered.
 
         :param order_skel: The order to check, if there is one yet.
         """
