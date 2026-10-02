@@ -51,18 +51,17 @@ class UnzerPaylaterInvoice(UnzerAbstract):
     ) -> bool:
         """Tell whether the shop asks for the date of birth of the billing address.
 
-        Asked for a private customer, as before. Not asked for a business: in the
-        Unzer sandbox, registered and unregistered companies were authorized without
-        one, as long as they were not reported as a sole proprietor -- which
-        :meth:`company_info_from_order_skel` does not do. An observation, not a
-        contract; should Unzer ask for it after all, the authorize fails and says so.
+        Follows Unzer's B2B customer form: a private customer is always asked, a
+        registered company is not -- it is identified by its register entry, and the
+        form asks for no owner there -- and an unregistered company is, because the
+        person behind it is what identifies it.
 
         :param order_skel: The order to check.
         """
         if self.customer_type_from_order_skel(order_skel) != unzer.CustomerType.B2B:
             return True
         company_info = self.company_info_from_order_skel(order_skel)
-        return str(company_info.companyType or "").lower() == unzer.CompanyType.SOLE
+        return company_info.registrationType is unzer.CompanyRegistrationType.NOT_REGISTERED
 
     @log_unzer_error
     def checkout(
