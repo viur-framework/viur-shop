@@ -666,7 +666,7 @@ class UnzerAbstract(PaymentProviderAbstract):
         ba = order_skel["billing_address"]["dest"]
         if register_number := as_plain_text(ba["commercial_register_number"]):
             return unzer.CompanyInfo.registered(register_number, companyType=unzer.CompanyType.COMPANY)
-        return unzer.CompanyInfo.notRegistered(companyType=unzer.CompanyType.OTHER)
+        return unzer.CompanyInfo.not_registered(companyType=unzer.CompanyType.OTHER)
 
     def customer_id_from_order_skel(
         self,
