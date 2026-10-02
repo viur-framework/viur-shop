@@ -298,7 +298,6 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
             title=self.title,
             descr=self.description,
             image_path=self.image_path,
-            is_available=self.is_available(order_skel),
             is_usable=self.is_usable(order_skel),
         )
 
