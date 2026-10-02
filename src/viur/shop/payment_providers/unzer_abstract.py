@@ -248,8 +248,6 @@ class UnzerAbstract(PaymentProviderAbstract):
             # rejects the whole checkout over a single character. Ask the model now,
             # while the cart is still editable and the customer can go back and fix it,
             # instead of failing mid-payment with the API's own German message.
-            # For a business this also reports what Unzer requires beyond the
-            # address skeleton, e.g. the company name.
             self.customer_from_order_skel(order_skel).validateBeforeRequest()
         except ValueError as exc:
             errs.append(ClientError(str(exc)))
