@@ -60,6 +60,12 @@ TRANSLATIONS = {
         "en": "My Addresses",
         "fr": "Mes adresses",
     },
+    "viur.shop.no_commercial_register_number": {
+        "_hint": "checkbox below the commercial register number of a business address",
+        "de": "Ich habe keine Handelsregisternummer oder kenne sie nicht.",
+        "en": "I have no commercial register number or do not know it.",
+        "fr": "Je n'ai pas de numéro d'immatriculation au registre du commerce ou je ne le connais pas.",
+    },
 
     # --- Payment providers ---------------------------------------------------
     "viur.shop.payment_provider.invoice": {
