@@ -475,6 +475,12 @@ TRANSLATIONS = {
         "en": "Street number",
         "fr": "Non.",
     },
+    "viur.shop.skeleton.address.vat_id": {
+        "_hint": "bone vat_id<StringBone> in AddressSkel in viur.shop",
+        "de": "USt-IdNr.",
+        "en": "VAT ID",
+        "fr": "Numéro de TVA intracommunautaire",
+    },
     "viur.shop.skeleton.address.zip_code": {
         "_hint": "bone zip_code<StringBone> in AddressSkel in viur.shop",
         "de": "Postleitzahl",

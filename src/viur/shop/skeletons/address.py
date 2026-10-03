@@ -49,6 +49,14 @@ class AddressSkel(Skeleton):
         },
     )
 
+    vat_id = StringBone(
+        params={
+            "group": "Customer Info",
+            "visibleIf": 'customer_type == "business"',
+        },
+        searchable=True,
+    )
+
     firstname = StringBone(
         params={"group": "Customer Info"},
         required=True,
