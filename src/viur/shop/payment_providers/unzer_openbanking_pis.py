@@ -23,7 +23,9 @@ class UnzerOpenbankingPis(UnzerAbstract):
 
     The charge is not settled when the customer returns -- the transfer takes one up
     to seven business days to arrive. Until then the order remains unpaid and the
-    payment is flagged as pending, see :meth:`return_handler`.
+    payment is flagged as pending, see :meth:`return_handler`. The order is marked as
+    paid once Unzer sends the ``charge.succeeded`` webhook, which requires the merchant
+    to subscribe to the ``charge`` events.
     """
 
     name: t.Final[str] = "unzer-openbanking_pis"

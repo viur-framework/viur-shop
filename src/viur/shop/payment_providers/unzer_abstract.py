@@ -479,7 +479,11 @@ class UnzerAbstract(PaymentProviderAbstract):
     def webhook(self, *args, **kwargs):
         """Webhook for unzer.
 
-        Listens to all events, but handle payment-complete as backup currently only.
+        Listens to all events, but handles only payment-completed and charge-succeeded.
+
+        Payment methods with a deferred settlement (e.g. direct bank transfer) complete
+        the payment while the charge is still pending; only charge-succeeded signals the
+        settlement, which can take up to several days.
         """
         try:
             payload = json.loads(current.request.get().request.body)
@@ -495,7 +499,7 @@ class UnzerAbstract(PaymentProviderAbstract):
             logger.warning(f"Unallowed IP address {ip}")
             raise errors.Forbidden
 
-        if payload.get("event") == Events.PAYMENT_COMPLETED:
+        if payload.get("event") in (Events.PAYMENT_COMPLETED, Events.CHARGE_SUCCEEDED):
             order_skel = self.get_order_by_pay_id(payload["paymentId"], payload["publicKey"])
             if not order_skel:
                 raise errors.BadRequest("Unknown order")
