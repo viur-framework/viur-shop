@@ -29,6 +29,7 @@ class UnzerOpenbankingPis(UnzerAbstract):
     """
 
     name: t.Final[str] = "unzer-openbanking_pis"
+    payment_type_class = unzer.OpenbankingPis
 
     def get_payment_type(
         self,

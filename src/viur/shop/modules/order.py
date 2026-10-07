@@ -70,7 +70,7 @@ class Order(ShopModuleAbstract, List):
     @exposed
     def payment_providers_list(  # TODO(discuss): Move: to API?
         self,
-        only_available: bool = True,
+        only_usable: bool = True,
     ) -> JsonResponse[dict[str, PaymentProviderResult]]:
         """
         Get a list of payment providers.
@@ -79,25 +79,25 @@ class Order(ShopModuleAbstract, List):
         providers. The keys represent provider identifiers, and the values are
         instances of `PaymentProviderResult` (dict) containing the details of each provider.
 
-        :param only_available: If ``True`` (default), only payment providers that
-            are currently available will be included in the response.
-            If ``False``, all providers will be listed regardless of availability.
+        :param only_usable: If ``True`` (default), only payment providers that
+            can be used for the current order are included, see ``is_usable``.
+            If ``False``, all providers are listed.
         :return: A JSON response with a dictionary of payment providers.
         """
-        return JsonResponse(self.get_payment_providers(only_available))
+        return JsonResponse(self.get_payment_providers(only_usable))
 
     def get_payment_providers(
         self,
-        only_available: bool = True,
+        only_usable: bool = True,
     ) -> dict[str, PaymentProviderResult]:
         order_skel = self.current_order_skel  # Evaluate property only once
         res: dict[str, PaymentProviderResult] = {
             pp.name: pp.serialize_for_api(order_skel)
             for pp in self.shop.payment_providers
         }
-        if only_available:
+        if only_usable:
             return {name: result for name, result in res.items()
-                    if result["is_available"]}
+                    if result["is_usable"]}
         return res
 
     def order_get(

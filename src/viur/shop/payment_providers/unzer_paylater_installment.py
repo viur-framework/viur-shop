@@ -30,6 +30,7 @@ class UnzerPaylaterInstallment(UnzerAbstract):
     """
 
     name: t.Final[str] = "unzer-paylater_installment"
+    payment_type_class = unzer.PaylaterInstallment
 
     def __init__(
         self,

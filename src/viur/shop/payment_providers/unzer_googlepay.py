@@ -18,6 +18,7 @@ class UnzerGooglepay(UnzerAbstract):
     """
 
     name: t.Final[str] = "unzer-googlepay"
+    payment_type_class = unzer.Googlepay
 
     def __init__(
         self,

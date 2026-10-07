@@ -60,6 +60,12 @@ TRANSLATIONS = {
         "en": "My Addresses",
         "fr": "Mes adresses",
     },
+    "viur.shop.no_commercial_register_number": {
+        "_hint": "checkbox below the commercial register number of a business address",
+        "de": "Ich habe keine Handelsregisternummer oder kenne sie nicht.",
+        "en": "I have no commercial register number or do not know it.",
+        "fr": "Je n'ai pas de numéro d'immatriculation au registre du commerce ou je ne le connais pas.",
+    },
 
     # --- Payment providers ---------------------------------------------------
     "viur.shop.payment_provider.invoice": {
@@ -397,6 +403,12 @@ TRANSLATIONS = {
         "en": "City",
         "fr": "Ville",
     },
+    "viur.shop.skeleton.address.commercial_register_number": {
+        "_hint": "bone commercial_register_number<StringBone> in AddressSkel in viur.shop",
+        "de": "Handelsregisternummer",
+        "en": "Commercial register number",
+        "fr": "Numéro d'immatriculation au registre du commerce",
+    },
     "viur.shop.skeleton.address.company_name": {
         "_hint": "bone company_name<StringBone> in AddressSkel in viur.shop",
         "de": "Firmenname",
@@ -462,6 +474,12 @@ TRANSLATIONS = {
         "de": "Hausnummer",
         "en": "Street number",
         "fr": "Non.",
+    },
+    "viur.shop.skeleton.address.vat_id": {
+        "_hint": "bone vat_id<StringBone> in AddressSkel in viur.shop",
+        "de": "USt-IdNr.",
+        "en": "VAT ID",
+        "fr": "Numéro de TVA intracommunautaire",
     },
     "viur.shop.skeleton.address.zip_code": {
         "_hint": "bone zip_code<StringBone> in AddressSkel in viur.shop",

@@ -27,6 +27,7 @@ class UnzerKlarna(UnzerAbstract):
     """
 
     name: t.Final[str] = "unzer-klarna"
+    payment_type_class = unzer.Klarna
 
     def __init__(
         self,

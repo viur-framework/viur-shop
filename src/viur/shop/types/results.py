@@ -38,9 +38,11 @@ class PaymentProviderResult(t.TypedDict):
     """
     Metadata and availability status for a payment provider.
 
-    Includes translated title/description, an optional image path, and a flag for availability.
+    Includes translated title/description, an optional image path, and whether it can be used for the order.
     """
     title: translate
     descr: translate
     image_path: str | None
-    is_available: bool
+    is_usable: bool
+    """Whether the provider can be used for the current order, see
+    :meth:`~viur.shop.payment_providers.abstract.PaymentProviderAbstract.check_usable`."""
