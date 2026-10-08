@@ -1176,6 +1176,12 @@ TRANSLATIONS = {
         # note: {{cart_key}} is a substitution variable for translations, not for an f-string!
         "en": r"The cart {{cart_key}} can no longer be edited.",
         "fr": r"Le panier {{cart_key}} ne peut plus être modifié.",
-    }
+    },
+    "viur.shop.error.discount.no_longer_valid": {
+        "de": r"Der Rabatt „{{name}}“ ist nicht mehr gültig und wurde aus dem Warenkorb entfernt.",
+        # note: {{name}} is a substitution variable for translations, not for an f-string!
+        "en": r"The discount “{{name}}” is no longer valid and has been removed from the cart.",
+        "fr": r"La remise « {{name}} » n'est plus valable et a été retirée du panier.",
+    },
 }
 """Initial translations used inside the viur-shop backend"""

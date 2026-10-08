@@ -92,6 +92,7 @@ class DiscountConditionScope(abc.ABC):
     allowed_contexts: t.Final[list[DiscountValidationContext]] = [
         DiscountValidationContext.NORMAL,
         DiscountValidationContext.AUTOMATICALLY_LIVE,
+        DiscountValidationContext.REVALIDATE,
     ]
     """contexts in which this scope should be checked"""
 
@@ -334,6 +335,18 @@ class ScopeCode(DiscountConditionScope):
     must not be applied automatically).
     """
 
+    allowed_contexts: t.Final[list[DiscountValidationContext]] = [
+        DiscountValidationContext.NORMAL,
+        DiscountValidationContext.AUTOMATICALLY_LIVE,
+    ]
+    """Excluded from :attr:`DiscountValidationContext.REVALIDATE`.
+
+    The redeemed code is not stored on the cart and cannot be reconstructed,
+    and for :attr:`CodeType.INDIVIDUAL` the check below (``quantity_used > 0``)
+    is permanently False once the code has been redeemed. Every *other* scope
+    of a code-bound discount is still revalidated.
+    """
+
     def precondition(self) -> bool:
         return (
             self.condition_skel["code_type"] in {CodeType.INDIVIDUAL, CodeType.UNIVERSAL}
@@ -430,6 +443,7 @@ class ScopeDateEnd(DiscountConditionScope):
         DiscountValidationContext.NORMAL,
         DiscountValidationContext.AUTOMATICALLY_PREVALIDATE,
         DiscountValidationContext.AUTOMATICALLY_LIVE,
+        DiscountValidationContext.REVALIDATE,
     ]
 
     def precondition(self) -> bool:

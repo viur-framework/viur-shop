@@ -153,6 +153,7 @@ class Cart(ShopModuleAbstract, Tree):
 
         :returns: The rendered representation of the available root-nodes.
         """
+        self.shop.discount.revalidate_session_basket()
         return self.render.listRootNodes([
             self.render.renderSkelValues(skel)
             for skel in self.getAvailableRootNodes(*args, **kwargs)
@@ -226,6 +227,19 @@ class Cart(ShopModuleAbstract, Tree):
 
     def clear_children_cache(self) -> None:
         current.request_data.get()["shop_cache_cart_children"] = {}
+
+    def clear_caches(self) -> None:
+        """
+        Drop all request-local caches that depend on the cart tree.
+
+        Must be called after the tree or a discount relation changed: a
+        :class:`Price` built earlier in the same request still carries the
+        discounts collected in its ``__init__`` and would otherwise hand a
+        stale total to the caller.
+        """
+        self.clear_children_cache()
+        current.request_data.get()["shop_cache_cart_skel"] = {}
+        Price.get_cache().clear()
 
     # --- (internal) API methods ----------------------------------------------
 
