@@ -228,7 +228,8 @@ class Api(ShopModuleAbstract):
         Returns: The updated cart node skel
         """
         cart_key = self._normalize_external_key(
-            cart_key, "parent_cart_key")
+            cart_key, "cart_key")
+        self._ensure_own_cart_node(cart_key, "cart_key")
         shipping_address_key = self._normalize_external_key(
             shipping_address_key, "shipping_address_key", True)
         shipping_key = self._normalize_external_key(
@@ -260,6 +261,7 @@ class Api(ShopModuleAbstract):
         :param cart_key: Key of the cart node to be removed
         """
         cart_key = self._normalize_external_key(cart_key, "cart_key")
+        self._ensure_own_cart_node(cart_key, "cart_key")
         return JsonResponse(self.shop.cart.cart_remove(cart_key))
 
     @exposed
@@ -280,6 +282,7 @@ class Api(ShopModuleAbstract):
         if cart_key == "BASKET":
             cart_key = self.shop.cart.get_current_session_cart_key(create_if_missing=False)
         cart_key = self._normalize_external_key(cart_key, "cart_key")
+        self._ensure_own_cart_node(cart_key, "cart_key")
         return JsonResponse(self.shop.cart.cart_clear(cart_key, keep_sub_carts=keep_sub_carts))
 
     @exposed
@@ -334,6 +337,7 @@ class Api(ShopModuleAbstract):
             return JsonResponse(self.shop.cart.getAvailableRootNodes())
         # key provided: list children (nodes and leafs)
         cart_key = self._normalize_external_key(cart_key, "cart_key")
+        self._ensure_own_cart_node(cart_key, "cart_key")
         children = []
         for child_skel in self.shop.cart.get_children(cart_key):
             assert issubclass(child_skel.skeletonCls, (self.shop.cart.nodeSkelCls, self.shop.cart.leafSkelCls))
@@ -527,6 +531,7 @@ class Api(ShopModuleAbstract):
         :returns: list of :class:`ShippingSkel` `SkeletonInstance`s
         """
         cart_key = self._normalize_external_key(cart_key, "cart_key")
+        self._ensure_own_cart_node(cart_key, "cart_key")
         return JsonResponse(self.shop.shipping.get_shipping_skels_for_cart(cart_key=cart_key))
 
     # --- Internal helpers  ----------------------------------------------------
@@ -552,6 +557,21 @@ class Api(ShopModuleAbstract):
             return db.Key.from_legacy_urlsafe(external_key)
         except (ValueError, DecodeError):  # yes, the exception really comes from protobuf...
             raise InvalidArgumentException(parameter_name, external_key)
+
+    def _ensure_own_cart_node(
+        self,
+        cart_key: db.Key,
+        parameter_name: str,
+    ) -> None:
+        """
+        Ensure the cart node belongs to the current user or session.
+
+        :raises InvalidArgumentException: If the node does not exist or belongs to someone else.
+        """
+        # Not done via Cart.canEdit/canDelete: those also guard the generic
+        # Tree.edit/Tree.delete endpoints, which bypass the shop's own checks.
+        if not self.shop.cart.is_valid_node(cart_key):
+            raise InvalidArgumentException(parameter_name, cart_key)
 
 
 Api.html = True
