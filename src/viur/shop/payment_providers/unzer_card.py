@@ -18,6 +18,7 @@ class UnzerCard(UnzerAbstract):
     """
 
     name: t.Final[str] = "unzer-card"
+    payment_type_class = unzer.Card
 
     def get_payment_type(
         self,
