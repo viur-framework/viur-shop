@@ -59,6 +59,9 @@ class OrderSkel(Skeleton):
             "shipping_status",
             "shipping",
             "project_data",
+            # Required by `RelationalBoneShipping.unserialize_compute`, otherwise the
+            # shipping of a frozen cart is recomputed when reading this relation.
+            "is_frozen",
         ],
         params={
             "context": {
