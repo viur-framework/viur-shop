@@ -59,6 +59,11 @@ class OrderSkel(Skeleton):
             "shipping_status",
             "shipping",
             "project_data",
+            # Required by `RelationalBoneShipping.unserialize_compute` and `TotalFactory`,
+            # otherwise the shipping and totals of a frozen cart are recomputed when
+            # reading this relation instead of using the stored snapshot.
+            "is_frozen",
+            "frozen_values",
         ],
         params={
             "context": {

@@ -62,7 +62,8 @@ class TotalFactory:
         skel = without_render_preparation(skel)
         if skel["is_frozen"] and (frozen_values := skel["frozen_values"]) and bone_name in frozen_values:
             return frozen_values[bone_name]
-        children = self._get_children(skel["key"])
+        # An unsaved node (e.g. an empty skeleton, rendered by structure()) has no children
+        children = self._get_children(skel["key"]) if skel["key"] else []
         total = 0
         for child in children:
             # logger.debug(f"{child = }")
@@ -120,7 +121,8 @@ def get_vat_for_node(skel: "CartNodeSkel", bone: RecordBone) -> list[dict]:
     skel = without_render_preparation(skel)
     if skel["is_frozen"] and (frozen_values := skel["frozen_values"]) and "vat" in frozen_values:
         return frozen_values["vat"]
-    children = SHOP_INSTANCE.get().cart.get_children_from_cache(skel["key"])
+    # An unsaved node (e.g. an empty skeleton, rendered by structure()) has no children
+    children = SHOP_INSTANCE.get().cart.get_children_from_cache(skel["key"]) if skel["key"] else []
     cat2value = collections.defaultdict(lambda: 0)
     cat2rate = {}
     # logger.debug(f"{skel=}")
@@ -165,7 +167,7 @@ def get_vat_for_node(skel: "CartNodeSkel", bone: RecordBone) -> list[dict]:
     ]
 
 
-def get_price_for_leaf(skel: SkeletonInstance_T["CartItemSkel"]) -> dict:
+def get_price_for_leaf(skel: SkeletonInstance_T["CartItemSkel"]) -> dict | None:
     """
     Compute the price dict of a cart leaf.
 
@@ -177,6 +179,8 @@ def get_price_for_leaf(skel: SkeletonInstance_T["CartItemSkel"]) -> dict:
     """
     if skel["is_frozen"] and (frozen_values := skel["frozen_values"]) and frozen_values.get("price"):
         return frozen_values["price"]
+    if not skel["article"]:  # e.g. an empty skeleton, rendered by structure()
+        return None
     return skel.price_.to_dict()
 
 
@@ -189,6 +193,8 @@ def get_shipping_for_leaf(skel: SkeletonInstance_T["CartItemSkel"]) -> dict | No
     """
     if skel["is_frozen"] and (frozen_values := skel["frozen_values"]) and "shipping" in frozen_values:
         return frozen_values["shipping"]
+    if not skel["article"]:  # e.g. an empty skeleton, rendered by structure()
+        return None
     return make_json_dumpable(
         SHOP_INSTANCE.get().shipping.choose_shipping_skel_for_article(skel.article_skel_full)
     )
@@ -215,6 +221,9 @@ class RelationalBoneShipping(RelationalBone):
             return False  # should be unserialized from entity
 
         if skel["is_frozen"]:  # locked, unserialize the latest stored value from entity
+            return False
+
+        if not skel["key"]:  # unsaved node (e.g. an empty skeleton, rendered by structure()), no children
             return False
 
         match skel["shipping_status"]:
