@@ -102,8 +102,50 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
         self: t.Self,
         order_skel: SkeletonInstance_T[OrderSkel] | None,
     ) -> bool:
-        """Decide whether the payment provider is available."""
+        """Decide whether the payment provider is available.
+
+        This is the condition of the project, replaced by the ``is_available``
+        argument of the constructor. Whether the provider can actually be used for
+        an order is decided by :meth:`is_usable`, which takes this into account.
+        """
         return True
+
+    def usability_checks(
+        self,
+    ) -> list[t.Callable[[SkeletonInstance_T[OrderSkel] | None], ClientError | None]]:
+        """The criteria this provider must meet to be used for an order.
+
+        Each check returns a :class:`ClientError` naming why the provider cannot be
+        used, or ``None``. Subclasses extend the list via ``super()``.
+        """
+        return [self.check_is_available]
+
+    def check_usable(
+        self,
+        order_skel: SkeletonInstance_T[OrderSkel] | None,
+    ) -> list[ClientError]:
+        """Run all :meth:`usability_checks`.
+
+        :param order_skel: The order to check, if there is one yet.
+        :return: Why the provider cannot be used; empty if it can.
+        """
+        return [error for check in self.usability_checks() if (error := check(order_skel)) is not None]
+
+    def is_usable(
+        self,
+        order_skel: SkeletonInstance_T[OrderSkel] | None,
+    ) -> bool:
+        """Tell whether the provider can be used for this order, see :meth:`check_usable`."""
+        return not self.check_usable(order_skel)
+
+    def check_is_available(
+        self,
+        order_skel: SkeletonInstance_T[OrderSkel] | None,
+    ) -> ClientError | None:
+        """Check the condition of the project, see :meth:`is_available`."""
+        if not self.is_available(order_skel):
+            return ClientError(f"PaymentProvider {self.name} is not available", True)
+        return None
 
     def can_checkout(
         self,
@@ -114,10 +156,7 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
         An empty list means not error,
         a list with errors rejects the checkout start.
         """
-        errs = []
-        if not self.is_available(order_skel):
-            errs.append(ClientError(f"PaymentProvider {self.name} is not available", True))
-        return errs
+        return self.check_usable(order_skel)
 
     @abc.abstractmethod
     def checkout(
@@ -259,7 +298,7 @@ class PaymentProviderAbstract(InstancedModule, Module, abc.ABC):
             title=self.title,
             descr=self.description,
             image_path=self.image_path,
-            is_available=self.is_available(order_skel),
+            is_usable=self.is_usable(order_skel),
         )
 
     @classmethod

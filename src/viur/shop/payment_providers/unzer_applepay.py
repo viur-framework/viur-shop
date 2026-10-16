@@ -18,6 +18,7 @@ class UnzerApplepay(UnzerAbstract):
     """
 
     name: t.Final[str] = "unzer-applepay"
+    payment_type_class = unzer.Applepay
 
     def __init__(
         self,

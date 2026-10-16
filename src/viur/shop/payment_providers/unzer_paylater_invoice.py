@@ -22,6 +22,7 @@ class UnzerPaylaterInvoice(UnzerAbstract):
     """
 
     name: t.Final[str] = "unzer-paylater_invoice"
+    payment_type_class = unzer.PaylaterInvoice
 
     def __init__(
         self,
@@ -38,9 +39,29 @@ class UnzerPaylaterInvoice(UnzerAbstract):
     ) -> list[ClientError]:
         order_skel = OrderSkel.refresh_billing_address(order_skel)
         errs = super().can_order(order_skel)
-        if not order_skel["billing_address"] or not order_skel["billing_address"]["dest"]["birthdate"]:
+        if not order_skel["billing_address"]:
+            errs.append(ClientError("billing_address is missing"))
+        elif self.needs_birthdate(order_skel) and not order_skel["billing_address"]["dest"]["birthdate"]:
             errs.append(ClientError("billing_address has no birthdate set"))
         return errs
+
+    def needs_birthdate(
+        self,
+        order_skel: SkeletonInstance_T[OrderSkel],
+    ) -> bool:
+        """Tell whether the shop asks for the date of birth of the billing address.
+
+        Follows Unzer's B2B customer form: a private customer is always asked, a
+        registered company is not -- it is identified by its register entry, and the
+        form asks for no owner there -- and an unregistered company is, because the
+        person behind it is what identifies it.
+
+        :param order_skel: The order to check.
+        """
+        if self.customer_type_from_order_skel(order_skel) != unzer.CustomerType.B2B:
+            return True
+        company_info = self.company_info_from_order_skel(order_skel)
+        return company_info.registrationType is unzer.CompanyRegistrationType.NOT_REGISTERED
 
     @log_unzer_error
     def checkout(
@@ -48,7 +69,7 @@ class UnzerPaylaterInvoice(UnzerAbstract):
         order_skel: SkeletonInstance,
     ) -> t.Any:
         order_skel = OrderSkel.refresh_billing_address(order_skel)
-        if not order_skel["billing_address"]["dest"]["birthdate"]:
+        if self.needs_birthdate(order_skel) and not order_skel["billing_address"]["dest"]["birthdate"]:
             raise errors.PreconditionFailed("Billing address has no birthdate")
 
         # Paylater invoice cannot be charged directly.
