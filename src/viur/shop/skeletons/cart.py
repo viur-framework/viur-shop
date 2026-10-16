@@ -214,7 +214,7 @@ class RelationalBoneShipping(RelationalBone):
         assert name == "shipping", f"Special bone is only for shipping, but not for {name=}"
         # logger.debug(f"{skel["shipping_status"]=}")
 
-        if getattr(self, "_prevent_compute", False):  # avoid recursion errors
+        if self.is_computing(skel, name):  # avoid recursion errors
             return False
 
         if skel["shipping_status"] == ShippingStatus.USER and self._is_valid_user_shipping(skel):
@@ -235,8 +235,7 @@ class RelationalBoneShipping(RelationalBone):
                 func = None
 
         if func is not None:  # compute cheapest & most expensive
-            self._prevent_compute = True
-            try:
+            with self.computing(skel, name):
                 applicable_shippings = SHOP_INSTANCE.get().shipping.get_shipping_skels_for_cart(
                     cart_skel=skel, use_cache=True,
                 )
@@ -244,8 +243,6 @@ class RelationalBoneShipping(RelationalBone):
                     cheapest_shipping = func(applicable_shippings,
                                              key=lambda shipping: shipping["dest"]["shipping_cost"] or 0)
                     skel.setBoneValue("shipping", cheapest_shipping["dest"]["key"])
-            finally:
-                self._prevent_compute = False
 
             return True
 
@@ -259,8 +256,7 @@ class RelationalBoneShipping(RelationalBone):
             shipping_key = None
         if shipping_key is None:
             return True
-        self._prevent_compute = True
-        try:
+        with self.computing(skel, "shipping"):
             applicable_shippings = SHOP_INSTANCE.get().shipping.get_shipping_skels_for_cart(
                 cart_skel=skel, use_cache=True,
             )
@@ -272,8 +268,6 @@ class RelationalBoneShipping(RelationalBone):
                 skel.setBoneValue("shipping", None)
                 skel.setBoneValue("shipping_status", skel.shipping_status.getDefaultValue(skel))
                 return False
-        finally:
-            self._prevent_compute = False
 
 
 class CartNodeSkel(TreeSkel):
