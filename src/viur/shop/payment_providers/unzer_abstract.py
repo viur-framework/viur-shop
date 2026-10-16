@@ -507,7 +507,9 @@ class UnzerAbstract(PaymentProviderAbstract):
             logger.info(f'Check payment for {order_skel["key"]!r} deferred')
             self.check_payment_deferred(order_skel["key"], _countdown=60)
 
-        current.request.get().response.status = "204 No Content"
+        # Unzer's docs ask for "200 OK" to acknowledge a notification. Answered with 204,
+        # every notification was redelivered on Unzer's retry schedule for about twelve hours.
+        current.request.get().response.status = "200 OK"
         return ""
 
     # TODO: remove
