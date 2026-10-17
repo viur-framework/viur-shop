@@ -165,3 +165,13 @@ class DiscountValidationContext(enum.IntEnum):
 
     AUTOMATICALLY_LIVE = enum.auto()
     """Validate automatically discount in real time"""
+
+    REVALIDATE = enum.auto()
+    """Re-validate a discount which is already applied to a cart
+
+    Used to check whether an already redeemed discount is *still* valid, e.g.
+    before the checkout starts. In contrast to :attr:`NORMAL` it does not skip
+    ``activate_automatically`` discounts, and scopes which cannot be
+    reconstructed after the redemption are excluded from it (see
+    :class:`~viur.shop.types.dc_scope.ScopeCode`).
+    """

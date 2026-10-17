@@ -19,7 +19,7 @@ class Supplier:
 class ClientError:
     """Class to store information about client error"""
 
-    message: str
+    message: str | translate
 
     causes_failure: bool = True
 
