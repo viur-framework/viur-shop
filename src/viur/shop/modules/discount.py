@@ -10,7 +10,8 @@ from viur.core.skeleton import SkeletonInstance
 from viur.shop import DEBUG_DISCOUNTS
 from viur.shop.types import *
 from .abstract import ShopModuleAbstract
-from ..globals import MAX_FETCH_LIMIT, SHOP_LOGGER
+from .discount_condition import get_skel_cache, lock_get_skel
+from ..globals import DISCOUNT_CACHE_TTL, MAX_FETCH_LIMIT, SHOP_LOGGER
 from ..skeletons import CartItemSkel, DiscountSkel
 from ..types.dc_scope import DiscountValidator
 
@@ -18,6 +19,9 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 lock_current_automatically_discounts = threading.Lock()
 """Lock to make the current_automatically_discounts cache thread-safe"""
+
+current_automatically_discounts_cache = cachetools.TTLCache(maxsize=1024, ttl=DISCOUNT_CACHE_TTL)
+"""Cache of :attr:`Discount.current_automatically_discounts`, cleared by :meth:`Discount.clear_caches`"""
 
 
 class Discount(ShopModuleAbstract, List):
@@ -40,6 +44,36 @@ class Discount(ShopModuleAbstract, List):
             }
         ]
         return admin_info
+
+    def onAdded(self, skel: SkeletonInstance):
+        super().onAdded(skel)
+        self.clear_caches()
+
+    def onEdited(self, skel: SkeletonInstance):
+        super().onEdited(skel)
+        self.clear_caches()
+
+    def onCloned(self, skel: SkeletonInstance, src_skel: SkeletonInstance):
+        super().onCloned(skel, src_skel)
+        self.clear_caches()
+
+    def onDeleted(self, skel: SkeletonInstance):
+        super().onDeleted(skel)
+        self.clear_caches()
+
+    @staticmethod
+    def clear_caches() -> None:
+        """
+        Drop the cached discounts and conditions of this process.
+
+        Called whenever a discount or a condition changes, so the change applies at once
+        instead of after the cache expired. Other processes keep their caches until
+        :data:`DISCOUNT_CACHE_TTL` has passed.
+        """
+        with lock_current_automatically_discounts:
+            current_automatically_discounts_cache.clear()
+        with lock_get_skel:
+            get_skel_cache.clear()
 
     # --- Apply logic ---------------------------------------------------------
 
@@ -244,7 +278,7 @@ class Discount(ShopModuleAbstract, List):
         return dv.is_fulfilled, dv
 
     @property
-    @cachetools.cached(cache=cachetools.TTLCache(maxsize=1024, ttl=3600), lock=lock_current_automatically_discounts)
+    @cachetools.cached(cache=current_automatically_discounts_cache, lock=lock_current_automatically_discounts)
     def current_automatically_discounts(self) -> list[SkeletonInstance_T[DiscountSkel]]:
         query = self.viewSkel().all().filter("activate_automatically =", True)
         discounts = []
