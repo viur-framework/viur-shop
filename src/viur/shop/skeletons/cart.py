@@ -1,11 +1,12 @@
 import collections
 import typing as t  # noqa
+import uuid
 
 from viur import toolkit
 from viur.core import conf, current, db, utils
 from viur.core.bones import *
 from viur.core.prototypes.tree import TreeSkel
-from viur.core.skeleton import SkeletonInstance
+from viur.core.skeleton import RelSkel, SkeletonInstance
 from viur.shop.types import *
 
 from ._bones import SnapshotRelationalBone
@@ -270,6 +271,34 @@ class RelationalBoneShipping(RelationalBone):
                 return False
 
 
+class CartMessageSkel(RelSkel):
+    """
+    A note to the customer about something the shop changed on the cart on its own.
+
+    The text is stored as translation key and variables, so it is rendered in the
+    language the cart is viewed in. Data a frontend needs beyond the text belongs in
+    a separate bone, not in ``translation_variables``.
+    """
+
+    key = StringBone(
+        readOnly=True,
+        compute=Compute(lambda skel: str(uuid.uuid4()), ComputeInterval(ComputeMethod.Once)),
+        escape_html=False,
+    )
+    """Identifies the entry, e.g. to remove it"""
+
+    translation_key = StringBone(
+        readOnly=True,
+        escape_html=False,
+    )
+    """Translation key of the text; also tells what kind of note it is"""
+
+    translation_variables = JsonBone(
+        readOnly=True,
+    )
+    """Values for the placeholders of the text"""
+
+
 class CartNodeSkel(TreeSkel):
     kindName = "{{viur_shop_modulename}}_cart_node"
 
@@ -410,6 +439,20 @@ class CartNodeSkel(TreeSkel):
         readOnly=True,
         visible=False,
     )
+
+    messages = RecordBone(
+        using=CartMessageSkel,
+        multiple=True,
+        readOnly=True,
+        indexed=False,
+        format="$(dest.translation_key)",
+    )
+    """Notes to the customer about changes the shop made on its own, e.g. a dropped discount.
+
+    Stored on the cart rather than in the session: the session is written back as a whole
+    by every request that changed it, so parallel requests of one page would restore or
+    lose an entry (viur-framework/viur-core#1802). Written with :meth:`Cart.add_message`,
+    removed by the customer via :meth:`Cart.remove_message`."""
 
     @classmethod
     def refresh_shipping_address(cls, skel: SkeletonInstance) -> SkeletonInstance:
