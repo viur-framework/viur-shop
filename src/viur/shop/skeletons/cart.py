@@ -1,5 +1,6 @@
 import collections
 import typing as t  # noqa
+import uuid
 
 from viur import toolkit
 from viur.core import conf, current, db, utils
@@ -277,22 +278,29 @@ class RelationalBoneShipping(RelationalBone):
 
 
 class CartMessageSkel(RelSkel):
-    """A note to the customer about something the shop changed on the cart on its own."""
+    """
+    A note to the customer about something the shop changed on the cart on its own.
 
-    id = StringBone(
-        readOnly=True,
-    )
-    """Identifies the entry, e.g. to remove it"""
+    The text is stored as translation key and variables, so it is rendered in the
+    language the cart is viewed in. Data a frontend needs beyond the text belongs in
+    a separate bone, not in ``translation_variables``.
+    """
 
     key = StringBone(
         readOnly=True,
+        compute=Compute(lambda skel: str(uuid.uuid4()), ComputeInterval(ComputeMethod.Once)),
     )
-    """Translation key of the text"""
+    """Identifies the entry, e.g. to remove it"""
 
-    params = JsonBone(
+    translation_key = StringBone(
         readOnly=True,
     )
-    """Variables of the translation"""
+    """Translation key of the text; also tells what kind of note it is"""
+
+    translation_variables = JsonBone(
+        readOnly=True,
+    )
+    """Values for the placeholders of the text"""
 
 
 class CartNodeSkel(TreeSkel):
@@ -441,7 +449,7 @@ class CartNodeSkel(TreeSkel):
         multiple=True,
         readOnly=True,
         indexed=False,
-        format="$(dest.key)",
+        format="$(dest.translation_key)",
     )
     """Notes to the customer about changes the shop made on its own, e.g. a dropped discount.
 

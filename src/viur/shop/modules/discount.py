@@ -394,7 +394,7 @@ class Discount(ShopModuleAbstract, List):
         for discount_skel in dropped_discounts:
             self.shop.cart.add_message(
                 cart_key,
-                "viur.shop.error.discount.no_longer_valid",
+                translation_key="viur.shop.error.discount.no_longer_valid",
                 name=discount_skel["name"],
             )
         return dropped_discounts

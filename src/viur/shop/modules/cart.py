@@ -2,7 +2,7 @@ import typing as t  # noqa
 
 import viur.shop.types.exceptions as e
 from viur import toolkit
-from viur.core import conf, current, db, errors, exposed, translate, utils
+from viur.core import conf, current, db, errors, exposed, translate
 from viur.core.bones import BaseBone, RelationalConsistency
 from viur.core.prototypes import Tree
 from viur.core.prototypes.tree import SkelType
@@ -248,29 +248,32 @@ class Cart(ShopModuleAbstract, Tree):
     def add_message(
         self,
         cart_key: db.Key,
-        key: str,
-        **params: t.Any,
+        translation_key: str,
+        **translation_variables: t.Any,
     ) -> None:
         """
         Note something to the customer on a cart, e.g. a discount the shop dropped.
 
         The entry stays until the customer removes it with :meth:`remove_message`.
-        An entry with the same translation key and parameters is not added twice,
+        An entry with the same translation key and variables is not added twice,
         so parallel requests reporting the same change leave one entry.
 
         :param cart_key: Key of the cart (root) node the note belongs to.
-        :param key: Translation key of the text.
-        :param params: JSON serializable variables of the translation.
+        :param translation_key: Translation key of the text.
+        :param translation_variables: JSON serializable values for its placeholders.
         """
 
         def add(skel: SkeletonInstance_T[CartNodeSkel]) -> None:
             entries = list(skel["messages"] or [])
-            if any(entry["key"] == key and entry["params"] == params for entry in entries):
+            if any(
+                entry["translation_key"] == translation_key
+                and entry["translation_variables"] == translation_variables
+                for entry in entries
+            ):
                 return
             entry = skel.messages.using()
-            entry["id"] = utils.string.random(13)
-            entry["key"] = key
-            entry["params"] = params
+            entry["translation_key"] = translation_key
+            entry["translation_variables"] = translation_variables
             skel["messages"] = [*entries, entry]
 
         self._patch_messages(cart_key, add)
@@ -278,17 +281,17 @@ class Cart(ShopModuleAbstract, Tree):
     def remove_message(
         self,
         cart_key: db.Key,
-        message_id: str,
+        message_key: str,
     ) -> None:
         """
         Remove a note from a cart, once the customer dismissed it.
 
         :param cart_key: Key of the cart (root) node.
-        :param message_id: ``id`` of the entry to remove.
+        :param message_key: ``key`` of the entry to remove.
         """
 
         def remove(skel: SkeletonInstance_T[CartNodeSkel]) -> None:
-            skel["messages"] = [entry for entry in skel["messages"] or [] if entry["id"] != message_id]
+            skel["messages"] = [entry for entry in skel["messages"] or [] if entry["key"] != message_key]
 
         self._patch_messages(cart_key, remove)
 

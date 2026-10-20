@@ -268,21 +268,21 @@ class Api(ShopModuleAbstract):
         self,
         *,
         cart_key: str | db.Key | t.Literal["BASKET"],
-        message_id: str,
+        message_key: str,
     ):
         """
         Remove a note from a cart, once the customer dismissed it.
 
         :param cart_key: Key of the cart (root) node.
             Use "BASKET" as key to use the basket of the current session.
-        :param message_id: ``id`` of the entry in the cart's ``messages``.
+        :param message_key: ``key`` of the entry in the cart's ``messages``.
         """
         if cart_key == "BASKET":
             cart_key = self.shop.cart.get_current_session_cart_key(create_if_missing=False)
         cart_key = self._normalize_external_key(cart_key, "cart_key")
         if not self.shop.cart.is_valid_node(cart_key, root_node=True):
             raise errors.Forbidden
-        self.shop.cart.remove_message(cart_key, message_id)
+        self.shop.cart.remove_message(cart_key, message_key)
         return JsonResponse(self.shop.cart.cart_get(cart_key=cart_key, skel_type="node"))
 
     @exposed
