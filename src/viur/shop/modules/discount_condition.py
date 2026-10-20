@@ -10,7 +10,7 @@ from viur.core import db, tasks
 from viur.core.prototypes import List
 from viur.core.skeleton import SkeletonInstance
 from .abstract import ShopModuleAbstract
-from ..globals import MAX_FETCH_LIMIT, SHOP_INSTANCE, SHOP_LOGGER
+from ..globals import DISCOUNT_CACHE_TTL, MAX_FETCH_LIMIT, SHOP_INSTANCE, SHOP_LOGGER
 from ..services import Event, on_event
 from ..types import CodeType, SkeletonInstance_T
 
@@ -25,6 +25,9 @@ SUFFIX_LENGTH = 6
 
 lock_get_skel = threading.Lock()
 """Lock to make the get_skel cache thread-safe"""
+
+get_skel_cache = cachetools.TTLCache(maxsize=1024, ttl=DISCOUNT_CACHE_TTL)
+"""Cache of :meth:`DiscountCondition.get_skel`, cleared by :meth:`Discount.clear_caches`"""
 
 
 class DiscountCondition(ShopModuleAbstract, List):
@@ -102,12 +105,17 @@ class DiscountCondition(ShopModuleAbstract, List):
         super().onCloned(skel, src_skel)
         self.on_changed(skel, "cloned")
 
+    def onDeleted(self, skel: SkeletonInstance):
+        super().onDeleted(skel)
+        self.shop.discount.clear_caches()
+
     def on_change(self, skel: SkeletonInstance, event: str) -> None:
         # logger.debug(pprint.pformat(skel, width=120))
         ...
 
     def on_changed(self, skel: SkeletonInstance, event: str) -> None:
         # logger.debug(pprint.pformat(skel, width=120))
+        self.shop.discount.clear_caches()
         if skel["code_type"] == CodeType.INDIVIDUAL and not skel["is_subcode"]:
             query = self.viewSkel().all().filter("parent_code.dest.__key__ =", skel["key"])
             counter = query.count()
@@ -158,7 +166,7 @@ class DiscountCondition(ShopModuleAbstract, List):
     # --- Helpers  ------------------------------------------------------------
 
     @classmethod
-    @cachetools.cached(cache=cachetools.TTLCache(maxsize=1024, ttl=3600), lock=lock_get_skel)
+    @cachetools.cached(cache=get_skel_cache, lock=lock_get_skel)
     def get_skel(cls, key: db.Key) -> SkeletonInstance_T["DiscountConditionSkel"] | None:
         # logger.debug(f"get_skel({key=})")
         skel = SHOP_INSTANCE.get().discount_condition.viewSkel()
