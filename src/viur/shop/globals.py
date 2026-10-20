@@ -27,3 +27,10 @@ DEBUG_DISCOUNTS: GlobalVar[bool] = GlobalVar("DEBUG_DISCOUNTS", default=False)
 
 MAX_FETCH_LIMIT: int = 100
 """Limit used if all entries should be fetched, but it needs to be limited because it's ViUR."""
+
+DISCOUNT_CACHE_TTL: int = 300
+"""Seconds discounts and their conditions are cached per process.
+
+Editing a discount clears the caches of the process handling the edit only, so this is
+the longest another instance keeps using the previous state.
+"""
