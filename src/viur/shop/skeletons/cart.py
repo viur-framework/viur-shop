@@ -289,11 +289,13 @@ class CartMessageSkel(RelSkel):
     key = StringBone(
         readOnly=True,
         compute=Compute(lambda skel: str(uuid.uuid4()), ComputeInterval(ComputeMethod.Once)),
+        escape_html=False,
     )
     """Identifies the entry, e.g. to remove it"""
 
     translation_key = StringBone(
         readOnly=True,
+        escape_html=False,
     )
     """Translation key of the text; also tells what kind of note it is"""
 
