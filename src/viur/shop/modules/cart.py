@@ -72,8 +72,12 @@ class Cart(ShopModuleAbstract, Tree):
             user_skel = conf.main_app.vi.user.viewSkel()
             user_skel.read(user["key"])
             if user_skel["basket"]:
-                self.session["session_cart_key"] = user_skel["basket"]["dest"]["key"]
-                current.session.get().markChanged()
+                basket_key = user_skel["basket"]["dest"]["key"]
+                # Only on a change: a session marked as changed is written back as a whole,
+                # overwriting what parallel requests stored (viur-framework/viur-core#1802).
+                if self.session.get("session_cart_key") != basket_key:
+                    self.session["session_cart_key"] = basket_key
+                    current.session.get().markChanged()
         if create_if_missing:
             self._ensure_current_session_cart()
         return self.session.get("session_cart_key")
