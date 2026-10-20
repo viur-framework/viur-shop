@@ -388,7 +388,16 @@ class Discount(ShopModuleAbstract, List):
         request_data["shop_basket_revalidated"] = True
         if (cart_key := self.shop.cart.current_session_cart_key) is None:
             return []
-        return self.revalidate_cart(cart_key)
+        dropped_discounts = self.revalidate_cart(cart_key)
+        # Unlike the checkout, the basket has no error channel: the customer would only
+        # notice a higher total. Leave a note on the cart instead.
+        for discount_skel in dropped_discounts:
+            self.shop.cart.add_message(
+                cart_key,
+                translation_key="viur.shop.error.discount.no_longer_valid",
+                name=discount_skel["name"],
+            )
+        return dropped_discounts
 
     def is_still_applicable(
         self,
