@@ -311,6 +311,7 @@ class Api(ShopModuleAbstract):
         cart_key = self.shop.cart.get_current_session_cart_key(create_if_missing=create_if_missing)
         if cart_key is None:
             raise errors.PreconditionFailed("No basket created yet for this session")
+        self.shop.discount.revalidate_session_basket()
         return JsonResponse(self.shop.cart.cart_get(
             cart_key=cart_key, skel_type="node",
         ))
