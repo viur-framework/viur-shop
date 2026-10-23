@@ -28,6 +28,9 @@ viur-shop was the first ViUR plugin: a PyPI package a project imports and mounts
 extension. It was also the first place several ideas were tried out, and some of them only
 exist here so far:
 
+- **The cart is a tree.** Nodes decorate everything below them — a discount, a shipping
+  address, a supplier — and the root node is the cart. Basket and wishlist share the
+  layout (ADR-0022).
 - **Nested modules.** `Shop` is one module with the cart, order, discount, API and payment
   providers as sub-modules (`shop.cart`, `shop.api`, …). No other ViUR project uses that
   construct as extensively.

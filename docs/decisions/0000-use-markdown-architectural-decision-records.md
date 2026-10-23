@@ -91,6 +91,6 @@ Conventions:
 * MADR: <https://adr.github.io/madr/>
 * Michael Nygard, "Documenting Architecture Decisions" (2011):
   <https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions>
-* ADRs 0001–0021 were written in October 2026, after the fact: 0001–0019 from merged
-  pull requests and the discussions around them, 0020 and 0021 from the maintainer's
+* ADRs 0001–0022 were written in October 2026, after the fact: 0001–0019 from merged
+  pull requests and the discussions around them, 0020–0022 from the maintainer's
   account. Each one names its sources.

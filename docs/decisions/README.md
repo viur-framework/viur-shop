@@ -28,3 +28,4 @@ New records start from [adr-template.md](adr-template.md).
 | [0019](0019-consume-individual-discount-codes-when-the-order-is-placed.md) | Mark an individual discount code as used when the order is placed | proposed |
 | [0020](0020-scope-viur-shop-as-a-checkout.md) | Scope viur-shop as a checkout; the article catalog stays in the project | accepted |
 | [0021](0021-return-json-as-a-response-object.md) | Return JSON as a `JsonResponse` object instead of serializing in every endpoint | accepted |
+| [0022](0022-model-the-cart-as-a-tree-of-decorating-nodes.md) | Model the cart as a tree whose nodes decorate everything below them | accepted |
