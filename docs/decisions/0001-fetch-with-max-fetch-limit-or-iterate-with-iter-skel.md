@@ -10,11 +10,22 @@ decision-makers: Sven Eberth
 
 Many queries in viur-shop conceptually want *all* entries: the children of a cart node,
 the active discounts, the conditions of a discount, the VAT rates, the addresses of a
-user, the payments of an order. `Query.fetch()` needs an explicit limit, and an
-unbounded loop over the datastore is a cost and latency risk on App Engine.
+user, the payments of an order.
 
-`MAX_FETCH_LIMIT = 100` in `globals.py` is used for most of these queries. To a reviewer
-it looks like a silent truncation bug: a cart with 101 items would lose one.
+viur-core limits query results in two ways:
+
+* Every query without an explicit limit returns at most `conf.db.query_default_limit`
+  entries (30). `query.fetch()` without an argument therefore silently returns only
+  the first 30.
+* A limit taken from request parameters — the `amount` of the standard list
+  functions — is capped at `conf.db.query_external_limit` (100). The reason is that a
+  client must not load every entry of a kind through a list endpoint: huge responses
+  mean heavy traffic, long response times and high costs.
+
+That is how viur-core works, and every project and extension has to deal with it.
+`MAX_FETCH_LIMIT = 100` in `globals.py` is the shop's answer for most of these queries.
+To a reviewer it looks like a silent truncation bug: a cart with 101 items would lose
+one.
 
 ## Considered Options
 
@@ -30,9 +41,9 @@ Chosen option: "choose per query", because the two cases have different requirem
 
 **`fetch(MAX_FETCH_LIMIT)` is a compromise for queries whose result is expected to stay
 far below 100** — more than 100 discounts on one cart, VAT rates or addresses of one user
-are highly unlikely. 100 is viur-core's maximum for limits taken from a request
-(`conf.db.query_external_limit` in its default configuration), so the shop uses the same
-number. It bounds the query and keeps it a single `fetch()`.
+are highly unlikely. Instead of the default of 30, the shop asks for 100, the maximum
+a list request may ask for in viur-core's default configuration. It bounds the query
+and keeps it a single `fetch()`.
 
 **`toolkit.iter_skel()` is used where missing an entry would be a defect**, typically in
 operations that change data or must be complete: freezing a cart (`freeze_cart`),
@@ -69,7 +80,9 @@ entities.
 * `src/viur/shop/globals.py` (`MAX_FETCH_LIMIT`)
 * `viur.toolkit.iter_skel()` iterates `query.iter()` and yields skeleton instances
   instead of calling `fetch()`.
-* viur-core applies `conf.db.query_external_limit` (default 100) only in
-  `Query.mergeExternalFilter()`, i.e. to limits from request parameters. A direct
-  `fetch(limit)` is not capped by the core; the shop constant follows the convention,
-  it is not forced by it.
+* viur-core: `conf.db.query_default_limit` (30) is set on every new query
+  (`db/types.py`) and used by `run()` / `fetch()` without an argument;
+  `conf.db.query_external_limit` (100) caps the limit in `Query.mergeExternalFilter()`,
+  i.e. limits from request parameters. A limit passed to `fetch()` directly is not
+  capped, so the shop constant follows viur-core's maximum by convention, it is not
+  forced by it.
