@@ -69,7 +69,7 @@ AND/OR groups would have been over-engineered.
   spread over them.
 * Bad, because the evaluation is a scope system of its own (`types/dc_scope.py`) that
   projects extend with their own scopes (ADR-0003).
-* Bad, because a rule like "(A and B) or C" needs the shared scopes repeated in several
+* Bad, because a rule like "(A or B) and C" needs the shared scope C repeated in several
   conditions.
 * Neutral: the old discount codes had a lifecycle (draft → active → archive) that froze
   them for statistics. It was dropped for simplicity — the statistics were hardly used.
