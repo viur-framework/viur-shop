@@ -17,6 +17,7 @@ decision-makers: Sven Eberth
 > - [SVEN] (this conversation) Decorator principle; discounts on nodes; individual shipping addresses, suppliers, bundles as possibilities; root node is the cart and provides defaults; basket and wishlist share the layout; suppliers only via project extension.
 > - [CODE] `add_new_parent`, `get_closest_node`, `CartType.WISHLIST`, `supplier` bone.
 > - [DERIVED] Options 2 and 3, consequences.
+> - [ASANA] (kickoff board "Shop", requirements collected 2023-10-18 from three projects before any code was written; a first draft, partly outdated) Task "unterschiedliche Warenkorbtypen": basket, wishlist, (recurring order as a template of a cart); "Hierarchisierung" by VAT, payable/requestable, special/standard size, warehouse A/B, main/partial order; delivery address per partial order; meta information per ordered article (customer comment).
 <!-- DRAFT-PROVENANCE:END -->
 
 ## Context and Problem Statement
@@ -73,6 +74,10 @@ wraps what is below it and adds to it.
 
 ## More Information
 
+* The tree goes back to the requirements collected before the first line of code
+  (October 2023): carts grouped by VAT, by payable vs. on-request articles, by standard vs.
+  custom size, by warehouse, or into partial orders with their own delivery address; a
+  wishlist and a recurring order as further kinds of cart. Not all of these exist.
 * `src/viur/shop/skeletons/cart.py` (`CartNodeSkel`, `CartItemSkel`),
   `src/viur/shop/modules/cart.py` (`add_new_parent`, `get_closest_node`,
   `get_available_root_nodes`), `src/viur/shop/types/enums.py` (`CartType`)

@@ -40,3 +40,4 @@ New records start from [adr-template.md](adr-template.md).
 | [0023](0023-general-features-in-the-shop-specific-ones-in-the-project.md) | General features belong in the shop, project-specific ones in the project | accepted |
 | [0024](0024-compute-prices-as-floats-rounded-to-cents.md) | Compute prices as floats rounded to cents, until a switch to `Decimal` is decided | accepted |
 | [0025](0025-one-provider-per-unzer-payment-type.md) | Implement one provider per Unzer payment type instead of using the Unzer Payment Page | accepted |
+| [0026](0026-separate-the-discount-value-from-its-conditions.md) | Separate the discount value from its conditions, and combine conditions with `ONE_OF` or `ALL` | accepted |

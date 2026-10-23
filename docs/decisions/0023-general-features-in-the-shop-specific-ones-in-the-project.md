@@ -19,6 +19,7 @@ decision-makers: Sven Eberth
 > - [CODE] `*_cls` parameters of `Shop`, hooks and events services.
 > - [ASANA] (viur-shop board, task "Dashboard", open) "Erst als projektspezifische Komponente, später als Admin-Plugin" — used below as an example of the path from project to shop.
 > - [DERIVED] The fork option and the "minimal shop" option; overridable methods as public API; the consequences. (The earlier rule "the shop provides the extension point, not the feature" was Claude's and is replaced by Sven's correction.)
+> - [ASANA] (kickoff board "Shop", requirements collected 2023-10-18 from three projects before any code was written; a first draft, partly outdated) Tasks "Payment Provider dynamisch einbinden" (standard and individual implementations), "Bestellnummern" (generated at completion, optionally overridable), "OrderInterfaces" (interfaces with hooks for export, statistics, newsletter, reviews).
 <!-- DRAFT-PROVENANCE:END -->
 
 ## Context and Problem Statement
@@ -87,6 +88,10 @@ point (an overridable method, a hook).
 
 ## More Information
 
+* The requirements collected before the first line of code (October 2023) already asked
+  for standard *and* project-specific payment provider implementations, order numbers
+  that are generated at completion but can be overridden, and order interfaces (export,
+  statistics, newsletter, reviews) attached through hooks.
 * `src/viur/shop/shop.py` (`Shop.__init__`), `src/viur/shop/services/hooks.py`,
   `src/viur/shop/services/events.py`
 * Example of the path: an order dashboard is built as a project-specific component

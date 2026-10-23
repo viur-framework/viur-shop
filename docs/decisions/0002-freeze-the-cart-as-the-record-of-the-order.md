@@ -19,6 +19,7 @@ decision-makers: Sven Eberth
 > - [MEM] The cause behind #230 (order viewed from another country lost its shipping); `frozen_values` breaking a consumer's export.
 > - [ASANA] (viur-shop board, task "AddressSkel nicht löschbar, wenn Adresse bei Bestellung referenziert, die nicht abgeschlossen wurde", created by Sven, open) "vor freeze nicht geklont, in OrderSkel auf preventDeletion. Lösung: conditional prevent delete" — used for the open point below; [CODE] the `PreventDeletion` named there was not found on the address relation.
 > - [DERIVED] Framing "frozen values are the record of the order"; options 2 and 3 (separate total, plain copy) were never discussed — invented as contrast.
+> - [ASANA] (kickoff board "Shop", requirements collected 2023-10-18 from three projects before any code was written; a first draft, partly outdated) Task "Warenkörbe/Wunschlisten in eigenem Modul mit Skeleton speichern": "Kein JSON-Bone", "Relation mit UsingSkel — veränderbare Daten, wie Preis festschreiben".
 <!-- DRAFT-PROVENANCE:END -->
 
 ## Context and Problem Statement
@@ -79,6 +80,9 @@ Rules that follow from it:
 
 ## More Information
 
+* Origin: the requirements collected before the first line of code (October 2023) asked
+  for carts stored as skeletons in their own module, not as a JSON bone, with changeable
+  data such as the price written down ("festschreiben") on the relation.
 * Open: an address referenced by an order that was never completed cannot be deleted.
   Proposed: prevent the deletion only while it matters (conditional). Which mechanism
   blocks the deletion today is not identified: `OrderSkel.billing_address` sets no

@@ -18,6 +18,7 @@ decision-makers: Sven Eberth
 > - [SVEN] (session 6ad34875) "ich rechne nicht mit einer zeitnahen core lösung"; "wie wäre es mit einem messages feld (multiple stringbone oder recordbone)"; dismissal: "Kunde schließt"; field renames (`key` identifies, no `id`).
 > - [CODE] Docstring of `CartNodeSkel.messages`.
 > - [DERIVED] "a note costs a cart write"; folding #238 in as a general rule.
+> - [ASANA] (kickoff board "Shop", requirements collected 2023-10-18 from three projects before any code was written; a first draft, partly outdated) Task "Konsequentes Error-Handling für Kunden-Transparenz": pass errors from the payment provider through to the customer, "Artikel, Rabatt gibt es nicht mehr etc.", translated in a customer-friendly way.
 <!-- DRAFT-PROVENANCE:END -->
 
 ## Context and Problem Statement
@@ -78,6 +79,10 @@ value actually changed (#238).
 
 ## More Information
 
+* Origin: the requirements collected before the first line of code (October 2023) asked
+  for consistent error handling towards the customer — errors passed through from the
+  payment provider, and notices such as "this article or discount no longer exists",
+  translated for the customer.
 * #236 (messages), #238 (session writes), viur-framework/viur-core#1802
 * `src/viur/shop/skeletons/cart.py` (`CartMessageSkel`, `CartNodeSkel.messages`)
 * Rejected alternatives: header or redirect — lost when another request made the change;
