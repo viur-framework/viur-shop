@@ -86,3 +86,9 @@ entities.
   i.e. limits from request parameters. A limit passed to `fetch()` directly is not
   capped, so the shop constant follows viur-core's maximum by convention, it is not
   forced by it.
+* The convention is historical. Up to viur-core 3.0, `fetch()` itself refused any limit
+  outside `0 < limit < 100` ("You must specify an upper bound using limit() between 1
+  and 100"), and `mergeExternalFilter()` accepted request limits up to 100 only. The
+  limits were hard-coded, not configurable. From 3.1 the datastore layer lived in the
+  separate `viur-datastore` package for a while; how it limited `fetch()` was not
+  checked.
