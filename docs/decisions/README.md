@@ -8,7 +8,7 @@ New records start from [adr-template.md](adr-template.md).
 > [!WARNING]
 > **Draft — remove before merge.** Every record and `AGENTS.md` carry a provenance callout below
 > their title, marking what Claude took from Sven, from PR descriptions, from its memory notes,
-> from the code, from the team's task tracker (`[ASANA]`), and what it derived itself. To strip them, delete everything between the
+> from the code, from the team's task tracker (`[ASANA]`), from the git history of the project the shop was extracted from (`[HIST]`), and what it derived itself. To strip them, delete everything between the
 > `DRAFT-PROVENANCE:START` and `DRAFT-PROVENANCE:END` comments.
 <!-- DRAFT-PROVENANCE:END -->
 
@@ -39,3 +39,4 @@ New records start from [adr-template.md](adr-template.md).
 | [0022](0022-model-the-cart-as-a-tree-of-decorating-nodes.md) | Model the cart as a tree whose nodes decorate everything below them | accepted |
 | [0023](0023-general-features-in-the-shop-specific-ones-in-the-project.md) | General features belong in the shop, project-specific ones in the project | accepted |
 | [0024](0024-compute-prices-as-floats-rounded-to-cents.md) | Compute prices as floats rounded to cents, until a switch to `Decimal` is decided | accepted |
+| [0025](0025-one-provider-per-unzer-payment-type.md) | Implement one provider per Unzer payment type instead of using the Unzer Payment Page | accepted |
