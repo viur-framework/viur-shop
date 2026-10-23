@@ -29,3 +29,4 @@ New records start from [adr-template.md](adr-template.md).
 | [0020](0020-scope-viur-shop-as-a-checkout.md) | Scope viur-shop as a checkout; the article catalog stays in the project | accepted |
 | [0021](0021-return-json-as-a-response-object.md) | Return JSON as a `JsonResponse` object instead of serializing in every endpoint | accepted |
 | [0022](0022-model-the-cart-as-a-tree-of-decorating-nodes.md) | Model the cart as a tree whose nodes decorate everything below them | accepted |
+| [0023](0023-extend-by-overriding-not-by-configuration.md) | Provide a common base that projects extend by overriding, not a shop configured for every case | accepted |

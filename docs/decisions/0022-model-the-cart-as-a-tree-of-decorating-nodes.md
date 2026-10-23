@@ -55,7 +55,8 @@ wraps what is below it and adds to it.
   expect a flat list — the Unzer basket has to mirror the per-node computation
   (ADR-0008).
 * Neutral: bundles and supplier grouping are possibilities of the model, not features
-  that exist today.
+  of the shop today. A project can build them by extending the cart skeletons and
+  modules (ADR-0023).
 
 ## More Information
 

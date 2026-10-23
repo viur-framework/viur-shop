@@ -22,6 +22,13 @@ own. In practice viur-shop is a **checkout**: it takes an article the project de
 article catalog — that stays individual in each project (ADR-0020). A rename to
 `viur-checkout` is planned for some point in the future; until then the name stays.
 
+The shop is a common base, not a solution for every project. Individual requirements are
+solved in the project by overriding module classes, extending skeletons and registering
+hooks (ADR-0023). When a project needs something the shop does not do, the shop's job is to
+offer the extension point — an overridable method, a hook — not the feature or a
+configuration flag. Overridable methods and hooks are public API: do not rename them or
+change their signatures casually.
+
 ### A prototype, and it shows
 
 viur-shop was the first ViUR plugin: a PyPI package a project imports and mounts as an
