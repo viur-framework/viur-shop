@@ -1,0 +1,50 @@
+---
+status: accepted
+date: 2026-10-23
+decision-makers: Sven Eberth
+---
+
+# Scope viur-shop as a checkout; the article catalog stays in the project
+
+## Context and Problem Statement
+
+viur-shop was started to generalize the order process that every ViUR project used to
+implement on its own: cart, order, discounts, shipping, payment. Over time it became
+clear that the article side does not generalize: every project models its articles,
+variants, prices and catalog pages differently, and a standard article shop would be
+too complex to fit them.
+
+What is viur-shop responsible for, and what stays in the project?
+
+## Considered Options
+
+* A checkout: the project defines the article, the shop handles cart, order and payment
+* A complete shop including a standard article model and catalog
+
+## Decision Outcome
+
+Chosen option: "a checkout", because that is the part that is the same in every
+project.
+
+* The project passes its own article skeleton (`Shop(article_skel=...)`, derived from
+  `ArticleAbstractSkel`). The shop reads what it needs for cart and order from it and
+  does not manage the catalog.
+* Frontends replace a large part of the default presentation, usually through
+  [shop-components](https://github.com/viur-framework/shop-components).
+* The name stays `viur-shop` for now. A rename to `viur-checkout`, which describes the
+  scope better, is planned but not scheduled.
+
+### Consequences
+
+* Good, because projects keep full control over articles and catalog.
+* Good, because the shop's scope stays small enough to be generic.
+* Bad, because the name suggests more than the package does. New users expect a
+  catalog.
+* Neutral: a rename will be a breaking change for every project (package name, import
+  path) and needs its own record.
+
+## More Information
+
+* `src/viur/shop/shop.py` (`Shop.__init__`, `article_skel`)
+* The reasoning was stated by the maintainer when the decision records were written;
+  there is no earlier written discussion of it.

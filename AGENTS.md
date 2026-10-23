@@ -14,6 +14,33 @@ It runs inside projects that pin their own `viur-core`, on App Engine with sever
 and parallel requests. Many bugs here were races between requests or between instances —
 keep that in mind for any state you introduce.
 
+### What it is in practice: a checkout
+
+The goal was to generalize the order process that every ViUR project used to build on its
+own. In practice viur-shop is a **checkout**: it takes an article the project defines
+(`article_skel`), puts it into a cart and handles ordering and payment. It does not own the
+article catalog — that stays individual in each project (ADR-0020). A rename to
+`viur-checkout` is planned for some point in the future; until then the name stays.
+
+### A prototype, and it shows
+
+viur-shop was the first ViUR plugin: a PyPI package a project imports and mounts as an
+extension. It was also the first place several ideas were tried out, and some of them only
+exist here so far:
+
+- **Nested modules.** `Shop` is one module with the cart, order, discount, API and payment
+  providers as sub-modules (`shop.cart`, `shop.api`, …). No other ViUR project uses that
+  construct as extensively.
+- **Deliberate deviations from viur-core conventions**, where the core way was found
+  cumbersome. Example: endpoints return a `JsonResponse` object instead of setting the
+  `Content-Type` header and serializing by hand in every method (ADR-0021).
+- **Experiments that left traces.** Some things exist twice or look odd, e.g. the error and
+  response types in `types/error.py` and `types/response.py`.
+
+For changes this means: an oddity is not automatically a bug, and the viur-core way is not
+automatically the target. Check the decision records. Do not unify duplicated mechanisms
+along the way — that is a change of its own, to be agreed on first.
+
 ## Read the decision records first
 
 Architectural decisions are recorded in [`docs/decisions/`](docs/decisions/README.md) as
