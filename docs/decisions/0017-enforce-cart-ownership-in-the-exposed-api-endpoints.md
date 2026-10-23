@@ -6,6 +6,18 @@ decision-makers: Sven Eberth
 
 # Enforce cart ownership in the exposed API endpoints, with the rule in the cart module
 
+<!-- DRAFT-PROVENANCE:START -->
+> [!WARNING]
+> **Draft provenance — remove before merge.** Written by Claude, not yet reviewed.
+> Tags: **[SVEN]** stated or confirmed by Sven · **[PR]** taken from a PR description ·
+> **[MEM]** Claude's memory notes from earlier sessions · **[CODE]** checked by Claude in the code ·
+> **[DERIVED]** Claude's own inference or wording, unconfirmed.
+> Quotes come from session transcripts (session id in brackets), typos corrected.
+>
+> - [SVEN] (session 40fa8ea7) "Warum die prüfung in API?"; "das wäre aber auch wieder breaking für die internen funktionen"; first approved option 2 (`canEdit`), "6 klingt interessant, maybe komplett für viur"; order endpoints: "nur bedingt kritisch".
+> - [DERIVED] Claude withdrew option 2 after finding the `Tree.edit` hole; Sven continued without objecting — not an explicit approval of option 1. #228 is open.
+<!-- DRAFT-PROVENANCE:END -->
+
 ## Context and Problem Statement
 
 Several cart endpoints of the API (`cart_update`, `cart_remove`, `cart_clear`,

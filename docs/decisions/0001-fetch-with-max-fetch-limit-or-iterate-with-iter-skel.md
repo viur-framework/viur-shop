@@ -6,6 +6,20 @@ decision-makers: Sven Eberth
 
 # Fetch with `MAX_FETCH_LIMIT` where more than 100 entries are not expected, iterate with `iter_skel` where every entry is required
 
+<!-- DRAFT-PROVENANCE:START -->
+> [!WARNING]
+> **Draft provenance — remove before merge.** Written by Claude, not yet reviewed.
+> Tags: **[SVEN]** stated or confirmed by Sven · **[PR]** taken from a PR description ·
+> **[MEM]** Claude's memory notes from earlier sessions · **[CODE]** checked by Claude in the code ·
+> **[DERIVED]** Claude's own inference or wording, unconfirmed.
+> Quotes come from session transcripts (session id in brackets), typos corrected.
+>
+> - [SVEN] (this conversation) 100 is a compromise for results expected to stay far below 100; `iter_skel` where every entry is required, e.g. tasks; core's limit exists so clients cannot load everything via list endpoints (traffic, latency, cost); hard-coded historically.
+> - [CODE] viur-core `config.py:313-316`, `db/query.py:221-227`, `db/types.py:252`; v3.0.0 `core/db.py:859-862`; `iter_skel` call sites in shop.
+> - [MEM] The consistency argument (`get_children` / `build_node_items`) — originally Claude's analysis in an earlier session, after Claude had wrongly reported the limit as a bug.
+> - [DERIVED] The list of considered options; "never lift the limit at a single call site" as a rule.
+<!-- DRAFT-PROVENANCE:END -->
+
 ## Context and Problem Statement
 
 Many queries in viur-shop conceptually want *all* entries: the children of a cart node,

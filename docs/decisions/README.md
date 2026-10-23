@@ -4,6 +4,14 @@ Decisions that shape viur-shop and would be easy to undo by accident — things 
 like gaps or bugs but are deliberate. Format and conventions: [ADR-0000](0000-use-markdown-architectural-decision-records.md).
 New records start from [adr-template.md](adr-template.md).
 
+<!-- DRAFT-PROVENANCE:START -->
+> [!WARNING]
+> **Draft — remove before merge.** Every record and `AGENTS.md` carry a provenance callout below
+> their title, marking what Claude took from Sven, from PR descriptions, from its memory notes,
+> from the code, and what it derived itself. To strip them, delete everything between the
+> `DRAFT-PROVENANCE:START` and `DRAFT-PROVENANCE:END` comments.
+<!-- DRAFT-PROVENANCE:END -->
+
 | ADR | Decision | Status |
 |---|---|---|
 | [0000](0000-use-markdown-architectural-decision-records.md) | Record architectural decisions as Markdown ADRs (MADR) | proposed |

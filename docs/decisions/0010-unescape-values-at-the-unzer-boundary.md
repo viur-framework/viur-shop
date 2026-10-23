@@ -6,6 +6,19 @@ decision-makers: Sven Eberth
 
 # Unescape stored values where they leave for Unzer, not where they are stored
 
+<!-- DRAFT-PROVENANCE:START -->
+> [!WARNING]
+> **Draft provenance — remove before merge.** Written by Claude, not yet reviewed.
+> Tags: **[SVEN]** stated or confirmed by Sven · **[PR]** taken from a PR description ·
+> **[MEM]** Claude's memory notes from earlier sessions · **[CODE]** checked by Claude in the code ·
+> **[DERIVED]** Claude's own inference or wording, unconfirmed.
+> Quotes come from session transcripts (session id in brackets), typos corrected.
+>
+> - [PR] #212.
+> - [SVEN] (session fcaa2da7) chose "An der Unzer-Grenze entescapen" (Claude's recommendation); suggested joining street name and number before unescaping.
+> - [DERIVED] The general rule "values leave the shop as plain text, unescaped at the boundary".
+<!-- DRAFT-PROVENANCE:END -->
+
 ## Context and Problem Statement
 
 viur-core's `StringBone` stores values HTML-escaped (`(` becomes `&#40;`, `'` becomes

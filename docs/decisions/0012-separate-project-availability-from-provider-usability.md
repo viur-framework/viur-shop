@@ -6,6 +6,18 @@ decision-makers: Sven Eberth
 
 # Separate a project's `is_available` from the provider's own usability checks
 
+<!-- DRAFT-PROVENANCE:START -->
+> [!WARNING]
+> **Draft provenance — remove before merge.** Written by Claude, not yet reviewed.
+> Tags: **[SVEN]** stated or confirmed by Sven · **[PR]** taken from a PR description ·
+> **[MEM]** Claude's memory notes from earlier sessions · **[CODE]** checked by Claude in the code ·
+> **[DERIVED]** Claude's own inference or wording, unconfirmed.
+> Quotes come from session transcripts (session id in brackets), typos corrected.
+>
+> - [PR] #214.
+> - [SVEN] (unzer-sdk session 677f6952) "eine methode … die dann eine antwort liefert … gemeinsame antwort"; "is_usable, erstmal nur ja/nein"; "A mit is_usable"; no alias: "B, ist eh schon breaking".
+<!-- DRAFT-PROVENANCE:END -->
+
 ## Context and Problem Statement
 
 Whether a payment provider is offered for an order had one switch: `is_available`, a

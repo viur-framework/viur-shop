@@ -6,6 +6,19 @@ decision-makers: Sven Eberth
 
 # Return JSON as a `JsonResponse` object instead of serializing in every endpoint
 
+<!-- DRAFT-PROVENANCE:START -->
+> [!WARNING]
+> **Draft provenance — remove before merge.** Written by Claude, not yet reviewed.
+> Tags: **[SVEN]** stated or confirmed by Sven · **[PR]** taken from a PR description ·
+> **[MEM]** Claude's memory notes from earlier sessions · **[CODE]** checked by Claude in the code ·
+> **[DERIVED]** Claude's own inference or wording, unconfirmed.
+> Quotes come from session transcripts (session id in brackets), typos corrected.
+>
+> - [SVEN] (this conversation) Setting `Content-Type` in every response is cumbersome; a response class keeps the source data available in hooks; an experiment that stayed.
+> - [CODE] `__str__` sets status and header; `ErrorResponse` overlaps.
+> - [DERIVED] Sven named a decorator *or* a response class as ways to do it — listing the decorator as a rejected option is Claude's interpretation. Consequences are Claude's.
+<!-- DRAFT-PROVENANCE:END -->
+
 ## Context and Problem Statement
 
 In plain viur-core, an endpoint that returns JSON sets the `Content-Type` header on the

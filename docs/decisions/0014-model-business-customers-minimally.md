@@ -6,6 +6,19 @@ decision-makers: Sven Eberth
 
 # Model business customers with the minimum Unzer needs
 
+<!-- DRAFT-PROVENANCE:START -->
+> [!WARNING]
+> **Draft provenance — remove before merge.** Written by Claude, not yet reviewed.
+> Tags: **[SVEN]** stated or confirmed by Sven · **[PR]** taken from a PR description ·
+> **[MEM]** Claude's memory notes from earlier sessions · **[CODE]** checked by Claude in the code ·
+> **[DERIVED]** Claude's own inference or wording, unconfirmed.
+> Quotes come from session transcripts (session id in brackets), typos corrected.
+>
+> - [PR] #214.
+> - [SVEN] (session 677f6952) "Registernummer + Defaults"; customer type not mixed with salutation; date of birth rules; "code-mäßig würde ich das auch nicht verbieten"; "viur-shop soll erstmal nur das benutzen was notwendig ist".
+> - [DERIVED] Consequence about companies with another legal form.
+<!-- DRAFT-PROVENANCE:END -->
+
 ## Context and Problem Statement
 
 The address skeleton knew `customer_type`, but every customer reached Unzer as a

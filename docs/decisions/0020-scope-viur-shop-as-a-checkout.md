@@ -6,6 +6,19 @@ decision-makers: Sven Eberth
 
 # Scope viur-shop as a checkout; the article catalog stays in the project
 
+<!-- DRAFT-PROVENANCE:START -->
+> [!WARNING]
+> **Draft provenance — remove before merge.** Written by Claude, not yet reviewed.
+> Tags: **[SVEN]** stated or confirmed by Sven · **[PR]** taken from a PR description ·
+> **[MEM]** Claude's memory notes from earlier sessions · **[CODE]** checked by Claude in the code ·
+> **[DERIVED]** Claude's own inference or wording, unconfirmed.
+> Quotes come from session transcripts (session id in brackets), typos corrected.
+>
+> - [SVEN] (this conversation) The shop is in practice a checkout; articles stay in the project; a standard article shop is too complex; rename to `viur-checkout` planned.
+> - [CODE] `Shop(article_skel=...)`, `ArticleAbstractSkel`.
+> - [DERIVED] Options, consequences, "a rename needs its own record".
+<!-- DRAFT-PROVENANCE:END -->
+
 ## Context and Problem Statement
 
 viur-shop was started to generalize the order process that every ViUR project used to

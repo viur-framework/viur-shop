@@ -6,6 +6,20 @@ decision-makers: Sven Eberth
 
 # Store notes to the customer on the cart, not in the session
 
+<!-- DRAFT-PROVENANCE:START -->
+> [!WARNING]
+> **Draft provenance — remove before merge.** Written by Claude, not yet reviewed.
+> Tags: **[SVEN]** stated or confirmed by Sven · **[PR]** taken from a PR description ·
+> **[MEM]** Claude's memory notes from earlier sessions · **[CODE]** checked by Claude in the code ·
+> **[DERIVED]** Claude's own inference or wording, unconfirmed.
+> Quotes come from session transcripts (session id in brackets), typos corrected.
+>
+> - [PR] #236 ("Why on the cart and not in the session"), #238.
+> - [SVEN] (session 6ad34875) "ich rechne nicht mit einer zeitnahen core lösung"; "wie wäre es mit einem messages feld (multiple stringbone oder recordbone)"; dismissal: "Kunde schließt"; field renames (`key` identifies, no `id`).
+> - [CODE] Docstring of `CartNodeSkel.messages`.
+> - [DERIVED] "a note costs a cart write"; folding #238 in as a general rule.
+<!-- DRAFT-PROVENANCE:END -->
+
 ## Context and Problem Statement
 
 The shop sometimes changes a cart on its own — since ADR-0003 it drops a discount that

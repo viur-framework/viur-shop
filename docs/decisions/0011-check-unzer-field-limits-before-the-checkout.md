@@ -6,6 +6,19 @@ decision-makers: Sven Eberth
 
 # Check Unzer's field limits in `can_checkout`, with the limits owned by the SDK
 
+<!-- DRAFT-PROVENANCE:START -->
+> [!WARNING]
+> **Draft provenance — remove before merge.** Written by Claude, not yet reviewed.
+> Tags: **[SVEN]** stated or confirmed by Sven · **[PR]** taken from a PR description ·
+> **[MEM]** Claude's memory notes from earlier sessions · **[CODE]** checked by Claude in the code ·
+> **[DERIVED]** Claude's own inference or wording, unconfirmed.
+> Quotes come from session transcripts (session id in brackets), typos corrected.
+>
+> - [PR] #213, unzer-python-sdk#24.
+> - [SVEN] (session fcaa2da7) "ggf direkt in unzer sdk?"; chose "SDK + viur-shop-Meldung"; "Gar nicht kürzen"; accepted the 40-character limit once measured.
+> - [DERIVED] Option 4 (constants in viur-shop).
+<!-- DRAFT-PROVENANCE:END -->
+
 ## Context and Problem Statement
 
 Unzer refuses a payment mid-checkout when one field is a character too long, and the

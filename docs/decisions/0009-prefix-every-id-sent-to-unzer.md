@@ -6,6 +6,18 @@ decision-makers: Sven Eberth
 
 # Prefix every id sent to Unzer with `s` or `p`
 
+<!-- DRAFT-PROVENANCE:START -->
+> [!WARNING]
+> **Draft provenance — remove before merge.** Written by Claude, not yet reviewed.
+> Tags: **[SVEN]** stated or confirmed by Sven · **[PR]** taken from a PR description ·
+> **[MEM]** Claude's memory notes from earlier sessions · **[CODE]** checked by Claude in the code ·
+> **[DERIVED]** Claude's own inference or wording, unconfirmed.
+> Quotes come from session transcripts (session id in brackets), typos corrected.
+>
+> - [PR] #210 (everything).
+> - [DERIVED] No statement of Sven found. Options 2 and 3 (urlsafe key, prefix only failing fields) are invented.
+<!-- DRAFT-PROVENANCE:END -->
+
 ## Context and Problem Statement
 
 Unzer refuses a whole request with `400 API.500.560.003` ("sensitive card information

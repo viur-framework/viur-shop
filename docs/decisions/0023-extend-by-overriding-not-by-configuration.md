@@ -6,6 +6,19 @@ decision-makers: Sven Eberth
 
 # Provide a common base that projects extend by overriding, not a shop configured for every case
 
+<!-- DRAFT-PROVENANCE:START -->
+> [!WARNING]
+> **Draft provenance — remove before merge.** Written by Claude, not yet reviewed.
+> Tags: **[SVEN]** stated or confirmed by Sven · **[PR]** taken from a PR description ·
+> **[MEM]** Claude's memory notes from earlier sessions · **[CODE]** checked by Claude in the code ·
+> **[DERIVED]** Claude's own inference or wording, unconfirmed.
+> Quotes come from session transcripts (session id in brackets), typos corrected.
+>
+> - [SVEN] (this conversation) A common base that can do as much as possible; individual cases in the project by overriding; not thousands of configuration options; skeletons are overridden in projects.
+> - [CODE] `*_cls` parameters of `Shop`, hooks and events services.
+> - [DERIVED] The fork option; the rule "the shop provides the extension point, not the feature"; overridable methods as public API; the consequences.
+<!-- DRAFT-PROVENANCE:END -->
+
 ## Context and Problem Statement
 
 Every project that uses viur-shop has requirements of its own: other article models,

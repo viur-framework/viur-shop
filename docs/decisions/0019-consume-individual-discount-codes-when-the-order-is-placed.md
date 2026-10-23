@@ -6,6 +6,19 @@ decision-makers: Sven Eberth
 
 # Mark an individual discount code as used when the order is placed
 
+<!-- DRAFT-PROVENANCE:START -->
+> [!WARNING]
+> **Draft provenance — remove before merge.** Written by Claude, not yet reviewed.
+> Tags: **[SVEN]** stated or confirmed by Sven · **[PR]** taken from a PR description ·
+> **[MEM]** Claude's memory notes from earlier sessions · **[CODE]** checked by Claude in the code ·
+> **[DERIVED]** Claude's own inference or wording, unconfirmed.
+> Quotes come from session transcripts (session id in brackets), typos corrected.
+>
+> - [SVEN] (session 40fa8ea7) "code bei ordered order hochzählen" — the trigger only.
+> - [CODE] `mark_discount_used`, `ScopeCode`.
+> - [DERIVED] Everything under "Not decided yet" is Claude's plan, not approved; the consequence about two carts.
+<!-- DRAFT-PROVENANCE:END -->
+
 ## Context and Problem Statement
 
 A discount condition with `CodeType.INDIVIDUAL` has one sub-code per customer.

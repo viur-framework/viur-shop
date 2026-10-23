@@ -6,6 +6,19 @@ decision-makers: Sven Eberth
 
 # Flag a pending settlement on the payment entry, and mark the order paid only after settlement
 
+<!-- DRAFT-PROVENANCE:START -->
+> [!WARNING]
+> **Draft provenance — remove before merge.** Written by Claude, not yet reviewed.
+> Tags: **[SVEN]** stated or confirmed by Sven · **[PR]** taken from a PR description ·
+> **[MEM]** Claude's memory notes from earlier sessions · **[CODE]** checked by Claude in the code ·
+> **[DERIVED]** Claude's own inference or wording, unconfirmed.
+> Quotes come from session transcripts (session id in brackets), typos corrected.
+>
+> - [MEM] Problem, the local flag ("Option 3") and the planned third state ("Option 1") — the memory does not record who decided.
+> - [CODE] `UnzerOpenbankingPis.return_handler`, `mark_payments_pending`, the `TODO`.
+> - [DERIVED] Option "mark paid on return" invented.
+<!-- DRAFT-PROVENANCE:END -->
+
 ## Context and Problem Statement
 
 With Unzer direct bank transfer (`UnzerOpenbankingPis`), the charge is `pending` and

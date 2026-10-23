@@ -1,5 +1,18 @@
 # AGENTS.md
 
+<!-- DRAFT-PROVENANCE:START -->
+> [!WARNING]
+> **Draft provenance — remove before merge.** Written by Claude, not yet reviewed.
+> Tags: **[SVEN]** stated or confirmed by Sven · **[PR]** taken from a PR description ·
+> **[MEM]** Claude's memory notes from earlier sessions · **[CODE]** checked by Claude in the code ·
+> **[DERIVED]** Claude's own inference or wording, unconfirmed.
+> Quotes come from session transcripts (session id in brackets), typos corrected.
+>
+> - [DERIVED] Structure and wording adapted from unzer-python-sdk's `AGENTS.md`; the pitfall list condenses the ADRs.
+> - [SVEN] "What it is in practice" and "A prototype, and it shows" (this conversation); no version bumps in PRs (memory).
+> - [CODE] CI lint command from `.github/workflows/pep8.yaml`; no test suite in the repository.
+<!-- DRAFT-PROVENANCE:END -->
+
 Guidance for AI coding agents working in this repository. It covers what is specific to this
 project — the general code style lives in `.editorconfig` and `tox.ini`.
 

@@ -6,6 +6,20 @@ decision-makers: Sven Eberth
 
 # Cache discounts per process for 300 seconds, and clear the local cache on every edit
 
+<!-- DRAFT-PROVENANCE:START -->
+> [!WARNING]
+> **Draft provenance — remove before merge.** Written by Claude, not yet reviewed.
+> Tags: **[SVEN]** stated or confirmed by Sven · **[PR]** taken from a PR description ·
+> **[MEM]** Claude's memory notes from earlier sessions · **[CODE]** checked by Claude in the code ·
+> **[DERIVED]** Claude's own inference or wording, unconfirmed.
+> Quotes come from session transcripts (session id in brackets), typos corrected.
+>
+> - [PR] #232.
+> - [SVEN] (session 7d1a6b1f / 6ad34875) "sollten beim rabatt bearbeiten nicht dann die caches invalidiert werden?"; chose 300 s (Claude's recommendation) and the approved plan "TTL als Modul-Konstante".
+> - [DERIVED] Rejection reasons for "configurable" and "shared version counter" are Claude's arguments from that session.
+> - [MEM] Confirmation section (testing against the cache).
+<!-- DRAFT-PROVENANCE:END -->
+
 ## Context and Problem Statement
 
 Every price build reads the automatic discounts, and every scope check reads its

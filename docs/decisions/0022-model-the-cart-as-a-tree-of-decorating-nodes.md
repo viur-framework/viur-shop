@@ -6,6 +6,19 @@ decision-makers: Sven Eberth
 
 # Model the cart as a tree whose nodes decorate everything below them
 
+<!-- DRAFT-PROVENANCE:START -->
+> [!WARNING]
+> **Draft provenance — remove before merge.** Written by Claude, not yet reviewed.
+> Tags: **[SVEN]** stated or confirmed by Sven · **[PR]** taken from a PR description ·
+> **[MEM]** Claude's memory notes from earlier sessions · **[CODE]** checked by Claude in the code ·
+> **[DERIVED]** Claude's own inference or wording, unconfirmed.
+> Quotes come from session transcripts (session id in brackets), typos corrected.
+>
+> - [SVEN] (this conversation) Decorator principle; discounts on nodes; individual shipping addresses, suppliers, bundles as possibilities; root node is the cart and provides defaults; basket and wishlist share the layout; suppliers only via project extension.
+> - [CODE] `add_new_parent`, `get_closest_node`, `CartType.WISHLIST`, `supplier` bone.
+> - [DERIVED] Options 2 and 3, consequences.
+<!-- DRAFT-PROVENANCE:END -->
+
 ## Context and Problem Statement
 
 A cart is more than a flat list of articles. Articles get discounts; groups of articles

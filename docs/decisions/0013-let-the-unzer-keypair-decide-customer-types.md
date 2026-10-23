@@ -6,6 +6,19 @@ decision-makers: Sven Eberth
 
 # Let the Unzer keypair alone decide which customer types a payment method is offered to
 
+<!-- DRAFT-PROVENANCE:START -->
+> [!WARNING]
+> **Draft provenance — remove before merge.** Written by Claude, not yet reviewed.
+> Tags: **[SVEN]** stated or confirmed by Sven · **[PR]** taken from a PR description ·
+> **[MEM]** Claude's memory notes from earlier sessions · **[CODE]** checked by Claude in the code ·
+> **[DERIVED]** Claude's own inference or wording, unconfirmed.
+> Quotes come from session transcripts (session id in brackets), typos corrected.
+>
+> - [PR] #214.
+> - [SVEN] (session 677f6952) "nur am keypair orientieren"; chose "Alle Unzer-Provider"; "wir vertrauen darauf, dass wenn im keypair B2B steht, das auch technisch geht".
+> - [DERIVED] "contract question, not a technical one"; the `cached_property` (Claude's implementation, not discussed).
+<!-- DRAFT-PROVENANCE:END -->
+
 ## Context and Problem Statement
 
 Unzer keypairs carry `allowCustomerTypes` (`"B2C"`, `"B2B"`, `"B2B,B2C"`) per payment

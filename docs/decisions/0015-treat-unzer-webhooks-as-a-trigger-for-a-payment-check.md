@@ -6,6 +6,20 @@ decision-makers: Sven Eberth
 
 # Treat Unzer webhooks as a trigger for a payment check, never as the payment state
 
+<!-- DRAFT-PROVENANCE:START -->
+> [!WARNING]
+> **Draft provenance — remove before merge.** Written by Claude, not yet reviewed.
+> Tags: **[SVEN]** stated or confirmed by Sven · **[PR]** taken from a PR description ·
+> **[MEM]** Claude's memory notes from earlier sessions · **[CODE]** checked by Claude in the code ·
+> **[DERIVED]** Claude's own inference or wording, unconfirmed.
+> Quotes come from session transcripts (session id in brackets), typos corrected.
+>
+> - [PR] #216, #231.
+> - [SVEN] (session e863ddcb) "ja, mach den PR mit 200 OK"; on `charge.failed`: "ist das wichtig für uns?" → left unhandled.
+> - [DERIVED] Framing "never as the payment state"; option 2 (apply payload state) invented; one webhook URL for all providers was Claude's answer, not Sven's decision.
+> - [CODE] `UnzerAbstract.webhook` only schedules `check_payment_deferred`.
+<!-- DRAFT-PROVENANCE:END -->
+
 ## Context and Problem Statement
 
 Unzer notifies the shop about payment events by webhook. A notification can arrive

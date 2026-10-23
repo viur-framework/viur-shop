@@ -6,6 +6,19 @@ decision-makers: Sven Eberth
 
 # Send basket discounts to Unzer as positive per-item discounts, split in whole cents
 
+<!-- DRAFT-PROVENANCE:START -->
+> [!WARNING]
+> **Draft provenance — remove before merge.** Written by Claude, not yet reviewed.
+> Tags: **[SVEN]** stated or confirmed by Sven · **[PR]** taken from a PR description ·
+> **[MEM]** Claude's memory notes from earlier sessions · **[CODE]** checked by Claude in the code ·
+> **[DERIVED]** Claude's own inference or wording, unconfirmed.
+> Quotes come from session transcripts (session id in brackets), typos corrected.
+>
+> - [PR] #202 (problem, `spread_discount`, frozen discount, sandbox measurements).
+> - [MEM] v1/v3 basket measurements; Unzer pages show undiscounted gross (also in unzer-python-sdk `AGENTS.md`).
+> - [DERIVED] No statement of Sven found on this decision. Option 3 (leave the discount out) is invented.
+<!-- DRAFT-PROVENANCE:END -->
+
 ## Context and Problem Statement
 
 A basket-domain discount was sent to Unzer as its own line item (`kind="voucher"`) with

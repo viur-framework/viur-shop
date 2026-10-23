@@ -6,6 +6,19 @@ decision-makers: Sven Eberth
 
 # Keep request state off bone instances; guard computations per skeleton and thread
 
+<!-- DRAFT-PROVENANCE:START -->
+> [!WARNING]
+> **Draft provenance — remove before merge.** Written by Claude, not yet reviewed.
+> Tags: **[SVEN]** stated or confirmed by Sven · **[PR]** taken from a PR description ·
+> **[MEM]** Claude's memory notes from earlier sessions · **[CODE]** checked by Claude in the code ·
+> **[DERIVED]** Claude's own inference or wording, unconfirmed.
+> Quotes come from session transcripts (session id in brackets), typos corrected.
+>
+> - [PR] #233.
+> - [SVEN] (session 6ad34875) "wieso sollte es für 3 keinen pr geben? das dingen hast du im core als deprecated markiert".
+> - [DERIVED] The general rule "no per-request state on bone instances" — Claude's generalization; rejection of the runtime switch is Claude's argument.
+<!-- DRAFT-PROVENANCE:END -->
+
 ## Context and Problem Statement
 
 A bone instance is created once per skeleton class and shared by every skeleton instance

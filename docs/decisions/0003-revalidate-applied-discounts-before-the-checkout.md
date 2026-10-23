@@ -6,6 +6,20 @@ decision-makers: Sven Eberth
 
 # Revalidate applied discounts in their own context, drop invalid ones and refuse that checkout attempt
 
+<!-- DRAFT-PROVENANCE:START -->
+> [!WARNING]
+> **Draft provenance — remove before merge.** Written by Claude, not yet reviewed.
+> Tags: **[SVEN]** stated or confirmed by Sven · **[PR]** taken from a PR description ·
+> **[MEM]** Claude's memory notes from earlier sessions · **[CODE]** checked by Claude in the code ·
+> **[DERIVED]** Claude's own inference or wording, unconfirmed.
+> Quotes come from session transcripts (session id in brackets), typos corrected.
+>
+> - [PR] #235 (problem, `REVALIDATE`, `ScopeCode` opt-out, case table).
+> - [SVEN] (session 7d1a6b1f) "ein neuer revalidate kontext klingt gut"; on `ScopeCode`: "alle anderen bedingungen sollen auch bei einem code-rabatt natürlich weiter aktiv sein"; chose "Entfernen + Abbruch"; target "develop (minor)".
+> - [DERIVED] Sub-decisions made by Claude in that session, not confirmed separately: hook into `listRootNodes`/`basket_view` instead of `get_available_root_nodes`, once per request, no `except Exception`.
+> - [MEM] Frontend has to handle the `400`, otherwise the payment step waits forever.
+<!-- DRAFT-PROVENANCE:END -->
+
 ## Context and Problem Statement
 
 A discount was validated exactly once, when it was redeemed. Afterwards the relation sat

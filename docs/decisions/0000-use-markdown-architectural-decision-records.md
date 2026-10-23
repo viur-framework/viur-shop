@@ -6,6 +6,17 @@ decision-makers: Sven Eberth
 
 # Record architectural decisions as Markdown ADRs (MADR)
 
+<!-- DRAFT-PROVENANCE:START -->
+> [!WARNING]
+> **Draft provenance — remove before merge.** Written by Claude, not yet reviewed.
+> Tags: **[SVEN]** stated or confirmed by Sven · **[PR]** taken from a PR description ·
+> **[MEM]** Claude's memory notes from earlier sessions · **[CODE]** checked by Claude in the code ·
+> **[DERIVED]** Claude's own inference or wording, unconfirmed.
+> Quotes come from session transcripts (session id in brackets), typos corrected.
+>
+> - [DERIVED] Everything: choice of MADR 4.0, path `docs/decisions/`, the conventions, options and pros/cons. Sven only asked for "the industry standard, usable by AI".
+<!-- DRAFT-PROVENANCE:END -->
+
 ## Context and Problem Statement
 
 viur-shop has accumulated design decisions that look like gaps or bugs to anyone who
