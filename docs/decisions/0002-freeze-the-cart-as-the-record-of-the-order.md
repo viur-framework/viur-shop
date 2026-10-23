@@ -17,6 +17,7 @@ decision-makers: Sven Eberth
 > - [PR] #196 (`SnapshotRelationalBone`, trade-off), #202 (basket reads frozen values), #230.
 > - [SVEN] (session b9f63b42) "is_frozen in den ref keys macht doch mehr sinn?", "fehlt dann nicht auch frozen_data selbst in den ref keys?"; old orders not migrated (memory: "Svens Entscheidung").
 > - [MEM] The cause behind #230 (order viewed from another country lost its shipping); `frozen_values` breaking a consumer's export.
+> - [ASANA] (viur-shop board, task "AddressSkel nicht löschbar, wenn Adresse bei Bestellung referenziert, die nicht abgeschlossen wurde", created by Sven, open) "vor freeze nicht geklont, in OrderSkel auf preventDeletion. Lösung: conditional prevent delete" — used for the open point below; [CODE] the `PreventDeletion` named there was not found on the address relation.
 > - [DERIVED] Framing "frozen values are the record of the order"; options 2 and 3 (separate total, plain copy) were never discussed — invented as contrast.
 <!-- DRAFT-PROVENANCE:END -->
 
@@ -78,6 +79,10 @@ Rules that follow from it:
 
 ## More Information
 
+* Open: an address referenced by an order that was never completed cannot be deleted.
+  Proposed: prevent the deletion only while it matters (conditional). Which mechanism
+  blocks the deletion today is not identified: `OrderSkel.billing_address` sets no
+  `consistency`, `PreventDeletion` sits on `OrderSkel.cart`.
 * #196 (`SnapshotRelationalBone`), #202 (Unzer basket reads frozen values),
   #230 (`refKeys` of `OrderSkel.cart`)
 * `src/viur/shop/modules/cart.py` (`freeze_cart`, `freeze_leaf`),

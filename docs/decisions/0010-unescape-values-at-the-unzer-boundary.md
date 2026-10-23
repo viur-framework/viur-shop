@@ -16,6 +16,7 @@ decision-makers: Sven Eberth
 >
 > - [PR] #212.
 > - [SVEN] (session fcaa2da7) chose "An der Unzer-Grenze entescapen" (Claude's recommendation); suggested joining street name and number before unescaping.
+> - [ASANA] (viur-shop board, task "Adressen, Datenfelder escape_html=True oder False ?", created 2026-10-05 by Sven, open) — used for the open question below.
 > - [DERIVED] The general rule "values leave the shop as plain text, unescaped at the boundary".
 <!-- DRAFT-PROVENANCE:END -->
 
@@ -55,3 +56,5 @@ consumer of the bone. A migration needs a script writing to live data.
 
 * #212
 * `src/viur/shop/payment_providers/unzer_abstract.py` (`as_plain_text`)
+* Open: whether the address bones should store unescaped values (`escape_html=False`)
+  after all. If they do, this record is superseded for new data; old data stays escaped.

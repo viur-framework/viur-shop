@@ -17,6 +17,7 @@ decision-makers: Sven Eberth
 > - [SVEN] (this conversation) A common base that can do as much as possible; individual cases in the project by overriding; not thousands of configuration options; skeletons are overridden in projects.
 > - [SVEN] (this conversation, correction) Extensions of general interest do belong in the shop, enabled, disabled or parametrized by configuration; only what is foreseeably specific to one project stays out. Ideal: integrate the base class, configure it, have a working shop.
 > - [CODE] `*_cls` parameters of `Shop`, hooks and events services.
+> - [ASANA] (viur-shop board, task "Dashboard", open) "Erst als projektspezifische Komponente, später als Admin-Plugin" — used below as an example of the path from project to shop.
 > - [DERIVED] The fork option and the "minimal shop" option; overridable methods as public API; the consequences. (The earlier rule "the shop provides the extension point, not the feature" was Claude's and is replaced by Sven's correction.)
 <!-- DRAFT-PROVENANCE:END -->
 
@@ -88,4 +89,6 @@ point (an overridable method, a hook).
 
 * `src/viur/shop/shop.py` (`Shop.__init__`), `src/viur/shop/services/hooks.py`,
   `src/viur/shop/services/events.py`
+* Example of the path: an order dashboard is built as a project-specific component
+  first, to become a shared admin plugin once it has proven itself.
 * The reasoning was stated by Sven Eberth, creator and architect of viur-shop, when the decision records were written in October 2026.

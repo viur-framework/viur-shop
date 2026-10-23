@@ -15,6 +15,7 @@ decision-makers: Sven Eberth
 > Quotes come from session transcripts (session id in brackets), typos corrected.
 >
 > - [SVEN] (this conversation) The shop is in practice a checkout; articles stay in the project; a standard article shop is too complex; rename to `viur-checkout` planned.
+> - [ASANA] (viur-shop board, task "ViUR-Shop zu ViUR-Checkout umbenennen", created 2025-11-17 by a colleague, open) "Shop" means the whole (marketing, catalog, service, product selection, filtering and purchase); viur-shop should only provide the checkout; proposed names `ViUR-Checkout`, `-Backend`, `-UI`; open whether backend and frontend need distinct names.
 > - [CODE] `Shop(article_skel=...)`, `ArticleAbstractSkel`.
 > - [DERIVED] Options, consequences, "a rename needs its own record".
 <!-- DRAFT-PROVENANCE:END -->
@@ -45,7 +46,11 @@ project.
 * Frontends replace a large part of the default presentation, usually through
   [shop-components](https://github.com/viur-framework/shop-components).
 * The name stays `viur-shop` for now. A rename to `viur-checkout`, which describes the
-  scope better, is planned but not scheduled.
+  scope better, is planned but not scheduled. "Shop" names the whole — marketing,
+  catalog, service, product selection and filtering, and the purchase — while this
+  package provides only the purchase. The proposal discussed so far: `viur-checkout`,
+  with the backend and frontend packages named alike (e.g. `viur-checkout-backend`,
+  `viur-checkout-ui`); not decided.
 
 ### Consequences
 
@@ -59,5 +64,6 @@ project.
 ## More Information
 
 * `src/viur/shop/shop.py` (`Shop.__init__`, `article_skel`)
-* The reasoning was stated by Sven Eberth, creator and architect of viur-shop, when the decision records were written in October 2026;
-  there is no earlier written discussion of it.
+* The reasoning was stated by Sven Eberth, creator and architect of viur-shop, when the
+  decision records were written in October 2026. The rename was first discussed in the
+  team's task tracker in November 2025.
