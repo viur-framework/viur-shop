@@ -17,7 +17,7 @@ viur-core limits query results in two ways:
 * Every query without an explicit limit returns at most `conf.db.query_default_limit`
   entries (30). `query.fetch()` without an argument therefore silently returns only
   the first 30.
-* A limit taken from request parameters — the `amount` of the standard list
+* A limit taken from request parameters — the `limit` parameter of the standard list
   functions — is capped at `conf.db.query_external_limit` (100). The reason is that a
   client must not load every entry of a kind through a list endpoint: huge responses
   mean heavy traffic, long response times and high costs.
