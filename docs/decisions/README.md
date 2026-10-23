@@ -7,7 +7,7 @@ New records start from [adr-template.md](adr-template.md).
 | ADR | Decision | Status |
 |---|---|---|
 | [0000](0000-use-markdown-architectural-decision-records.md) | Record architectural decisions as Markdown ADRs (MADR) | proposed |
-| [0001](0001-cap-unbounded-queries-at-max-fetch-limit.md) | Cap "fetch all" queries at `MAX_FETCH_LIMIT`, and lift the cap only everywhere at once | accepted |
+| [0001](0001-fetch-with-max-fetch-limit-or-iterate-with-iter-skel.md) | Fetch with `MAX_FETCH_LIMIT` where more than 100 entries are not expected, iterate with `iter_skel` where every entry is required | accepted |
 | [0002](0002-freeze-the-cart-as-the-record-of-the-order.md) | Freeze the cart when the order is placed; frozen values are the record of the order | accepted |
 | [0003](0003-revalidate-applied-discounts-before-the-checkout.md) | Revalidate applied discounts in their own context, drop invalid ones and refuse that checkout attempt | accepted |
 | [0004](0004-store-customer-notes-on-the-cart.md) | Store notes to the customer on the cart, not in the session | accepted |

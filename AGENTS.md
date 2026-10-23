@@ -46,8 +46,10 @@ cart instead of the session, return handlers without an ownership check.
   back as a whole and overwrites parallel requests (viur-framework/viur-core#1802, ADR-0004).
 - **Caches are per process.** Clearing a cache reaches one App Engine instance; the TTL is the
   bound for all others (ADR-0005).
-- **Lifting a limit in one place creates inconsistencies.** Search for every reader of the
-  same data first (ADR-0001).
+- **`MAX_FETCH_LIMIT` vs. `iter_skel`.** `fetch(MAX_FETCH_LIMIT)` is for queries where more
+  than 100 entries are not expected; where every entry is required (freezing, deleting,
+  tasks), iterate with `toolkit.iter_skel()`. Never lift the limit at a single call site
+  (ADR-0001).
 - **Values sent to external systems are unescaped at the boundary.** ViUR stores strings
   HTML-escaped (ADR-0010).
 - **Unzer: the running sandbox API is the authority,** not Unzer's documentation and not the
