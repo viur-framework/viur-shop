@@ -104,4 +104,4 @@ Conventions:
   <https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions>
 * ADRs 0001–0023 were written in October 2026, after the fact: 0001–0019 from merged
   pull requests and the discussions around them, 0020–0023 from the account of
-  Sven Eberth, the original author of viur-shop. Each one names its sources.
+  Sven Eberth, creator and architect of viur-shop. Each one names its sources.

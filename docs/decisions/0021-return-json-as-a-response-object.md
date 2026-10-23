@@ -61,4 +61,4 @@ stayed.
 * `src/viur/shop/types/response.py`; used e.g. in `modules/api.py`, `modules/order.py`
 * `types/error.py` has its own `ErrorResponse` that also serializes through
   `JsonResponse`. The error and response types overlap; unifying them is open.
-* The reasoning was stated by Sven Eberth, the original author of viur-shop, when the decision records were written in October 2026.
+* The reasoning was stated by Sven Eberth, creator and architect of viur-shop, when the decision records were written in October 2026.

@@ -59,5 +59,5 @@ project.
 ## More Information
 
 * `src/viur/shop/shop.py` (`Shop.__init__`, `article_skel`)
-* The reasoning was stated by Sven Eberth, the original author of viur-shop, when the decision records were written in October 2026;
+* The reasoning was stated by Sven Eberth, creator and architect of viur-shop, when the decision records were written in October 2026;
   there is no earlier written discussion of it.
