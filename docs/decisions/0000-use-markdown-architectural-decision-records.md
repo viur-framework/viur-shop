@@ -110,8 +110,8 @@ Conventions:
 * MADR: <https://adr.github.io/madr/>
 * Michael Nygard, "Documenting Architecture Decisions" (2011):
   <https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions>
-* ADRs 0001–0026 were written in October 2026, after the fact: 0001–0019 from merged
+* ADRs 0001–0027 were written in October 2026, after the fact: 0001–0019 from merged
   pull requests and the discussions around them, 0020–0023 and 0025 from the account of
-  Sven Eberth, creator and architect of viur-shop, 0024 and 0026 from the team's task
+  Sven Eberth, creator and architect of viur-shop, 0024, 0026 and 0027 from the code, the team's task
   trackers and the git history of the project the shop was extracted from. Each one
   names its sources.

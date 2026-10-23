@@ -41,3 +41,4 @@ New records start from [adr-template.md](adr-template.md).
 | [0024](0024-compute-prices-as-floats-rounded-to-cents.md) | Compute prices as floats rounded to cents, until a switch to `Decimal` is decided | accepted |
 | [0025](0025-one-provider-per-unzer-payment-type.md) | Implement one provider per Unzer payment type instead of using the Unzer Payment Page | accepted |
 | [0026](0026-separate-the-discount-value-from-its-conditions.md) | Separate the discount value from its conditions, and combine conditions with `ONE_OF` or `ALL` | accepted |
+| [0027](0027-choose-the-shipping-by-a-per-cart-policy.md) | Choose the cart's shipping by a policy: the customer's choice, the cheapest or the most expensive | accepted |
