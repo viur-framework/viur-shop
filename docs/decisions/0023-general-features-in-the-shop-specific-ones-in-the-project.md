@@ -88,4 +88,4 @@ point (an overridable method, a hook).
 
 * `src/viur/shop/shop.py` (`Shop.__init__`), `src/viur/shop/services/hooks.py`,
   `src/viur/shop/services/events.py`
-* The reasoning was stated by the maintainer when the decision records were written.
+* The reasoning was stated by Sven Eberth, the original author of viur-shop, when the decision records were written in October 2026.

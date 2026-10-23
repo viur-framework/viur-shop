@@ -76,4 +76,4 @@ wraps what is below it and adds to it.
 * `src/viur/shop/skeletons/cart.py` (`CartNodeSkel`, `CartItemSkel`),
   `src/viur/shop/modules/cart.py` (`add_new_parent`, `get_closest_node`,
   `get_available_root_nodes`), `src/viur/shop/types/enums.py` (`CartType`)
-* The reasoning was stated by the maintainer when the decision records were written.
+* The reasoning was stated by Sven Eberth, the original author of viur-shop, when the decision records were written in October 2026.
