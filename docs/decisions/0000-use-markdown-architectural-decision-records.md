@@ -14,7 +14,8 @@ decision-makers: Sven Eberth
 > **[DERIVED]** Claude's own inference or wording, unconfirmed.
 > Quotes come from session transcripts (session id in brackets), typos corrected.
 >
-> - [DERIVED] Everything: choice of MADR 4.0, path `docs/decisions/`, the conventions, options and pros/cons. Sven only asked for "the industry standard, usable by AI".
+> - [SVEN] (this conversation) Read decisions in the context of their time; shop developed against viur-core 3.6 dev; refactorings wait behind stability and features.
+> - [DERIVED] Everything else: choice of MADR 4.0, path `docs/decisions/`, the conventions, options and pros/cons. Sven only asked for "the industry standard, usable by AI".
 <!-- DRAFT-PROVENANCE:END -->
 
 ## Context and Problem Statement
@@ -62,6 +63,13 @@ Conventions:
 * An accepted ADR is not rewritten. When a decision changes, a new ADR supersedes it,
   and only the `status` of the old one is changed. Typos and links may be fixed.
 * `docs/decisions/README.md` lists all ADRs with their status.
+* `date` is when the decision was made or last changed, not when the record was written.
+  A record is read in the context of its date: viur-shop was developed from late 2023
+  against the development state of viur-core 3.6, and several viur-core 3.6 changes came
+  from its requirements. That a newer viur-core would allow another solution does not
+  make a decision wrong — changing it in running projects is a breaking change that
+  needs capacity, and stability and requested features have so far come first. Such
+  changes are planned as issues and get their own record.
 * A pull request that makes an architecturally significant decision adds the ADR in the
   same pull request.
 

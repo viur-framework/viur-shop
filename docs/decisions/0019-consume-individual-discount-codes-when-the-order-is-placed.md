@@ -16,6 +16,7 @@ decision-makers: Sven Eberth
 >
 > - [SVEN] (session 40fa8ea7) "code bei ordered order hochzählen" — the trigger only.
 > - [CODE] `mark_discount_used`, `ScopeCode`.
+> - [HIST] (git history of the project the shop was extracted from, verified by Claude) the discount code logic, including sub-codes, was ported almost 1:1 into viur-shop (`33f2d18`, 2024-03-05; Sven: "fast 1:1 übernommen", well proven in production). The old code incremented usage after payment (`processDiscountCode` from `setRTS`) and stored the applied code with its value on the order.
 > - [DERIVED] Everything under "Not decided yet" is Claude's plan, not approved; the consequence about two carts.
 <!-- DRAFT-PROVENANCE:END -->
 
@@ -52,5 +53,8 @@ Not decided yet:
 
 ## More Information
 
+* The discount code logic was ported almost unchanged from the production checkout the
+  shop was extracted from, where it had been in use since 2020. That checkout stored the
+  redeemed code on the order and counted it after payment.
 * `src/viur/shop/modules/discount_condition.py` (`mark_discount_used`),
   `src/viur/shop/types/dc_scope.py` (`ScopeCode`)

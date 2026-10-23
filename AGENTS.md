@@ -60,6 +60,13 @@ exist here so far:
 - **Experiments that left traces.** Some things exist twice or look odd, e.g. the error and
   response types in `types/error.py` and `types/response.py`.
 
+It was developed from late 2023 against the development state of viur-core 3.6 — several
+core features exist because the shop needed them, and others came years later. Judge a
+design by what was possible when it was made. "A newer viur-core could do this better" is a
+reason for an issue, not for a drive-by change: changing stored data or the API is breaking
+for running projects, and refactorings have so far waited behind stability and the
+features projects asked for. Several are already tracked as issues (e.g. #169 for events).
+
 For changes this means: an oddity is not automatically a bug, and the viur-core way is not
 automatically the target. Check the decision records. Do not unify duplicated mechanisms
 along the way — that is a change of its own, to be agreed on first.

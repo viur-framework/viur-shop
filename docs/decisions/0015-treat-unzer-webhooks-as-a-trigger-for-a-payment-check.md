@@ -18,6 +18,7 @@ decision-makers: Sven Eberth
 > - [SVEN] (session e863ddcb) "ja, mach den PR mit 200 OK"; on `charge.failed`: "ist das wichtig für uns?" → left unhandled.
 > - [DERIVED] Framing "never as the payment state"; option 2 (apply payload state) invented; one webhook URL for all providers was Claude's answer, not Sven's decision.
 > - [CODE] `UnzerAbstract.webhook` only schedules `check_payment_deferred`.
+> - [HIST] (git history of the project the shop was extracted from, verified by Claude) the same design since 2021-05 (`6b19a3186`): webhook "handle currently only payment-complete as backup", "# Do this deferred, otherwise we check parallel with the returnHook", `_countdown=60`; the old payment check also only marked an order paid when Unzer reported it completed with the full amount.
 <!-- DRAFT-PROVENANCE:END -->
 
 ## Context and Problem Statement
@@ -61,6 +62,9 @@ paid".
 
 ## More Information
 
+* The design predates viur-shop: the checkout it was extracted from handled the webhook
+  the same way from 2021 on — as a backup to the return handler, deferred by 60 seconds
+  so both do not check in parallel.
 * #216 (`charge.succeeded`), #231 (`200 OK`)
 * `src/viur/shop/payment_providers/unzer_abstract.py` (`webhook`)
 * `PaypalCheckout.webhook` still answers `204`; nothing was measured for PayPal.
