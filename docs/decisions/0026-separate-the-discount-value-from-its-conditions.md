@@ -17,7 +17,8 @@ decision-makers: Sven Eberth
 > - [ASANA] (kickoff board "Shop", 2023-10-18) Task "Rabatte/Gutscheine/Angebotspreise": "Trennung Rabattwert/Rabattkonfiguration"; value: percentage, absolute, free article, free shipping; configuration: all articles, article groups, code (individual/general), combinable, URL, blacklist/whitelist, minimum order value, period, usability, customer group (all, new, regular).
 > - [HIST] The old checkout had two separate mechanisms: discount codes on the cart total (`modules/discountCode.py`, from 2020) and article reductions (`modules/discount.py`). Its `canUse` required all preconditions and *at least one* article scope ("Scope-Conditions, At least ONE of the following MUST be true"). Code logic ported in `33f2d18` (2024-03-05).
 > - [CODE] `DiscountSkel` (value, `condition` relation `multiple=True`, `condition_operator` default `ALL`), `DiscountConditionSkel` (`scope_*` bones), `ConditionOperator`, `DiscountType`, `ApplicationDomain`.
-> - [DERIVED] That the split replaces the two old mechanisms; options; consequences. Why scopes *within* one condition are all required (instead of "at least one article scope" as before) is not recorded.
+> - [SVEN] (this conversation) A condition can define one or any number of scopes, all required; for "any one of several scopes", set the discount to `ONE_OF` and put one scope in each condition. Some place has to choose between OR and ALL; modelling the conditions as a tree would have been over-engineered. The draft/active/archive lifecycle of the old codes was dropped for simplicity — statistics depended on it, but probably nobody read them; draft/archive/trash would be desirable for every ViUR module, but ViUR has no such concept, and doing it for one module only makes little sense.
+> - [DERIVED] That the split replaces the two old mechanisms; options; consequences.
 <!-- DRAFT-PROVENANCE:END -->
 
 ## Context and Problem Statement
@@ -35,6 +36,11 @@ own fields.
 * One skeleton per kind of discount, each with the fields it needs
 * Keep codes and article reductions as separate mechanisms
 
+And for combining conditions:
+
+* Two levels: all scopes within a condition, `ALL` or `ONE_OF` across conditions
+* A tree of nested AND/OR groups
+
 ## Decision Outcome
 
 Chosen option: "a discount with conditions", following the requirement collected before
@@ -48,7 +54,12 @@ the first line of code to separate the discount value from its configuration.
   article). All applicable scopes of one condition must be fulfilled.
 * A discount references several conditions and combines them with
   `condition_operator`: `ALL` (default) or `ONE_OF`. An "either this article or that
-  one" rule is therefore expressed as several conditions with `ONE_OF`.
+  one" rule is therefore expressed as several conditions with `ONE_OF`, each holding one
+  scope.
+
+The choice between OR and ALL has to be made somewhere; two levels — AND within a
+condition, a choice across conditions — cover the cases in practice. A tree of nested
+AND/OR groups would have been over-engineered.
 
 ### Consequences
 
@@ -58,6 +69,12 @@ the first line of code to separate the discount value from its configuration.
   spread over them.
 * Bad, because the evaluation is a scope system of its own (`types/dc_scope.py`) that
   projects extend with their own scopes (ADR-0003).
+* Bad, because a rule like "(A and B) or C" needs the shared scopes repeated in several
+  conditions.
+* Neutral: the old discount codes had a lifecycle (draft → active → archive) that froze
+  them for statistics. It was dropped for simplicity — the statistics were hardly used.
+  A draft, archive or trash state would be desirable for every ViUR module, but ViUR has
+  no such concept, and building it for one module only makes little sense.
 
 ## More Information
 
