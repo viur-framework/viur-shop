@@ -505,6 +505,7 @@ class Cart(ShopModuleAbstract, Tree):
         shipping_address_key: str | db.Key = SENTINEL,
         shipping_key: str | db.Key = SENTINEL,
         discount_key: str | db.Key = SENTINEL,
+        discount_code: str | None = None,
         **kwargs,
     ) -> SkeletonInstance_T[CartNodeSkel] | None:
         if not isinstance(parent_cart_key, (db.Key, type(None))):
@@ -523,6 +524,7 @@ class Cart(ShopModuleAbstract, Tree):
             shipping_address_key=shipping_address_key,
             shipping_key=shipping_key,
             discount_key=discount_key,
+            discount_code=discount_code,
         )
         skel = self.additional_cart_add(skel, **kwargs)
         skel.write()
@@ -541,6 +543,7 @@ class Cart(ShopModuleAbstract, Tree):
         shipping_address_key: str | db.Key = SENTINEL,
         shipping_key: str | db.Key = SENTINEL,
         discount_key: str | db.Key = SENTINEL,
+        discount_code: str | None = None,
         **kwargs,
     ) -> SkeletonInstance_T[CartNodeSkel] | None:
         if not isinstance(cart_key, db.Key):
@@ -570,6 +573,7 @@ class Cart(ShopModuleAbstract, Tree):
             shipping_address_key=shipping_address_key,
             shipping_key=shipping_key,
             discount_key=discount_key,
+            discount_code=discount_code,
         )
         self.additional_cart_update(skel, **kwargs)
         skel.write()
@@ -588,6 +592,7 @@ class Cart(ShopModuleAbstract, Tree):
         shipping_address_key: str | db.Key = SENTINEL,
         shipping_key: str | db.Key = SENTINEL,
         discount_key: str | db.Key = SENTINEL,
+        discount_code: str | None = None,
     ) -> SkeletonInstance_T[CartNodeSkel]:
         if parent_cart_key is not SENTINEL:
             skel["parententry"] = parent_cart_key
@@ -634,6 +639,8 @@ class Cart(ShopModuleAbstract, Tree):
                 skel["discount"] = None
             else:
                 skel.setBoneValue("discount", discount_key)
+            # The code belongs to exactly this discount; a new or removed discount resets it
+            skel["discount_code"] = discount_code if discount_key is not None else None
         return skel
 
     def cart_remove(

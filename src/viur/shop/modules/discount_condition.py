@@ -187,14 +187,28 @@ class DiscountCondition(ShopModuleAbstract, List):
             else:
                 yield cond_skel
 
-    def get_discounts_from_cart(self, cart_key: db.Key) -> list[db.Key]:
-        discounts = []
+    def get_subcode(self, parent_key: db.Key, code: str) -> SkeletonInstance_T["DiscountConditionSkel"] | None:
+        """
+        Get the subcode of an individual code condition by its code.
+
+        :param parent_key: Key of the parent condition (``code_type`` individual).
+        :param code: The code as entered by the customer.
+        :return: The subcode condition, or ``None`` if the code is no subcode of this parent.
+        """
+        query = self.viewSkel().all().filter("scope_code.idx =", code.lower())
+        for cond_skel in query.fetch(MAX_FETCH_LIMIT):
+            if cond_skel["is_subcode"] and cond_skel["parent_code"]["dest"]["key"] == parent_key:
+                return cond_skel  # type: ignore
+        return None
+
+    def _get_discount_nodes(self, cart_key: db.Key) -> list[SkeletonInstance]:
+        """Get all nodes of the cart (including the root node) which have a discount."""
         nodes = self.shop.cart.viewSkel("node").all().filter("parentrepo =", cart_key).fetch(MAX_FETCH_LIMIT)
         nodes.append(self.shop.cart.skel(skelType="node").read(cart_key))  # the root node itself
-        for node in nodes:
-            # logger.debug(f"Collecting discount (if exist) of {node=}")
-            if node["discount"]:
-                discounts.append(node["discount"]["dest"]["key"])
+        return [node for node in nodes if node["discount"]]
+
+    def get_discounts_from_cart(self, cart_key: db.Key) -> list[db.Key]:
+        discounts = [node["discount"]["dest"]["key"] for node in self._get_discount_nodes(cart_key)]
         # TODO: collect used from price and automatically as well
         return discounts
 
@@ -217,3 +231,13 @@ class DiscountCondition(ShopModuleAbstract, List):
                 # cond_skel = toolkit.get_full_skel_from_ref_skel(condition["dest"])
                 res = toolkit.increase_counter(condition["dest"]["key"], "quantity_used", 1)
                 logger.debug(f"old value: {res = }")
+
+        # Redeem the individual codes: the conditions of the discount are only
+        # the parents, the entered subcode is stored on the cart node.
+        for node in self._get_discount_nodes(order_skel["cart"]["dest"]["key"]):
+            if not node["discount_code"]:
+                continue
+            for condition in node["discount"]["dest"]["condition"] or []:
+                if sub_skel := self.get_subcode(condition["dest"]["key"], node["discount_code"]):
+                    res = toolkit.increase_counter(sub_skel["key"], "quantity_used", 1)
+                    logger.info(f'Redeemed subcode {sub_skel["key"]!r} (old value: {res})')

@@ -159,6 +159,7 @@ class Discount(ShopModuleAbstract, List):
                 parent_cart_key=cart_key,
                 name="Free Article",
                 discount_key=discount_skel["key"],
+                discount_code=code,
             )
             # logger.debug(f"{cart_node_skel = }")
             cart_item_skel = self.shop.cart.add_or_update_article(
@@ -177,7 +178,8 @@ class Discount(ShopModuleAbstract, List):
             if discount_skel["discount_type"] in {DiscountType.PERCENTAGE, DiscountType.ABSOLUTE}:
                 cart = self.shop.cart.cart_update(
                     cart_key=cart_key,
-                    discount_key=discount_skel["key"]
+                    discount_key=discount_skel["key"],
+                    discount_code=code,
                 )
                 # logger.debug(f"{cart = }")
                 return {  # TODO: what should be returned?
@@ -214,7 +216,8 @@ class Discount(ShopModuleAbstract, List):
                     parent_skel = self.shop.cart.add_new_parent(leaf_skel, name=f'Discount {discount_skel["name"]}')
                     cart = self.shop.cart.cart_update(
                         cart_key=parent_skel["key"],
-                        discount_key=discount_skel["key"]
+                        discount_key=discount_skel["key"],
+                        discount_code=code,
                     )
                     # logger.debug(f"{cart = }")
                     leafs_applied.append(leaf_skel)

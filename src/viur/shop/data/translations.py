@@ -660,6 +660,12 @@ TRANSLATIONS = {
         "en": "Discount",
         "fr": "réduction",
     },
+    "viur.shop.skeleton.cartnode.discount_code": {
+        "_hint": "bone discount_code<StringBone> in CartNodeSkel in viur.shop",
+        "de": "Rabattcode",
+        "en": "Discount code",
+        "fr": "Code de réduction",
+    },
     "viur.shop.skeleton.cartnode.frozen_values": {
         "_hint": "bone frozen_values<JsonBone> in CartNodeSkel in viur.shop",
         "de": "Eingefrorene Werte",
