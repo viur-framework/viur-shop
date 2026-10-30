@@ -1,9 +1,8 @@
-import logging
 import time
 import typing as t  # noqa
 
 from viur import toolkit
-from viur.core import current, db, errors as core_errors, exposed, force_post
+from viur.core import current, db, errors as core_errors, exposed, force_post, translate
 from viur.core.prototypes import List
 from viur.shop.types import *
 from viur.shop.types.results import PaymentProviderResult
@@ -295,12 +294,16 @@ class Order(ShopModuleAbstract, List):
         if not order_skel.read(order_key):
             raise core_errors.NotFound()
         order_skel.refresh()  # TODO: cart.shipping_address relation seems not be updated by the core
-        if ClientError.has_failing_error(errors := self.can_checkout(order_skel)):
-            logging.error(errors)
+        client_errors = self.can_checkout(order_skel)
+        if order_skel["cart"]:
+            # Must run before freeze_order(): afterwards a discount that is no
+            # longer valid would be written down in the order total for good.
+            client_errors.extend(self.revalidate_discounts(order_skel))
+        if ClientError.has_failing_error(client_errors):
+            logger.error(f"checkout errors: {client_errors}")
             return JsonResponse({
-                "errors": errors,
+                "errors": client_errors,
             }, status_code=400)
-            raise e.InvalidStateError(", ".join(errors))
 
         order_skel = self.freeze_order(order_skel)
         try:
@@ -343,6 +346,30 @@ class Order(ShopModuleAbstract, List):
 
         # TODO: ...
         return errors
+
+    def revalidate_discounts(
+        self,
+        order_skel: SkeletonInstance_T[OrderSkel],
+    ) -> list[ClientError]:
+        """
+        Re-validate the discounts applied to the order's cart.
+
+        A discount is only validated when it is redeemed; afterwards it stays
+        effective on the cart no matter whether its conditions are still met.
+        Discounts that are no longer fulfilled are therefore removed here and
+        reported back, which fails this checkout attempt. The customer sees the
+        corrected total and confirms again; the next attempt succeeds.
+
+        :param order_skel: The order whose cart should be re-validated.
+        :return: One error per discount that has been removed.
+        """
+        return [
+            ClientError(translate(
+                "viur.shop.error.discount.no_longer_valid",
+                default_variables={"name": discount_skel["name"]},
+            ))
+            for discount_skel in self.shop.discount.revalidate_cart(order_skel["cart"]["dest"]["key"])
+        ]
 
     def freeze_order(
         self,
@@ -394,12 +421,11 @@ class Order(ShopModuleAbstract, List):
         if not order_skel.read(order_key):
             raise core_errors.NotFound()
 
-        if ClientError.has_failing_error(errors := self.can_order(order_skel)):
-            logging.error(errors)
+        if ClientError.has_failing_error(client_errors := self.can_order(order_skel)):
+            logger.error(f"checkout errors: {client_errors}")
             return JsonResponse({
-                "errors": errors,
+                "errors": client_errors,
             }, status_code=400)
-            raise e.InvalidStateError(", ".join(error_))
 
         order_skel = HOOK_SERVICE.dispatch(Hook.ORDER_ASSIGN_UID, self._default_assign_uid)(order_skel)
         # TODO: charge order if it should directly be charged
