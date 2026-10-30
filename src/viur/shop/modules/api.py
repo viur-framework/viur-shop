@@ -282,8 +282,7 @@ class Api(ShopModuleAbstract):
         if cart_key == "BASKET":
             cart_key = self.shop.cart.get_current_session_cart_key(create_if_missing=False)
         cart_key = self._normalize_external_key(cart_key, "cart_key")
-        if not self.shop.cart.is_valid_node(cart_key, root_node=True):
-            raise errors.Forbidden
+        self._ensure_own_cart_node(cart_key, "cart_key", root_node=True)
         self.shop.cart.remove_message(cart_key, message_key)
         return JsonResponse(self.shop.cart.cart_get(cart_key=cart_key, skel_type="node"))
 
@@ -586,15 +585,18 @@ class Api(ShopModuleAbstract):
         self,
         cart_key: db.Key,
         parameter_name: str,
+        *,
+        root_node: bool = False,
     ) -> None:
         """
         Ensure the cart node belongs to the current user or session.
 
+        :param root_node: The node must also be a root node.
         :raises InvalidArgumentException: If the node does not exist or belongs to someone else.
         """
         # Not done via Cart.canEdit/canDelete: those also guard the generic
         # Tree.edit/Tree.delete endpoints, which bypass the shop's own checks.
-        if not self.shop.cart.is_valid_node(cart_key):
+        if not self.shop.cart.is_valid_node(cart_key, root_node=root_node):
             raise InvalidArgumentException(parameter_name, cart_key)
 
 
