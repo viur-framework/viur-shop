@@ -118,7 +118,9 @@ class DiscountCondition(ShopModuleAbstract, List):
         self.shop.discount.clear_caches()
         if skel["code_type"] == CodeType.INDIVIDUAL and not skel["is_subcode"]:
             query = self.viewSkel().all().filter("parent_code.dest.__key__ =", skel["key"])
-            counter = query.count()
+            # Explicit maximum: the default `up_to` of viur-core 3.8 exceeds the Int32 limit
+            # of Datastore, see https://github.com/viur-framework/viur-core/pull/1817
+            counter = query.count(up_to=2 ** 31 - 1)
             # logger.debug(f"{counter = }")
             if skel["individual_codes_amount"] > counter:
                 self.generate_subcodes(skel["key"], skel["individual_codes_prefix"],
