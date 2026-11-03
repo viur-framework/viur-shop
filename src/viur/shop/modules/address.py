@@ -65,7 +65,7 @@ class Address(ShopModuleAbstract, List):
         if (user := current.user.get()) and self.render.kind == "json":
             query.filter("customer.dest.__key__ =", user["key"])
 
-        if user and (f"{self.moduleName}-view" in user["access"] or "root" in user["access"]):
+        if user and (self.access_right("view") in user["access"] or "root" in user["access"]):
             return query
 
         return None

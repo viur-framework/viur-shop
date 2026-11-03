@@ -24,6 +24,13 @@ class ShopModuleAbstract(Module):
     reference_user_created_skeletons_in_session: bool = False
     """If True, keys of skeletons that the current user has created will be stored in the session."""
 
+    roles = {
+        "admin": "*",
+        "editor": ("add", "edit"),
+        "viewer": "view",
+    }
+    """Default roles of all shop modules, see :attr:`viur.core.Module.roles`."""
+
     def adminInfo(self) -> dict:
         return {
             "name": translate(f"viur.shop.module.{self.moduleName.lower()}"),
