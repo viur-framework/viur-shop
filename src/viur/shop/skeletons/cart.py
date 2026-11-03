@@ -427,6 +427,14 @@ class CartNodeSkel(TreeSkel):
     with its cached refKey values by ``add_discount`` and crash the discount
     evaluation in the price calculation."""
 
+    discount_code = StringBone(
+        readOnly=True,
+    )
+    """The code the customer entered to apply :attr:`discount`.
+
+    Needed to redeem an individual code once the order is placed, because the
+    :attr:`discount` relation only knows the parent condition, not the subcode."""
+
     project_data = JsonBone(
     )
 

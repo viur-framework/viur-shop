@@ -341,7 +341,7 @@ class ScopeCode(DiscountConditionScope):
     ]
     """Excluded from :attr:`DiscountValidationContext.REVALIDATE`.
 
-    The redeemed code is not stored on the cart and cannot be reconstructed,
+    The revalidation does not pass the redeemed code,
     and for :attr:`CodeType.INDIVIDUAL` the check below (``quantity_used > 0``)
     is permanently False once the code has been redeemed. Every *other* scope
     of a code-bound discount is still revalidated.
@@ -366,14 +366,15 @@ class ScopeCode(DiscountConditionScope):
         elif (
             self.condition_skel["code_type"] == CodeType.INDIVIDUAL
         ):
-            sub = (
-                SHOP_INSTANCE.get().discount_condition.viewSkel().all()
-                .filter("parent_code.dest.__key__ =", self.condition_skel["key"])
-                .getSkel()
-            )
+            if not isinstance(self.code, str) or not self.code:
+                return False  # no code given (e.g. automatic discount evaluation)
+            sub = SHOP_INSTANCE.get().discount_condition.get_subcode(self.condition_skel["key"], self.code)
             logger.debug(f"{sub = }")
+            if sub is None:
+                logger.info(f"code_type INDIVIDUAL not reached ({self.code=} is no subcode of this condition)")
+                return False
             if sub["quantity_used"] > 0:
-                logger.info(f'code_type INDIVIDUAL not reached (sub already used)')
+                logger.info(f"code_type INDIVIDUAL not reached ({self.code=} already redeemed)")
                 return False
         return True
 
