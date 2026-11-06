@@ -360,7 +360,7 @@ class Api(ShopModuleAbstract):
             return JsonResponse(self.shop.cart.getAvailableRootNodes())
         # key provided: list children (nodes and leafs)
         cart_key = self._normalize_external_key(cart_key, "cart_key")
-        self._ensure_own_cart_node(cart_key, "cart_key")
+        self._ensure_viewable_cart_node(cart_key, "cart_key")
         children = []
         for child_skel in self.shop.cart.get_children(cart_key):
             assert issubclass(child_skel.skeletonCls, (self.shop.cart.nodeSkelCls, self.shop.cart.leafSkelCls))
@@ -554,7 +554,7 @@ class Api(ShopModuleAbstract):
         :returns: list of :class:`ShippingSkel` `SkeletonInstance`s
         """
         cart_key = self._normalize_external_key(cart_key, "cart_key")
-        self._ensure_own_cart_node(cart_key, "cart_key")
+        self._ensure_viewable_cart_node(cart_key, "cart_key")
         return JsonResponse(self.shop.shipping.get_shipping_skels_for_cart(cart_key=cart_key))
 
     # --- Internal helpers  ----------------------------------------------------
@@ -597,6 +597,23 @@ class Api(ShopModuleAbstract):
         # Not done via Cart.canEdit/canDelete: those also guard the generic
         # Tree.edit/Tree.delete endpoints, which bypass the shop's own checks.
         if not self.shop.cart.is_valid_node(cart_key, root_node=root_node):
+            raise InvalidArgumentException(parameter_name, cart_key)
+
+    def _ensure_viewable_cart_node(
+        self,
+        cart_key: db.Key,
+        parameter_name: str,
+    ) -> None:
+        """
+        Ensure the current user may view the cart node.
+
+        Unlike :meth:`_ensure_own_cart_node`, this also allows users with view
+        access to the cart module (e.g. admins), via :meth:`Cart.canView`.
+        Use it for read-only endpoints only.
+
+        :raises InvalidArgumentException: If the node does not exist or must not be viewed.
+        """
+        if self.shop.cart.cart_get(cart_key=cart_key, skel_type="node") is None:
             raise InvalidArgumentException(parameter_name, cart_key)
 
 
