@@ -1,0 +1,84 @@
+---
+status: accepted
+date: 2023-12-12
+decision-makers: Sven Eberth
+---
+
+# Model the cart as a tree whose nodes decorate everything below them
+
+<!-- DRAFT-PROVENANCE:START -->
+> [!WARNING]
+> **Draft provenance — remove before merge.** Written by Claude, not yet reviewed.
+> Tags: **[SVEN]** stated or confirmed by Sven · **[PR]** taken from a PR description ·
+> **[MEM]** Claude's memory notes from earlier sessions · **[CODE]** checked by Claude in the code ·
+> **[DERIVED]** Claude's own inference or wording, unconfirmed.
+> Quotes come from session transcripts (session id in brackets), typos corrected.
+>
+> - [SVEN] (this conversation) Decorator principle; discounts on nodes; individual shipping addresses, suppliers, bundles as possibilities; root node is the cart and provides defaults; basket and wishlist share the layout; suppliers only via project extension.
+> - [CODE] `add_new_parent`, `get_closest_node`, `CartType.WISHLIST`, `supplier` bone.
+> - [DERIVED] Options 2 and 3, consequences.
+> - [ASANA] (kickoff board "Shop", requirements collected 2023-10-18 from three projects before any code was written; a first draft, partly outdated) Task "unterschiedliche Warenkorbtypen": basket, wishlist, (recurring order as a template of a cart); "Hierarchisierung" by VAT, payable/requestable, special/standard size, warehouse A/B, main/partial order; delivery address per partial order; meta information per ordered article (customer comment).
+<!-- DRAFT-PROVENANCE:END -->
+
+## Context and Problem Statement
+
+A cart is more than a flat list of articles. Articles get discounts; groups of articles
+can go to different shipping addresses or come from different suppliers; a bundle sold
+as one product consists of several articles; the whole cart has one billing context and
+a default shipping address. And the same structure is needed for more than the active
+basket — a wishlist stored in the customer account holds the same kind of content.
+
+How should the cart be modeled so that all of this fits one data layout?
+
+## Considered Options
+
+* A tree (`Cart` is a ViUR `Tree`): nodes (`CartNodeSkel`) group and decorate, leaves
+  (`CartItemSkel`) are articles
+* A flat list of cart items with attributes for discount, address, group
+* Separate models for basket, wishlist and groupings
+
+## Decision Outcome
+
+Chosen option: "a tree of decorating nodes", following the decorator pattern: a node
+wraps what is below it and adds to it.
+
+* **Leaves** are articles.
+* **Nodes** group leaves and other nodes. A node can carry what applies to everything
+  below it: a discount, a shipping address, a supplier, a name. Possible uses:
+  * a discount on a node applies to its subtree — an article discount is applied by
+    wrapping the qualifying article in its own node (`Cart.add_new_parent`);
+  * individual shipping addresses per group;
+  * grouping by supplier;
+  * in theory, bundles: adding a bundle inserts a node with its articles below it, and
+    the cart shows it as one bundle.
+* **The root node is the cart.** What a sub-node does not set is taken from the closest
+  node above it that does, up to the root — e.g. the shipping address
+  (`Cart.get_closest_node`).
+* **One layout for every kind of cart.** `cart_type` distinguishes the active basket
+  (`BASKET`) from a wishlist (`WISHLIST`) kept in the customer account. The wishlist is
+  rarely used so far, but it is the reason the cart is not tied to the checkout alone.
+
+### Consequences
+
+* Good, because new kinds of grouping or decoration are a new node, not a new model.
+* Good, because totals, discounts and shipping are computed per node and add up the
+  tree, the same way for every cart type.
+* Bad, because every computation has to walk the tree, and readers must not assume a
+  flat cart. A discount, an address or a shipping method may sit on any level.
+* Bad, because the tree makes the cart harder to reason about and to send to systems that
+  expect a flat list — the Unzer basket has to mirror the per-node computation
+  (ADR-0008).
+* Neutral: bundles and supplier grouping are possibilities of the model, not features
+  of the shop today. A project can build them by extending the cart skeletons and
+  modules (ADR-0023).
+
+## More Information
+
+* The tree goes back to the requirements collected before the first line of code
+  (October 2023): carts grouped by VAT, by payable vs. on-request articles, by standard vs.
+  custom size, by warehouse, or into partial orders with their own delivery address; a
+  wishlist and a recurring order as further kinds of cart. Not all of these exist.
+* `src/viur/shop/skeletons/cart.py` (`CartNodeSkel`, `CartItemSkel`),
+  `src/viur/shop/modules/cart.py` (`add_new_parent`, `get_closest_node`,
+  `get_available_root_nodes`), `src/viur/shop/types/enums.py` (`CartType`)
+* The reasoning was stated by Sven Eberth, creator and architect of viur-shop, when the decision records were written in October 2026.
