@@ -109,6 +109,24 @@ class OrderState(enum.Enum):
     """Ready To Send (but must not be paid)"""
 
 
+class PaymentVerificationState(enum.Enum):
+    """Outcome of an extra verification step the customer completes at the payment provider.
+
+    Some payment methods send the customer to the provider before the order counts as
+    placed, e.g. the risk-check authentication of Unzer's pay-later methods. The
+    provider records the state on the current payment of the order.
+    """
+
+    PENDING = "pending"
+    """The customer was sent to the provider and has not completed the step yet"""
+
+    SUCCEEDED = "succeeded"
+    """The provider confirmed the authorization, the order is placed"""
+
+    FAILED = "failed"
+    """The provider declined, or the customer abandoned the verification"""
+
+
 class QuantityMode(enum.Enum):
     """Specifies how item quantities in the cart should be modified."""
 

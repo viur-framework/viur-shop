@@ -13,3 +13,6 @@ class PaymentTransaction(PaymentTransactionSpecific):
     uuid: str
     client_ip: str
     user_agent: str
+    # Optional, set by a payment provider whose checkout sends the customer away
+    # for an extra verification step. Holds a `PaymentVerificationState` value.
+    verification_state: t.NotRequired[str]

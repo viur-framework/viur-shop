@@ -430,12 +430,31 @@ class Order(ShopModuleAbstract, List):
         order_skel = HOOK_SERVICE.dispatch(Hook.ORDER_ASSIGN_UID, self._default_assign_uid)(order_skel)
         # TODO: charge order if it should directly be charged
         pp_res = self.get_payment_provider_by_name(order_skel["payment_provider"]).checkout(order_skel)
+        if self.is_verification_pending(order_skel):
+            # The customer first has to complete a verification step at the payment
+            # provider. The order stays in checkout and is placed as soon as the
+            # provider confirms the authorization (return handler or webhook).
+            logger.info(f'Order {order_skel["key"]!r} waits for the payment verification, not placed yet')
+            EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=order_skel, deleted=False)
+            return JsonResponse({
+                "skel": order_skel,
+                "payment": pp_res,
+            })
         order_skel = self.set_ordered(order_skel, pp_res)
         EVENT_SERVICE.call(Event.ORDER_CHANGED, order_skel=order_skel, deleted=False)
         return JsonResponse({
             "skel": order_skel,
             "payment": pp_res,
         })
+
+    @staticmethod
+    def is_verification_pending(order_skel: "SkeletonInstance") -> bool:
+        """Tell whether the current payment of an order waits for a verification by the customer.
+
+        See :class:`PaymentVerificationState`.
+        """
+        payments = (order_skel["payment"] or {}).get("payments") or []
+        return bool(payments) and payments[-1].get("verification_state") == PaymentVerificationState.PENDING.value
 
     def can_order(
         self,

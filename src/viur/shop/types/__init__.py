@@ -33,6 +33,7 @@ from .enums import (  # noqa
     DiscountType,
     DiscountValidationContext,
     OrderState,
+    PaymentVerificationState,
     QuantityMode,
     Salutation,
     ShippingStatus,

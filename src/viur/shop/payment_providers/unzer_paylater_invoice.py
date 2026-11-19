@@ -3,7 +3,6 @@ import typing as t  # noqa
 import unzer
 from unzer import PaymentResponse
 
-from viur import toolkit
 from viur.core import current, db, errors, exposed
 from viur.core.skeleton import SkeletonInstance
 from viur.shop.skeletons import OrderSkel
@@ -89,19 +88,13 @@ class UnzerPaylaterInvoice(UnzerAbstract):
         logger.debug(f"{unzer_session=}")
         current.session.get().markChanged()
 
-        processing_data = payment.processing.asDict()
+        order_skel, verification_pending = self.store_authorization(order_skel, payment)
 
-        def set_payment(skel: SkeletonInstance):
-            skel["payment"]["payments"][-1]["payment_id"] = payment.paymentId
-            skel["payment"]["payments"][-1]["processing_data"] = processing_data
-
-        order_skel = toolkit.set_status(
-            key=order_skel["key"],
-            values=set_payment,
-            skel=order_skel,
-        )
-
-        if self.charge_directly:
+        if verification_pending:
+            # The customer has to pass the risk-check verification at Unzer first.
+            # The charge (if any) follows once the authorization is confirmed.
+            logger.info(f'Order {order_skel["key"]!r} waits for the verification at {payment.redirectUrl}')
+        elif self.charge_directly:
             order_skel, payment = self.charge(order_skel=order_skel, payment=payment)
 
         return unzer_session

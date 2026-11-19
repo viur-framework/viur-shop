@@ -7,11 +7,11 @@ import unzer
 from unzer.model import Basket, BasketItem, PaymentType
 from unzer.model.base import BaseModel
 from unzer.model.customer import Salutation as UnzerSalutation
-from unzer.model.payment import PaymentState
+from unzer.model.payment import Action, PaymentState, TransactionStatus
 from unzer.model.webhook import Events, IP_ADDRESS
 
 from viur import toolkit
-from viur.core import access, current, db, errors, exposed, force_post
+from viur.core import CallDeferred, access, current, db, errors, exposed, force_post
 from viur.core.skeleton import SkeletonInstance
 from viur.core.utils.string import unescape
 from viur.shop.skeletons import OrderSkel
@@ -121,6 +121,15 @@ class UnzerAbstract(PaymentProviderAbstract):
     Used to read the keypair configuration of the type, e.g. which customer types
     it allows. ``None`` skips those checks.
     """
+
+    VERIFICATION_EVENTS: t.Final[frozenset[str]] = frozenset({
+        Events.AUTHORIZE_SUCCEEDED,
+        Events.AUTHORIZE_FAILED,
+        Events.AUTHORIZE_CANCELED,
+        Events.AUTHORIZE_EXPIRED,
+        Events.PAYMENT_CANCELED,
+    })
+    """Webhook events that settle a pending verification step, see :meth:`resolve_verification`."""
 
     # Unzer basket item types (serialized as ``type``).
     BASKET_ITEM_GOODS: t.Final[str] = "goods"
@@ -444,6 +453,166 @@ class UnzerAbstract(PaymentProviderAbstract):
 
         return False, payment_results
 
+    # --- Verification (additional risk-check authentication) -----------------
+
+    @staticmethod
+    def is_verification_pending(payment: unzer.PaymentResponse) -> bool:
+        """Tell whether an authorization waits for a verification step by the customer.
+
+        Unzer's pay-later methods can ask the customer for an additional risk-check
+        authentication (CCD2). The authorize response is then neither a success nor
+        an error: it is pending and names the ``redirectUrl`` the customer has to visit.
+
+        :param payment: The authorize (or charge) response.
+        :return: ``True`` if the customer has to complete a step at Unzer first.
+        """
+        return bool(payment.isPending and not payment.isSuccess and not payment.isError)
+
+    @staticmethod
+    def current_verification_state(
+        order_skel: SkeletonInstance_T[OrderSkel],
+    ) -> PaymentVerificationState | None:
+        """Read the verification state recorded on the current payment of an order.
+
+        :param order_skel: The order to inspect.
+        :return: The state, or ``None`` if the payment needed no verification.
+        """
+        payments = (order_skel["payment"] or {}).get("payments") or []
+        if not payments or not (value := payments[-1].get("verification_state")):
+            return None
+        return PaymentVerificationState(value)
+
+    def set_verification_state(
+        self,
+        order_skel: SkeletonInstance_T[OrderSkel],
+        state: PaymentVerificationState,
+    ) -> SkeletonInstance_T[OrderSkel]:
+        """Record the verification state on the current payment of an order.
+
+        :param order_skel: The order to update.
+        :param state: The new state.
+        :return: The updated order.
+        """
+
+        def set_state(skel: SkeletonInstance) -> None:
+            skel["payment"]["payments"][-1]["verification_state"] = state.value
+
+        return toolkit.set_status(
+            key=order_skel["key"],
+            values=set_state,
+            skel=order_skel,
+        )
+
+    def store_authorization(
+        self,
+        order_skel: SkeletonInstance_T[OrderSkel],
+        payment: unzer.PaymentResponse,
+    ) -> tuple[SkeletonInstance_T[OrderSkel], bool]:
+        """Store the result of an authorize call on the current payment of an order.
+
+        Writes the payment id and the processing data, and -- if the customer has to
+        complete a verification step at Unzer first -- marks the payment as pending.
+
+        :param order_skel: The order the authorization belongs to.
+        :param payment: The authorize response.
+        :return: The updated order and whether the verification is pending.
+        """
+        logger.info(
+            f'Authorize {payment.paymentId} for order {order_skel["key"]!r}: '
+            f"{payment.isSuccess=} {payment.isPending=} {payment.isError=} {payment.messageCode=} "
+            f"redirectUrl={'set' if payment.redirectUrl else 'empty'}"
+        )
+        verification_pending = self.is_verification_pending(payment)
+        if verification_pending and not payment.redirectUrl:
+            logger.error(
+                f'Authorize {payment.paymentId} for order {order_skel["key"]!r} is pending, '
+                f"but Unzer sent no redirectUrl: the customer cannot complete the verification"
+            )
+        if payment.processing is None:
+            logger.error(f'Authorize {payment.paymentId} for order {order_skel["key"]!r} has no processing data')
+        processing_data = payment.processing.asDict() if payment.processing else {}
+
+        def set_payment(skel: SkeletonInstance) -> None:
+            entry = skel["payment"]["payments"][-1]
+            entry["payment_id"] = payment.paymentId
+            entry["processing_data"] = processing_data
+            if verification_pending:
+                entry["verification_state"] = PaymentVerificationState.PENDING.value
+
+        order_skel = toolkit.set_status(
+            key=order_skel["key"],
+            values=set_payment,
+            skel=order_skel,
+        )
+        return order_skel, verification_pending
+
+    def resolve_verification(
+        self,
+        order_skel: SkeletonInstance_T[OrderSkel],
+    ) -> tuple[SkeletonInstance_T[OrderSkel], PaymentVerificationState, unzer.PaymentGetResponse]:
+        """Look up the outcome of a pending verification at Unzer and apply it.
+
+        Reads the payment and inspects its authorization: a successful one places the
+        order (and charges it if the provider has ``charge_directly`` set), a failed or
+        canceled one marks the verification as failed. An authorization that is still
+        pending leaves the order untouched; the webhook will trigger another lookup.
+
+        :param order_skel: The order whose current payment is pending.
+        :return: The updated order, the resulting state and the payment data.
+        """
+        payment_id = order_skel["payment"]["payments"][-1]["payment_id"]
+        payment = self.client.getPayment(payment_id)
+        logger.debug(f"{payment=} [verification lookup]")
+        if str(payment.invoiceId) != str(order_skel["order_uid"]):
+            raise e.InvalidStateError(f'{payment.invoiceId} != {order_skel["order_uid"]}')
+
+        statuses = [txn.status for txn in payment.transactions if txn.action == Action.AUTHORIZE]
+        if TransactionStatus.SUCCESS in statuses:
+            state = PaymentVerificationState.SUCCEEDED
+        elif payment.state == PaymentState.CANCELED or TransactionStatus.ERROR in statuses:
+            state = PaymentVerificationState.FAILED
+        else:
+            state = PaymentVerificationState.PENDING
+        logger.info(
+            f'Verification of order {order_skel["key"]!r} ({payment_id}): {state.value} '
+            f"(payment state {payment.state!r}, authorize statuses {[str(st) for st in statuses]})"
+        )
+        if state is PaymentVerificationState.PENDING:
+            return order_skel, state, payment
+
+        order_skel = self.set_verification_state(order_skel, state)
+        if state is PaymentVerificationState.SUCCEEDED:
+            if not order_skel["is_ordered"]:
+                logger.info(f'Verification succeeded, placing order {order_skel["key"]!r}')
+                order_skel = self.shop.order.set_ordered(order_skel, payment)
+            if getattr(self, "charge_directly", False):
+                order_skel, _ = self.charge(order_skel=order_skel)
+        else:
+            logger.error(
+                f'Verification failed for order {order_skel["key"]!r} ({payment_id}): '
+                f"payment state {payment.state!r}, transactions {payment.transactions!r}"
+            )
+        return order_skel, state, payment
+
+    @CallDeferred
+    @log_unzer_error
+    def resolve_verification_deferred(self, order_key: db.Key) -> None:
+        """Resolve a pending verification from a deferred task (webhook).
+
+        Logs and returns if the order is gone or no verification is pending anymore,
+        so that the task queue does not retry forever.
+
+        :param order_key: Key of the order.
+        """
+        order_skel = self.shop.order.skel()
+        if not order_skel.read(order_key):
+            logger.warning(f"Order {order_key!r} doesn't exist (anymore); skipping deferred verification lookup")
+            return
+        if self.current_verification_state(order_skel) is not PaymentVerificationState.PENDING:
+            logger.info(f"Order {order_key!r} has no pending verification. Nothing to do.")
+            return
+        self.resolve_verification(order_skel)
+
     # --- API Endpoints  ------------------------------------------------------
 
     @exposed
@@ -462,12 +631,24 @@ class UnzerAbstract(PaymentProviderAbstract):
         order_skel = self.shop.order.viewSkel()
         if not order_skel.read(order_key):
             raise errors.NotFound
+        verification = None
+        if self.current_verification_state(order_skel) is PaymentVerificationState.PENDING:
+            # The customer comes back from the verification step. Only a confirmed
+            # authorization places the order; a still pending one is not confirmed
+            # here either -- the webhook places it later, if it succeeds.
+            order_skel, verification, payment = self.resolve_verification(order_skel)
+            if verification is not PaymentVerificationState.SUCCEEDED:
+                logger.warning(f'Order {order_skel["key"]!r}: verification {verification.value} on return')
+                return HOOK_SERVICE.dispatch(Hook.PAYMENT_RETURN_HANDLER_ERROR)(order_skel, payment)
         is_paid, payment = self.check_payment_state(order_skel)
         if is_paid and order_skel["is_paid"]:
             logger.info(f'Order {order_skel["key"]} already marked as paid. Nothing to do.')
         elif is_paid:
             logger.info(f'Mark order {order_skel["key"]} as paid')
             order_skel = self.shop.order.set_paid(order_skel)
+        elif verification is PaymentVerificationState.SUCCEEDED:
+            # Placed, but deliberately unpaid: pay-later methods are charged on fulfillment.
+            logger.info(f'Order {order_skel["key"]} is placed after the verification, not paid yet')
         else:
             return HOOK_SERVICE.dispatch(Hook.PAYMENT_RETURN_HANDLER_ERROR)(order_skel, payment)
         return HOOK_SERVICE.dispatch(Hook.PAYMENT_RETURN_HANDLER_SUCCESS)(order_skel, payment)
@@ -499,13 +680,26 @@ class UnzerAbstract(PaymentProviderAbstract):
             logger.warning(f"Unallowed IP address {ip}")
             raise errors.Forbidden
 
-        if payload.get("event") in (Events.PAYMENT_COMPLETED, Events.CHARGE_SUCCEEDED):
+        event = payload.get("event")
+        if event in (Events.PAYMENT_COMPLETED, Events.CHARGE_SUCCEEDED):
             order_skel = self.get_order_by_pay_id(payload["paymentId"], payload["publicKey"])
             if not order_skel:
                 raise errors.BadRequest("Unknown order")
             # Do this with a delay, otherwise there may be an interference with the return_hook
             logger.info(f'Check payment for {order_skel["key"]!r} deferred')
             self.check_payment_deferred(order_skel["key"], _countdown=60)
+        elif event in self.VERIFICATION_EVENTS:
+            # The outcome of a verification step the customer had to complete. Matters
+            # only for an order that still waits for it: an abandoned verification is
+            # reported this way after a while, without the customer ever returning.
+            order_skel = self.get_order_by_pay_id(payload["paymentId"], payload["publicKey"])
+            if not order_skel:
+                raise errors.BadRequest("Unknown order")
+            if self.current_verification_state(order_skel) is PaymentVerificationState.PENDING:
+                logger.info(f'Resolve verification for {order_skel["key"]!r} deferred ({event})')
+                self.resolve_verification_deferred(order_skel["key"], _countdown=60)
+            else:
+                logger.info(f'Order {order_skel["key"]!r} has no pending verification, ignoring {event}')
 
         # Unzer's docs ask for "200 OK" to acknowledge a notification. Answered with 204,
         # every notification was redelivered on Unzer's retry schedule for about twelve hours.
