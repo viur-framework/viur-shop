@@ -114,6 +114,44 @@ class UnzerPaylaterInvoice(UnzerAbstract):
         logger.debug(f"{payment=} [charge response]")
         return order_skel, payment
 
+    def get_checkout_start_data(
+        self,
+        order_skel: SkeletonInstance,
+    ) -> dict[str, t.Any]:
+        """Add the SECCI document of the purchase to the checkout start data.
+
+        CCD2 requires the checkout to offer the consumer credit information (SECCI)
+        for download before the customer places an invoice purchase. Unzer's UI
+        component shows it for installment, but not for invoice, so the shop has to
+        link it: ``GET types/paylater-invoice/plans`` answers with one plan whose
+        ``secciUrl`` is that document, for the order total, the customer's country
+        and type.
+
+        :param order_skel: The order being checked out.
+        :return: The base data plus ``secci_url`` (``None`` if Unzer offered none).
+        """
+        data = super().get_checkout_start_data(order_skel)
+        order_skel = OrderSkel.refresh_billing_address(order_skel)
+        secci_url: str | None = None
+        try:
+            plans = self.client.get_paylater_plans(
+                unzer.PaylaterInvoice,
+                amount=order_skel["total"],
+                currency=self.currency_code,
+                country=(order_skel["billing_address"]["dest"]["country"] or "").upper(),
+                customer_type=self.customer_type_from_order_skel(order_skel),
+                order_id=self.external_id(order_skel["key"]),
+            )
+            secci_url = next((plan.secciUrl for plan in plans.plans if plan.secciUrl), None)
+            if not secci_url:
+                logger.error(f'No SECCI document for order {order_skel["key"]!r}: {plans=}')
+        except unzer.model.ErrorResponse as err:
+            # The checkout must go on; the missing document is a compliance gap to
+            # see in the logs, not a reason to refuse the payment method.
+            logger.error(f'Fetching the SECCI document for order {order_skel["key"]!r} failed: {err!r}')
+        data["secci_url"] = secci_url
+        return data
+
     def get_payment_request(self, order_skel: SkeletonInstance) -> unzer.PaymentRequest:
         customer = self.get_customer(order_skel)
         return_url = self.get_return_url(order_skel)
